@@ -1,0 +1,17 @@
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor files
+*.swp
+*.swo
+*~
+.idea/
+.vscode/
+
+# Learned skills (auto-generated, may contain sensitive patterns)
+skills/learned/
+
+# Temporary files
+*.tmp
+*.bak
