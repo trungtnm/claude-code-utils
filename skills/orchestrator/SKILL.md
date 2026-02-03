@@ -7,7 +7,10 @@ description: Plan and coordinate multi-agent bead execution. Use when starting a
 
 This skill spawns and monitors parallel worker agents that execute beads autonomously.
 
-**Prerequisite**: Run the `planning` skill first to generate `history/<feature>/execution-plan.md`.
+## Prerequisites
+
+1. **Required**: Run `/skill planning` first to generate `history/<feature>/execution-plan.md`
+2. **Recommended**: Run `/skill review-beads` to validate bead quality before spawning workers
 
 ## Architecture (Mode B: Autonomous)
 
@@ -97,7 +100,9 @@ register_agent(
 
 ## Phase 3: Spawn Worker Subagents
 
-**Spawn all workers in parallel using Task tool:**
+**Spawn all workers in parallel using Task tool.**
+
+Workers load `/skill worker` which defines the full bead execution protocol including TDD and coding standards.
 
 ```python
 # Spawn Track 1 Worker
@@ -110,53 +115,14 @@ You are agent BlueLake working on Track 1 of epic <epic-id>.
 1. Read /path/to/project/AGENTS.md for tool preferences
 2. Load the worker skill: /skill worker
 
-## Your Track
-Beads to complete IN ORDER: <bead-a>, <bead-b>, <bead-c>
-File scope: packages/sdk/**
+## Your Assignment
+- Orchestrator: <OrchestratorName>
+- Beads (in order): <bead-a>, <bead-b>, <bead-c>
+- File scope: packages/sdk/**
+- Epic thread: <epic-id>
+- Track thread: track:BlueLake:<epic-id>
 
-## Protocol for EACH bead:
-
-### Start Bead
-1. Register: register_agent(name="BlueLake", task_description="<bead-id>")
-2. Read context: summarize_thread(thread_id="track:BlueLake:<epic-id>")
-3. Reserve files: file_reservation_paths(paths=["packages/sdk/**"], reason="<bead-id>")
-4. Claim: bd update <bead-id> --status in_progress
-
-### Work on Bead
-- Use preferred tools from AGENTS.md (gkg for exploration, morph for edits, etc.)
-- Check inbox periodically: fetch_inbox(agent_name="BlueLake")
-- If blocked, send message to epic thread with importance="high"
-
-### Complete Bead
-1. Close: bd close <bead-id> --reason "Summary of work"
-2. Report to orchestrator:
-   send_message(
-     to=["<OrchestratorName>"],
-     thread_id="<epic-id>",
-     subject="[<bead-id>] COMPLETE",
-     body_md="Done: <summary>. Next: <next-bead-id>"
-   )
-3. Save context for next bead:
-   send_message(
-     to=["BlueLake"],
-     thread_id="track:BlueLake:<epic-id>",
-     subject="<bead-id> Complete - Context for next",
-     body_md="## Learnings\\n- ...\\n## Gotchas\\n- ...\\n## Next bead notes\\n- ..."
-   )
-4. Release files: release_file_reservations()
-
-### Continue to Next Bead
-- Loop back to "Start Bead" with next bead in track
-- Read your track thread for context from previous bead
-
-## When Track Complete
-send_message(
-  to=["<OrchestratorName>"],
-  thread_id="<epic-id>",
-  subject="[Track 1] COMPLETE",
-  body_md="All beads done: <list>. Summary: ..."
-)
-
+Follow the worker skill protocol for each bead.
 Return a summary of all work completed.
 """
 )
@@ -164,17 +130,13 @@ Return a summary of all work completed.
 # Spawn Track 2 Worker (parallel)
 Task(
   description="Worker GreenCastle: Track 2 - <track-description>",
-  prompt="""
-... (same structure, different track/beads/scope) ...
-"""
+  prompt="... (same structure, different track/beads/scope) ..."
 )
 
 # Spawn Track 3 Worker (parallel)
 Task(
   description="Worker RedStone: Track 3 - <track-description>",
-  prompt="""
-... (same structure, different track/beads/scope) ...
-"""
+  prompt="... (same structure, different track/beads/scope) ..."
 )
 ```
 
@@ -297,54 +259,24 @@ You are agent {AGENT_NAME} working on Track {N} of epic {EPIC_ID}.
 
 ## Setup
 1. Read {PROJECT_PATH}/AGENTS.md for tool preferences
-2. Load the worker skill
+2. Load the worker skill: /skill worker
 
 ## Your Assignment
-- Track: {TRACK_NUMBER}
+- Orchestrator: {ORCHESTRATOR_NAME}
 - Beads (in order): {BEAD_LIST}
 - File scope: {FILE_SCOPE}
 - Epic thread: {EPIC_ID}
 - Track thread: track:{AGENT_NAME}:{EPIC_ID}
 
-## Tool Preferences (from AGENTS.md)
-- Codebase exploration: mcp__gkg__* tools
-- File editing: mcp__morph_mcp__edit_file
-- Web search: mcp__exa__* tools
-- UI components: mcp__shadcn__* tools
-
-## Protocol
-For EACH bead in your track:
-
-1. START BEAD
-   - register_agent(name="{AGENT_NAME}")
-   - summarize_thread(thread_id="track:{AGENT_NAME}:{EPIC_ID}")
-   - file_reservation_paths(paths=["{FILE_SCOPE}"], reason="{BEAD_ID}")
-   - bd update {BEAD_ID} --status in_progress
-
-2. WORK
-   - Implement the bead requirements
-   - Use preferred tools from AGENTS.md
-   - Check inbox periodically
-
-3. COMPLETE BEAD
-   - bd close {BEAD_ID} --reason "..."
-   - send_message to orchestrator: "[{BEAD_ID}] COMPLETE"
-   - send_message to self (track thread): context for next bead
-   - release_file_reservations()
-
-4. NEXT BEAD
-   - Read track thread for context
-   - Continue with next bead
-
-## When Track Complete
-- send_message to orchestrator: "[Track {N}] COMPLETE"
-- Return summary of all work
-
-## Important
-- ALWAYS read track thread before starting each bead for context
-- ALWAYS write context to track thread after completing each bead
-- Report blockers immediately to orchestrator
+Follow the worker skill protocol for each bead.
+Return a summary of all work completed.
 ```
+
+The `/skill worker` defines the full bead execution protocol including:
+- Required sub-skills (coding-standards, test-driven-development)
+- Bead lifecycle (start → work → complete → next)
+- Communication patterns (orchestrator + track threads)
+- File reservation management
 
 ---
 
