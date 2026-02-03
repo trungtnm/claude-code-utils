@@ -232,6 +232,27 @@ See `.spikes/billing-spike/webhook-test/` for working example.
 
 ## Phase 5: Validation
 
+### Dependency Ordering Rules
+
+**Stack dependencies flow downward**: Database → Backend → Frontend
+
+| If task does...              | It MUST be blocked by...                     |
+| ---------------------------- | -------------------------------------------- |
+| Frontend calls API endpoint  | Backend task implementing that endpoint      |
+| Backend reads/writes DB      | Database migration/schema task               |
+| Integration/E2E tests        | Both frontend AND backend tasks it exercises |
+| UI displays data from API    | Backend task that provides that data         |
+
+**Example**: "Add user list page" (frontend) is blocked by "Create GET /api/users endpoint" (backend)
+
+```bash
+# Correct dependency direction
+bd dep add frontend-user-list backend-users-endpoint
+
+# WRONG - frontend cannot be worked on until backend exists
+# bd dep add backend-users-endpoint frontend-user-list  # ❌ inverted
+```
+
 ### Run bv Analysis
 
 ```bash
@@ -239,6 +260,14 @@ bv --robot-suggest   # Find missing dependencies
 bv --robot-insights  # Detect cycles, bottlenecks
 bv --robot-priority  # Validate priorities
 ```
+
+### Verify Stack Dependencies
+
+After running `bv --robot-suggest`, manually verify:
+
+1. **Every frontend task that calls an API** → blocked by that API's backend task
+2. **Every backend task using new schema** → blocked by the migration task
+3. **No frontend tasks** can start before their required backend tasks
 
 ### Fix Issues
 
@@ -283,6 +312,7 @@ bd show <bead-id>  # Look at description for file hints
 - File scopes must NOT overlap between tracks
 - Use glob patterns: `packages/sdk/**`, `apps/server/**`
 - If overlap unavoidable, merge into single track
+- **Backend tracks before frontend tracks**: If frontend beads consume APIs from backend beads, backend must complete first (add cross-track deps)
 
 ### Step 3: Generate Agent Names
 
@@ -339,8 +369,9 @@ Generated: <date>
 
 ## Cross-Track Dependencies
 
+- Track 1 (frontend) blocked by bd-30 (Track 3/backend API endpoint)
 - Track 2 can start after bd-11 (Track 1) completes
-- Track 3 has no cross-track dependencies
+- Track 3 (backend) has no blockers - can start immediately
 
 ## Key Learnings (from Spikes)
 
@@ -395,3 +426,5 @@ bv --robot-plan 2>/dev/null | jq '.plan.unassigned'
 - **No spikes for HIGH risk** → Blocked workers
 - **Missing learnings in beads** → Workers re-discover same issues
 - **No bv validation** → Broken dependency graph
+- **Frontend before backend** → Frontend tasks calling APIs must be blocked by the backend tasks that implement those APIs
+- **Parallel tracks with API coupling** → If Track A (frontend) consumes Track B (backend) APIs, add cross-track dependencies
