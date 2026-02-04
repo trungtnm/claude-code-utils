@@ -100,26 +100,17 @@ register_agent(
 
 ## Phase 3: Spawn Worker Subagents
 
-**Spawn all workers in parallel using Task tool with `subagent_type="beads:task-agent"`.**
+**Spawn all workers in parallel using Task tool with `subagent_type="worker"`.**
 
-Workers follow the workflow defined in `agents/worker.md` which includes TDD, coding standards, and git commits.
+The `worker` agent (`~/.claude/agents/worker.md`) defines the complete workflow including TDD, coding standards, and git commits.
 
 ```python
 # Spawn Track 1 Worker
 Task(
-  subagent_type="beads:task-agent",
+  subagent_type="worker",
   description="Worker BlueLake: Track 1 - <track-description>",
   prompt="""
 You are agent BlueLake working on Track 1 of epic <epic-id>.
-
-## First Action
-Read the worker workflow: Read("~/.claude/agents/worker.md")
-
-This defines your complete workflow including:
-- Bead handling with Agent Mail
-- TDD methodology (mandatory)
-- Coding standards (mandatory)
-- Git commits after each bead
 
 ## Setup
 Read {PROJECT_PATH}/AGENTS.md for tool preferences.
@@ -131,27 +122,27 @@ Read {PROJECT_PATH}/AGENTS.md for tool preferences.
 - Epic thread: <epic-id>
 - Track thread: track:BlueLake:<epic-id>
 
-Follow the agent workflow for each bead.
+Follow the worker workflow for each bead.
 Return a summary of all work completed.
 """
 )
 
 # Spawn Track 2 Worker (parallel)
 Task(
-  subagent_type="beads:task-agent",
+  subagent_type="worker",
   description="Worker GreenCastle: Track 2 - <track-description>",
   prompt="... (same structure, different track/beads/scope) ..."
 )
 
 # Spawn Track 3 Worker (parallel)
 Task(
-  subagent_type="beads:task-agent",
+  subagent_type="worker",
   description="Worker RedStone: Track 3 - <track-description>",
   prompt="... (same structure, different track/beads/scope) ..."
 )
 ```
 
-**Why `beads:task-agent` + agent file?** Workers read `agents/worker.md` for their workflow - self-contained, no skill loading required.
+**Why `subagent_type="worker"`?** The worker agent definition is automatically loaded - no explicit Read() needed. Workflow is self-contained in `~/.claude/agents/worker.md`.
 
 ---
 
@@ -265,19 +256,10 @@ bd close <epic-id> --reason "All tracks complete"
 
 ## Worker Prompt Template
 
-Use this template when spawning workers:
+Use this template when spawning workers with `subagent_type="worker"`:
 
 ```
 You are agent {AGENT_NAME} working on Track {N} of epic {EPIC_ID}.
-
-## First Action
-Read the worker workflow: Read("~/.claude/agents/worker.md")
-
-This defines your complete workflow including:
-- Bead handling with Agent Mail
-- TDD methodology (mandatory)
-- Coding standards (mandatory)
-- Git commits after each bead
 
 ## Setup
 Read {PROJECT_PATH}/AGENTS.md for tool preferences.
@@ -289,11 +271,11 @@ Read {PROJECT_PATH}/AGENTS.md for tool preferences.
 - Epic thread: {EPIC_ID}
 - Track thread: track:{AGENT_NAME}:{EPIC_ID}
 
-Follow the agent workflow for each bead.
+Follow the worker workflow for each bead.
 Return a summary of all work completed.
 ```
 
-**Why read agent file?** `agents/worker.md` is self-contained with the complete workflow. Workers read it directly - no skill loading that might be skipped.
+**Note:** The worker agent definition (`~/.claude/agents/worker.md`) is automatically loaded via `subagent_type="worker"`. No explicit Read() needed.
 
 ---
 
