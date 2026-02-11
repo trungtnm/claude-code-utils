@@ -7,6 +7,15 @@ description: Plan and coordinate multi-agent bead execution. Use when starting a
 
 This skill spawns and monitors parallel worker agents that execute beads autonomously.
 
+## Model Requirements
+
+| Role          | Model    | Why                                              |
+| ------------- | -------- | ------------------------------------------------ |
+| Orchestrator  | `haiku`  | Only coordinates, monitors, verifies — lightweight |
+| Workers       | `opus`   | Write code, reason about architecture — heavy     |
+
+**If spawning orchestrator as a subagent:** `Task(subagent_type="general-purpose", model="haiku", prompt="Run /skill orchestrator for epic <id>")`
+
 ## Prerequisites
 
 1. **Required**: Run `/skill planning` first to generate `history/<feature>/execution-plan.md`
@@ -99,6 +108,8 @@ Extract the assigned name from the response:
 ## Phase 3: Spawn Worker Subagents
 
 **Spawn all workers in parallel** using `Task(subagent_type="worker")` — one per track. Use the Worker Prompt Template below for each spawn. The worker agent (`~/.claude/agents/worker.md`) is auto-loaded via `subagent_type`.
+
+**Model assignment:** Always spawn workers with `Task(model="opus")`. The orchestrator itself runs on **haiku** — it only coordinates, reads messages, and verifies deliverables, so it doesn't need a heavy model. Workers do the actual implementation and need opus-level reasoning.
 
 ---
 
