@@ -24,7 +24,8 @@ This skill spawns and monitors parallel worker agents that execute beads autonom
 │  3. Spawn worker subagents via Task()                                       │
 │  4. Monitor progress via Agent Mail                                         │
 │  5. Handle cross-track blockers                                             │
-│  6. Announce completion                                                     │
+│  6. Commit & push artifacts                                                 │
+│  7. Announce completion                                                     │
 └─────────────────────────────────────────────────────────────────────────────┘
            │
            │ Task() spawns parallel workers
@@ -227,7 +228,7 @@ send_message(
 
 ### Save Summary to History
 
-Write the same summary to `history/<feature>/summary.md` so it persists beyond Agent Mail:
+Write the same summary to `history/<feature>/completion-summary.md` so it persists beyond Agent Mail:
 
 ```bash
 Write("history/<feature>/summary.md", """
@@ -254,6 +255,43 @@ Write("history/<feature>/summary.md", """
 ```bash
 bd close <epic-id> --reason "All tracks complete"
 ```
+
+### Commit & Push Epic Artifacts
+
+**After closing the epic, commit and push all orchestration artifacts so they persist in the shared repo.**
+
+Stage epic history and beads database:
+
+```bash
+git add ./history/<feature>/
+git add .beads/
+```
+
+Commit with a clear epic-scoped message:
+
+```bash
+git commit -m "epic(<epic-id>): completion artifacts
+
+- history/<feature>/summary.md
+- history/<feature>/execution-plan.md
+- Beads database updates (all beads closed)
+
+Epic: <epic-id>"
+```
+
+Push to the current branch:
+
+```bash
+git push
+```
+
+**If push fails** (e.g., remote has diverged), rebase and retry:
+
+```bash
+git pull --rebase && git push
+```
+
+**Do NOT skip this step.** Without it, epic artifacts exist only locally and will be lost when the worktree is cleaned up.
 
 ---
 
@@ -298,6 +336,7 @@ Return a summary of all work completed.
 - Bead "closed" → confirm with `bd show`, don't trust reports alone
 - Proceeding to Phase 6 → ALL Phase 5.5 verifications must pass first
 - Missing deliverables (no hash, no test counts) → reject immediately
+- Skipping commit+push → artifacts lost when worktree cleaned up
 
 ---
 
@@ -312,3 +351,4 @@ Return a summary of all work completed.
 | Resolve    | `reply_message` for blockers                  |
 | **Verify** | `git log --grep`, `bd show`, check report     |
 | Complete   | All verified, send summary, close epic        |
+| **Commit** | `git add` history + .beads/, commit, push     |
