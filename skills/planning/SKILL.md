@@ -1,16 +1,26 @@
 ---
 name: planning
-description: Generate comprehensive plans for new features by exploring the codebase, synthesizing approaches, validating with spikes, and decomposing into beads. Use when asked to plan a feature, create a roadmap, or design an implementation approach.
+description: Use when asked to plan a feature, create a roadmap, or design an implementation approach. Triggers on requests for comprehensive plans, feature decomposition, or multi-phase implementation strategies.
 ---
 
 # Feature Planning Pipeline
 
 Generate quality plans through systematic discovery, synthesis, verification, and decomposition.
 
+## IMPORTANT: Execution Mode
+
+**This skill replaces Claude Code's built-in planning.** When this skill is active:
+
+- Do **NOT** use `EnterPlanMode` — this skill IS the plan mode
+- Do **NOT** use `TaskCreate`, `TaskUpdate`, or `TaskList` — use beads (`bd`) for task tracking instead
+- Do **NOT** ask the user to approve a plan before executing — just run the pipeline phases sequentially
+- Do **NOT** pause between phases to ask "should I continue?" — proceed through all 7 phases automatically
+- The only user interaction should be `AskUserQuestion` when genuine ambiguity exists (e.g., choosing between approach options in Phase 2)
+
 ## Pipeline Overview
 
 ```
-USER REQUEST → Discovery → Synthesis → Verification → Decomposition → Validation → Track Planning → Ready Plan
+USER REQUEST → Discovery → Synthesis → Verification → Decomposition → Validation → Track Planning → Artifact Check → Ready Plan
 ```
 
 | Phase             | Tool                                     | Output                              |
@@ -21,6 +31,29 @@ USER REQUEST → Discovery → Synthesis → Verification → Decomposition → 
 | 4. Decomposition  | file-beads skill                         | .beads/\*.md files                  |
 | 5. Validation     | bv + Task(Oracle)                        | Validated dependency graph          |
 | 6. Track Planning | bv --robot-plan                          | Execution plan with parallel tracks |
+| 7. Artifact Check | Verify all files exist                   | Confirmed complete plan             |
+
+## Completion Gate (MANDATORY)
+
+**You are NOT done until ALL of these files exist:**
+
+- [ ] `history/<feature>/discovery.md` (Phase 1)
+- [ ] `history/<feature>/approach.md` (Phase 2)
+- [ ] `.spikes/<feature>/` directory (Phase 3, if HIGH risk items exist)
+- [ ] `.beads/*.md` decomposed work items (Phase 4)
+- [ ] `history/<feature>/execution-plan.md` (Phase 6)
+
+**After Phase 6, run Phase 7 to verify each file exists before reporting completion.**
+**Missing ANY artifact = incomplete plan. Do not stop early.**
+
+## Red Flags - You Are About to Skip Steps
+
+- "Beads are filed, so the plan is done" → Beads without an execution plan force the orchestrator to re-analyze everything. File the execution plan.
+- "The orchestrator can figure out tracks" → No. Track planning is YOUR job. The orchestrator consumes execution-plan.md, it doesn't create it.
+- "I'll come back to the execution plan later" → You won't. Do it now.
+- "Discovery is obvious, I'll skip to synthesis" → Discovery catches patterns you'd miss. Run the parallel explorers.
+- "No HIGH risk items, so I can skip verification" → Correct, but you still need all other artifacts. Don't use this as an excuse to skip Phase 6.
+- "The approach is clear from discovery, I don't need approach.md" → Write it anyway. It captures tradeoffs and risk maps that beads reference.
 
 ## Phase 1: Discovery (Parallel Exploration)
 
@@ -34,36 +67,7 @@ WebSearch → External patterns ("how do similar projects do this?")
 mcp__exa__get_code_context_exa → Library docs (if external integration needed)
 ```
 
-### Discovery Report Template
-
-Save to `history/<feature>/discovery.md`:
-
-```markdown
-# Discovery Report: <Feature Name>
-
-## Architecture Snapshot
-
-- Relevant packages: ...
-- Key modules: ...
-- Entry points: ...
-
-## Existing Patterns
-
-- Similar implementation: <file> does X using Y pattern
-- Reusable utilities: ...
-- Naming conventions: ...
-
-## Technical Constraints
-
-- Node version: ...
-- Key dependencies: ...
-- Build requirements: ...
-
-## External References
-
-- Library docs: ...
-- Similar projects: ...
-```
+Save to `history/<feature>/discovery.md` using the template at `templates/discovery.md`.
 
 ## Phase 2: Synthesis (Oracle)
 
@@ -105,33 +109,7 @@ Blast radius >5 files? ─── YES → HIGH
                        └── NO  → MEDIUM
 ```
 
-Save to `history/<feature>/approach.md`:
-
-```markdown
-# Approach: <Feature Name>
-
-## Gap Analysis
-
-| Component | Have | Need | Gap |
-| --------- | ---- | ---- | --- |
-| ...       | ...  | ...  | ... |
-
-## Recommended Approach
-
-<Description>
-
-### Alternative Approaches
-
-1. <Option A> - Tradeoff: ...
-2. <Option B> - Tradeoff: ...
-
-## Risk Map
-
-| Component   | Risk | Reason           | Verification |
-| ----------- | ---- | ---------------- | ------------ |
-| Stripe SDK  | HIGH | New external dep | Spike        |
-| User entity | LOW  | Follows existing | Proceed      |
-```
+Save to `history/<feature>/approach.md` using the template at `templates/approach.md`.
 
 ## Phase 3: Verification (Risk-Based)
 
@@ -145,28 +123,7 @@ bd create "Spike: Test X" -t task --blocks <spike-epic>
 bd create "Spike: Verify Y" -t task --blocks <spike-epic>
 ```
 
-### Spike Bead Template
-
-```markdown
-# Spike: <specific question>
-
-**Time-box**: 30 minutes
-**Output location**: .spikes/<spike-id>/
-
-## Question
-
-Can we <specific technical question>?
-
-## Success Criteria
-
-- [ ] Working throwaway code exists
-- [ ] Answer documented (yes/no + details)
-- [ ] Learnings captured for main plan
-
-## On Completion
-
-Close with: `bd close <id> --reason "YES: <approach>" or "NO: <blocker>"`
-```
+Use the spike template at `templates/spike.md`.
 
 ### Execute Spikes
 
@@ -250,7 +207,7 @@ See `.spikes/billing-spike/webhook-test/` for working example.
 bd dep add frontend-user-list backend-users-endpoint
 
 # WRONG - frontend cannot be worked on until backend exists
-# bd dep add backend-users-endpoint frontend-user-list  # ❌ inverted
+# bd dep add backend-users-endpoint frontend-user-list  # inverted
 ```
 
 ### Run bv Analysis
@@ -288,9 +245,9 @@ Task(
 )
 ```
 
-## Phase 6: Track Planning
+## Phase 6: Track Planning (REQUIRED — orchestrator cannot run without this)
 
-This phase creates an **execution-ready plan** so the orchestrator can spawn workers immediately without re-analyzing beads.
+**Without `execution-plan.md`, the orchestrator has no tracks to assign. Your planning work is wasted until this file is committed.**
 
 ### Step 1: Get Parallel Tracks
 
@@ -323,67 +280,9 @@ Assign unique adjective+noun names to each track:
 
 ### Step 4: Create Execution Plan
 
-Save to `history/<feature>/execution-plan.md`:
+Save to `history/<feature>/execution-plan.md` using the template at `templates/execution-plan.md`.
 
-```markdown
-# Execution Plan: <Feature Name>
-
-Epic: <epic-id>
-Generated: <date>
-
-## Tracks
-
-| Track | Agent       | Beads (in order)      | File Scope        |
-| ----- | ----------- | --------------------- | ----------------- |
-| 1     | BlueLake    | bd-10 → bd-11 → bd-12 | `packages/sdk/**` |
-| 2     | GreenCastle | bd-20 → bd-21         | `packages/cli/**` |
-| 3     | RedStone    | bd-30 → bd-31 → bd-32 | `apps/server/**`  |
-
-## Track Details
-
-### Track 1: BlueLake - <track-description>
-
-**File scope**: `packages/sdk/**`
-**Beads**:
-
-1. `bd-10`: <title> - <brief description>
-2. `bd-11`: <title> - <brief description>
-3. `bd-12`: <title> - <brief description>
-
-### Track 2: GreenCastle - <track-description>
-
-**File scope**: `packages/cli/**`
-**Beads**:
-
-1. `bd-20`: <title> - <brief description>
-2. `bd-21`: <title> - <brief description>
-
-### Track 3: RedStone - <track-description>
-
-**File scope**: `apps/server/**`
-**Beads**:
-
-1. `bd-30`: <title> - <brief description>
-2. `bd-31`: <title> - <brief description>
-3. `bd-32`: <title> - <brief description>
-
-## Cross-Track Dependencies
-
-- Track 1 (frontend) blocked by bd-30 (Track 3/backend API endpoint)
-- Track 2 can start after bd-11 (Track 1) completes
-- Track 3 (backend) has no blockers - can start immediately
-
-## Key Learnings (from Spikes)
-
-Embedded in beads, but summarized here for orchestrator reference:
-
-- <learning 1>
-- <learning 2>
-```
-
-### Validation
-
-Before finalizing, verify:
+### Step 5: Validate Tracks
 
 ```bash
 # No cycles in the graph
@@ -393,16 +292,20 @@ bv --robot-insights 2>/dev/null | jq '.Cycles'
 bv --robot-plan 2>/dev/null | jq '.plan.unassigned'
 ```
 
-## Output Artifacts
+## Phase 7: Artifact Verification (MANDATORY — final step)
 
-| Artifact          | Location                              | Purpose                            |
-| ----------------- | ------------------------------------- | ---------------------------------- |
-| Discovery Report  | `history/<feature>/discovery.md`      | Codebase snapshot                  |
-| Approach Document | `history/<feature>/approach.md`       | Strategy + risks                   |
-| Spike Code        | `.spikes/<feature>/`                  | Reference implementations          |
-| Spike Learnings   | Embedded in beads                     | Context for workers                |
-| Beads             | `.beads/*.md`                         | Executable work items              |
-| Execution Plan    | `history/<feature>/execution-plan.md` | Track assignments for orchestrator |
+**Run this check before declaring the plan complete:**
+
+```bash
+# Verify all required artifacts exist
+ls history/<feature>/discovery.md
+ls history/<feature>/approach.md
+ls history/<feature>/execution-plan.md
+ls .beads/*.md
+```
+
+**If ANY file is missing, go back to the relevant phase and create it.**
+**Do NOT report plan completion with missing artifacts.**
 
 ## Quick Reference
 
@@ -428,3 +331,4 @@ bv --robot-plan 2>/dev/null | jq '.plan.unassigned'
 - **No bv validation** → Broken dependency graph
 - **Frontend before backend** → Frontend tasks calling APIs must be blocked by the backend tasks that implement those APIs
 - **Parallel tracks with API coupling** → If Track A (frontend) consumes Track B (backend) APIs, add cross-track dependencies
+- **Stopping after beads are filed** → execution-plan.md is required for orchestrator
