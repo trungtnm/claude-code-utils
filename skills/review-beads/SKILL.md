@@ -7,6 +7,12 @@ argument-hint: [optional: specific epic or issue IDs to focus on]
 
 You are tasked with thoroughly reviewing, proofreading, and polishing the filed Beads epics and issues to ensure workers have a smooth implementation experience.
 
+## Plan Space Philosophy
+
+> **Changing a bead takes seconds. Changing implemented code takes hours.**
+
+Review time is the highest-leverage investment in the entire pipeline. Every minute spent improving a bead description saves 10-60 minutes of worker confusion, false starts, and rework. Approach this review as the last checkpoint before expensive implementation begins.
+
 ## Step 1: Load Current Issues
 
 First, get the current state:
@@ -55,6 +61,20 @@ For EACH issue, verify:
 - [ ] Critical path items are prioritized correctly
 - [ ] Dependencies and priorities align
 
+### Self-Documentation
+
+- [ ] Project context explains how this task serves overarching goals
+- [ ] Reasoning/justification captures why this approach was chosen
+- [ ] Considerations document constraints, edge cases, and related decisions
+- [ ] A worker with zero prior context could implement this bead standalone
+
+### Optimality & User Value
+
+- [ ] This is the right decomposition (not too granular, not too coarse)
+- [ ] The scope delivers meaningful user value (not just "technical cleanup")
+- [ ] No better decomposition exists that would serve users more directly
+- [ ] Every bead earns its place — no "nice to have" filler
+
 ## Step 3: Common Issues to Fix
 
 Watch for and correct:
@@ -69,6 +89,8 @@ Watch for and correct:
 8. **Missing dependencies**: Link issues that should be sequenced
 9. **Wrong priorities**: Adjust based on critical path analysis
 10. **Typos and grammar**: Fix for professionalism
+11. **Missing "why"**: Add project context explaining how this serves overarching goals, and reasoning explaining why this approach was chosen over alternatives
+12. **Locally optimal, globally suboptimal**: Individual beads may look fine in isolation but the overall decomposition doesn't serve users well — restructure from the user's perspective, not the developer's
 
 ## Step 4: Update Issues
 
@@ -79,6 +101,14 @@ bd update <id> --title "Improved title" --json
 bd update <id> --priority <new-priority> --json
 bd update <id> --description "New description" --json
 bd update <id> --acceptance "Acceptance criteria" --json
+```
+
+For adding reasoning, context, or review notes that don't fit in the main description:
+
+```bash
+bd comments add <id> "Project context: This enables the Developer Platform epic by..." --json
+bd comments add <id> "Reasoning: Chose token-bucket over sliding window because..." --json
+bd comments add <id> "Review note: Consider merging with bd-15 if scope overlaps" --json
 ```
 
 Manage dependencies separately with `bd dep`:

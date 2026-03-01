@@ -13,6 +13,18 @@ First, review the plan context provided: `$ARGUMENTS`
 
 If no specific plan is provided, ask the user to share the plan or point to a planning document (check `history/` directory for recent plans).
 
+## Self-Documentation Principle
+
+Every bead must be **self-contained for a worker with zero prior context**. A worker should be able to read a single bead and understand not just *what* to build, but *why* it exists, *how* it serves the project, and *what tradeoffs were considered*.
+
+Self-documenting beads include:
+- **The "why"** — project context that connects this task to overarching goals
+- **Reasoning / justification** — why this approach was chosen, what alternatives were considered
+- **Considerations** — constraints, edge cases, related decisions from planning
+- **Context lineage** — references to discovery, approach docs, or spike learnings that informed this bead
+
+Workers should never need to read `history/` artifacts to understand a bead. Push context forward — don't require backward lookups.
+
 ## Step 2: Analyze and Structure
 
 Before filing any issues, analyze the plan for:
@@ -48,8 +60,11 @@ bd create "<task title>" -t <type> -p <priority> --deps <parent-epic-id> --json
 Each issue MUST include:
 
 - **Clear title** - Action-oriented (e.g., "Implement X", "Add Y", "Configure Z")
+- **Project context** - How this task serves overarching goals (1-2 sentences connecting to the bigger picture)
 - **Detailed description** - What exactly needs to be done
+- **Reasoning / justification** - Why this approach? What alternatives were considered and why rejected?
 - **Acceptance criteria** - How do we know it's done?
+- **Considerations** - Constraints, edge cases, related decisions from planning that affect implementation
 - **Technical notes** - Implementation hints, gotchas, relevant files
 - **Dependencies** - Link to blocking issues with `--deps bd-<id>`
 
@@ -62,6 +77,49 @@ For each issue, consider:
 - Are there cross-epic dependencies?
 
 Use `--deps bd-X,bd-Y` for multiple dependencies.
+
+## Example: Self-Documenting Bead
+
+Here's an example showing how a well-documented bead gives workers everything they need:
+
+```markdown
+# Implement rate limiting middleware for public API
+
+## Project Context
+
+Our public API currently has no rate limiting, which is the #1 blocker for
+launching to external developers. This task directly enables the "Developer
+Platform" epic by making the API safe for third-party consumption.
+
+## Reasoning / Justification
+
+Chose token-bucket algorithm over sliding window because:
+- Our Redis instance already supports atomic MULTI/EXEC (no extra infra)
+- Token bucket handles burst traffic better for our webhook-heavy use case
+- Alternative: sliding window was simpler but penalizes legitimate bursts
+
+## Considerations
+
+- Must be applied AFTER auth middleware (needs user ID for per-user limits)
+- Free tier: 100 req/min, Pro tier: 1000 req/min (from product spec in approach.md)
+- Edge case: webhook retry storms can exhaust limits — consider exempting internal IPs
+- Related decision: Phase 2 chose Redis over in-memory because of multi-instance deploy
+
+## Acceptance Criteria
+
+- [ ] Rate limiter middleware at `src/middleware/rate-limit.ts`
+- [ ] Token bucket algorithm with configurable limits per tier
+- [ ] Returns `429 Too Many Requests` with `Retry-After` header
+- [ ] Unit tests covering burst scenarios and tier differences
+
+## Technical Notes
+
+- Existing auth middleware at `src/middleware/auth.ts` extracts `req.user`
+- Redis client already configured in `src/lib/redis.ts`
+- See `.spikes/api-platform/rate-limit-test/` for working prototype
+```
+
+Compare this with a minimal bead that says "Add rate limiting to API" — the self-documenting version lets a worker start immediately without reading discovery or approach docs.
 
 ## Step 6: Set Priorities Thoughtfully
 

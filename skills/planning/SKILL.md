@@ -14,13 +14,13 @@ Generate quality plans through systematic discovery, synthesis, verification, an
 - Do **NOT** use `EnterPlanMode` — this skill IS the plan mode
 - Do **NOT** use `TaskCreate`, `TaskUpdate`, or `TaskList` — use beads (`bd`) for task tracking instead
 - Do **NOT** ask the user to approve a plan before executing — just run the pipeline phases sequentially
-- Do **NOT** pause between phases to ask "should I continue?" — proceed through all 7 phases automatically
+- Do **NOT** pause between phases to ask "should I continue?" — proceed through all 8 phases automatically
 - The only user interaction should be `AskUserQuestion` when genuine ambiguity exists (e.g., choosing between approach options in Phase 2)
 
 ## Pipeline Overview
 
 ```
-USER REQUEST → Discovery → Synthesis → Verification → Decomposition → Validation → Track Planning → Artifact Check → Ready Plan
+USER REQUEST → Discovery → Synthesis → Verification → Decomposition → Bead Review → Validation → Track Planning → Artifact Check → Ready Plan
 ```
 
 | Phase             | Tool                                     | Output                              |
@@ -29,21 +29,44 @@ USER REQUEST → Discovery → Synthesis → Verification → Decomposition → 
 | 2. Synthesis      | Task(Oracle)                             | Approach + Risk Map                 |
 | 3. Verification   | Spikes via parallel Task() calls         | Validated Approach + Learnings      |
 | 4. Decomposition  | file-beads skill                         | .beads/\*.md files                  |
-| 5. Validation     | bv + Task(Oracle)                        | Validated dependency graph          |
-| 6. Track Planning | bv --robot-plan                          | Execution plan with parallel tracks |
-| 7. Artifact Check | Verify all files exist                   | Confirmed complete plan             |
+| 5. Bead Review    | review-beads skill                       | Optimized, self-documented beads    |
+| 6. Validation     | bv + bv --robot-triage + Task(Oracle)    | Validated dependency graph          |
+| 7. Track Planning | bv --robot-plan                          | Execution plan with parallel tracks |
+| 8. Artifact Check | Verify all files exist                   | Confirmed complete plan             |
+
+## Artifact Naming Convention
+
+History directories use a structured name for easy retrospection:
+
+```
+history/<date>-<epic-id>-<slug>/
+```
+
+| Component    | Format         | Example            |
+| ------------ | -------------- | ------------------ |
+| `<date>`     | `YYYY-MM-DD`   | `2026-02-27`       |
+| `<epic-id>`  | beads epic ID  | `bd-42`            |
+| `<slug>`     | kebab-case title (3-5 words max) | `stripe-billing-integration` |
+
+**Full example:** `history/2026-02-27-bd-42-stripe-billing/`
+
+**Rules:**
+- Date is the day planning **starts** (not when it finishes)
+- Epic ID comes from the beads epic created during decomposition (Phase 4) — if unknown at Phase 1, use a placeholder like `draft` and rename the directory after the epic is created
+- Slug should be meaningful enough to identify the feature at a glance in `ls history/`
+- Use `<dir>` as shorthand in subsequent phases once the directory is established
 
 ## Completion Gate (MANDATORY)
 
 **You are NOT done until ALL of these files exist:**
 
-- [ ] `history/<feature>/discovery.md` (Phase 1)
-- [ ] `history/<feature>/approach.md` (Phase 2)
-- [ ] `.spikes/<feature>/` directory (Phase 3, if HIGH risk items exist)
+- [ ] `history/<dir>/discovery.md` (Phase 1)
+- [ ] `history/<dir>/approach.md` (Phase 2)
+- [ ] `.spikes/<dir>/` directory (Phase 3, if HIGH risk items exist)
 - [ ] `.beads/*.md` decomposed work items (Phase 4)
-- [ ] `history/<feature>/execution-plan.md` (Phase 6)
+- [ ] `history/<dir>/execution-plan.md` (Phase 7)
 
-**After Phase 6, run Phase 7 to verify each file exists before reporting completion.**
+**After Phase 7, run Phase 8 to verify each file exists before reporting completion.**
 **Missing ANY artifact = incomplete plan. Do not stop early.**
 
 ## Red Flags - You Are About to Skip Steps
@@ -52,7 +75,8 @@ USER REQUEST → Discovery → Synthesis → Verification → Decomposition → 
 - "The orchestrator can figure out tracks" → No. Track planning is YOUR job. The orchestrator consumes execution-plan.md, it doesn't create it.
 - "I'll come back to the execution plan later" → You won't. Do it now.
 - "Discovery is obvious, I'll skip to synthesis" → Discovery catches patterns you'd miss. Run the parallel explorers.
-- "No HIGH risk items, so I can skip verification" → Correct, but you still need all other artifacts. Don't use this as an excuse to skip Phase 6.
+- "No HIGH risk items, so I can skip verification" → Correct, but you still need all other artifacts. Don't use this as an excuse to skip Phase 7.
+- "Beads look fine, I'll skip review" → Plan space is cheap. Spending 2 minutes reviewing beads saves hours of worker confusion. Run Phase 5.
 - "The approach is clear from discovery, I don't need approach.md" → Write it anyway. It captures tradeoffs and risk maps that beads reference.
 
 ## Phase 1: Discovery (Parallel Exploration)
@@ -67,7 +91,7 @@ WebSearch → External patterns ("how do similar projects do this?")
 mcp__exa__get_code_context_exa → Library docs (if external integration needed)
 ```
 
-Save to `history/<feature>/discovery.md` using the template at `templates/discovery.md`.
+Save to `history/<dir>/discovery.md` using the template at `templates/discovery.md`.
 
 ## Phase 2: Synthesis (Oracle)
 
@@ -78,7 +102,7 @@ Task(
   subagent_type="Oracle",
   prompt="Analyze gap between current codebase and feature requirements.
           Context: Discovery report attached. User wants: <feature>.
-          Read history/<feature>/discovery.md for context."
+          Read history/<dir>/discovery.md for context."
 )
 ```
 
@@ -109,7 +133,7 @@ Blast radius >5 files? ─── YES → HIGH
                        └── NO  → MEDIUM
 ```
 
-Save to `history/<feature>/approach.md` using the template at `templates/approach.md`.
+Save to `history/<dir>/approach.md` using the template at `templates/approach.md`.
 
 ## Phase 3: Verification (Risk-Based)
 
@@ -131,7 +155,7 @@ Use parallel Task() calls:
 
 1. `bv --robot-plan` to parallelize spikes
 2. Launch multiple `Task(subagent_type="general-purpose")` calls in a single message
-3. Workers write to `.spikes/<feature>/<spike-id>/`
+3. Workers write to `.spikes/<dir>/<spike-id>/`
 4. Close with learnings: `bd close <id> --reason "<result>"`
 
 ### Aggregate Spike Results
@@ -141,7 +165,7 @@ Task(
   subagent_type="Oracle",
   prompt="Synthesize spike results and update approach.
           Context: Spikes completed. Results: ...
-          Read history/<feature>/approach.md and update with validated learnings."
+          Read history/<dir>/approach.md and update with validated learnings."
 )
 ```
 
@@ -187,7 +211,31 @@ See `.spikes/billing-spike/webhook-test/` for working example.
 - [ ] Events: `checkout.session.completed`, `invoice.paid`
 ```
 
-## Phase 5: Validation
+## Phase 5: Bead Review (Plan Space Optimization)
+
+**Principle: Plan space is cheap, implementation space is expensive.** Changing a bead description takes seconds. Changing implemented code takes hours. Invest time here to save orders of magnitude later.
+
+Invoke the review-beads skill to optimize all filed beads:
+
+```
+Skill(skill="review-beads")
+```
+
+### Review Focus Areas
+
+1. **Self-documentation quality** — Can a worker with zero context implement each bead?
+2. **Optimality** — Is this the right decomposition? Right scope? Best for users?
+3. **User value** — Does every bead earn its place by delivering value?
+4. **Completeness** — Are project context, reasoning, and considerations present?
+
+### Exit Criteria
+
+- [ ] Every bead is self-contained (worker needs no external docs to start)
+- [ ] Every bead includes project context and reasoning
+- [ ] No bead exists "just because" — each earns its place
+- [ ] Review report generated with changes made
+
+## Phase 6: Validation
 
 ### Dependency Ordering Rules
 
@@ -216,7 +264,21 @@ bd dep add frontend-user-list backend-users-endpoint
 bv --robot-suggest   # Find missing dependencies
 bv --robot-insights  # Detect cycles, bottlenecks
 bv --robot-priority  # Validate priorities
+bv --robot-triage --graph-root <epic-id> 2>/dev/null | jq '.quick_ref'  # Triage summary
 ```
+
+### Plan Health Check
+
+Verify the plan is structurally sound before proceeding to track planning:
+
+```bash
+bd ready --json      # Confirm entry points exist (some issues are unblocked)
+bd stats --json      # Open/closed/blocked counts — sanity check
+bd blocked --json    # Catch unexpectedly blocked beads
+```
+
+If `bd ready` returns empty, the dependency graph has no entry points — fix it before continuing.
+If `bd blocked` shows beads that shouldn't be blocked, investigate missing or incorrect dependencies.
 
 ### Verify Stack Dependencies
 
@@ -245,7 +307,7 @@ Task(
 )
 ```
 
-## Phase 6: Track Planning (REQUIRED — orchestrator cannot run without this)
+## Phase 7: Track Planning (REQUIRED — orchestrator cannot run without this)
 
 **Without `execution-plan.md`, the orchestrator has no tracks to assign. Your planning work is wasted until this file is committed.**
 
@@ -280,7 +342,7 @@ Assign unique adjective+noun names to each track:
 
 ### Step 4: Create Execution Plan
 
-Save to `history/<feature>/execution-plan.md` using the template at `templates/execution-plan.md`.
+Save to `history/<dir>/execution-plan.md` using the template at `templates/execution-plan.md`.
 
 ### Step 5: Validate Tracks
 
@@ -292,15 +354,15 @@ bv --robot-insights 2>/dev/null | jq '.Cycles'
 bv --robot-plan 2>/dev/null | jq '.plan.unassigned'
 ```
 
-## Phase 7: Artifact Verification (MANDATORY — final step)
+## Phase 8: Artifact Verification (MANDATORY — final step)
 
 **Run this check before declaring the plan complete:**
 
 ```bash
 # Verify all required artifacts exist
-ls history/<feature>/discovery.md
-ls history/<feature>/approach.md
-ls history/<feature>/execution-plan.md
+ls history/<dir>/discovery.md
+ls history/<dir>/approach.md
+ls history/<dir>/execution-plan.md
 ls .beads/*.md
 ```
 
