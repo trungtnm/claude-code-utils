@@ -9,6 +9,16 @@ Thumbs.db
 .idea/
 .vscode/
 
+# Symlinked skills (local references to ~/.agents/skills/)
+skills/design-md
+skills/reactcomponents
+skills/stitch-loop
+skills/enhance-prompt
+skills/find-skills
+skills/react-components
+skills/remotion
+skills/shadcn-ui
+
 # Learned skills (auto-generated, may contain sensitive patterns)
 skills/learned/
 

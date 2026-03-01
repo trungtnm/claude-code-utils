@@ -1,5 +1,6 @@
 ---
 name: orchestrator
+model: sonnet
 description: Plan and coordinate multi-agent bead execution. Use when starting a new epic, assigning tracks to agents, or monitoring parallel work progress.
 ---
 
@@ -18,7 +19,7 @@ This skill spawns and monitors parallel worker agents that execute beads autonom
 
 ## Prerequisites
 
-1. **Required**: Run `/skill planning` first to generate `history/<feature>/execution-plan.md`
+1. **Required**: Run `/skill planning` first to generate `history/<dir>/execution-plan.md`
 2. **Recommended**: Run `/skill review-beads` to validate bead quality before spawning workers
 
 ## Architecture (Mode B: Autonomous)
@@ -33,6 +34,7 @@ This skill spawns and monitors parallel worker agents that execute beads autonom
 │  3. Spawn worker subagents via Task()                                       │
 │  4. Monitor progress via Agent Mail                                         │
 │  5. Handle cross-track blockers                                             │
+│  5.8 Review & polish (cross-track quality sweep)                            │
 │  6. Commit & push artifacts                                                 │
 │  7. Announce completion                                                     │
 └─────────────────────────────────────────────────────────────────────────────┘
@@ -71,7 +73,7 @@ This skill spawns and monitors parallel worker agents that execute beads autonom
 
 ## Phase 1: Read Execution Plan
 
-The planning skill outputs `history/<feature>/execution-plan.md` with:
+The planning skill outputs `history/<dir>/execution-plan.md` with:
 
 - Track assignments (agent name, beads, file scope)
 - Cross-track dependencies
@@ -79,7 +81,7 @@ The planning skill outputs `history/<feature>/execution-plan.md` with:
 
 ```bash
 # Read the execution plan
-Read("history/<feature>/execution-plan.md")
+Read("history/<dir>/execution-plan.md")
 ```
 
 Extract:
@@ -113,15 +115,126 @@ Extract the assigned name from the response:
 
 ---
 
-## Phase 4: Monitor Progress
+## Phase 4: Active Progress Monitoring (Loop)
 
-While workers execute, monitor via Agent Mail and bead status:
+**Do NOT fire-and-forget.** After spawning workers, enter a monitoring loop that actively checks progress, inspects code quality, and escalates to the user when needed.
+
+### Monitoring Loop
+
+Run this loop after every worker Task() returns OR periodically while workers are running in background:
+
+```
+REPEAT until all tracks complete:
+  1. Check inbox for worker messages
+  2. Check bead progress (what's closed vs open)
+  3. Inspect recent commits for quality smells
+  4. Escalate to user if issues found
+  5. Handle cross-track blockers
+```
+
+### Step 1: Check Messages & Bead Status
 
 ```bash
+fetch_inbox(project_key="<path>", agent_name=ORCH_NAME, urgent_only=false, include_bodies=true)
 search_messages(project_key="<path>", query="<epic-id>", limit=20)
-fetch_inbox(project_key="<path>", agent_name=ORCH_NAME, urgent_only=true, include_bodies=true)
 bv --robot-triage --graph-root <epic-id> 2>/dev/null | jq '.quick_ref'
 ```
+
+### Step 2: Inspect Recent Commits for Quality Smells
+
+**After each worker reports a bead complete**, inspect their actual code — do NOT trust self-reports alone.
+
+```bash
+# Get the worker's recent commits
+git log --all --grep="Bead: <bead-id>" --format="%H" | head -1
+
+# Inspect the diff for quality smells
+git show <commit-hash> --stat   # What files changed?
+git show <commit-hash> -p       # Full diff
+```
+
+**Scan the diff for these red flags:**
+
+| Smell | Pattern to grep for | Problem |
+| ----- | ------------------- | ------- |
+| Mock implementations | `mock`, `Mock`, `MOCK`, `jest.fn()`, `vi.fn()` in non-test files | Worker faked it instead of building it |
+| Stubs / placeholders | `stub`, `Stub`, `STUB`, `not implemented`, `TODO`, `FIXME`, `placeholder` | Incomplete implementation |
+| Hardcoded data | `hardcoded`, `hardcode`, large inline arrays/objects pretending to be real data | No actual integration |
+| Skipped tests | `test.skip`, `it.skip`, `describe.skip`, `xit(`, `xdescribe(` | Tests deliberately bypassed |
+| Empty implementations | Functions with only `return null`, `return []`, `return {}`, `// TODO` | Hollow code |
+
+```bash
+# Quick automated check on the commit diff
+git show <commit-hash> -p | grep -iE '(mock|stub|placeholder|not.implemented|TODO|FIXME|hardcode|test\.skip|it\.skip|return null|return \[\]|return \{\})' | head -20
+```
+
+**If ANY smell is found in non-test production code:**
+1. Do NOT accept the bead
+2. Escalate to user (see Step 3)
+
+### Step 3: Escalate to User
+
+**Use `AskUserQuestion` when any of these situations arise:**
+
+#### Situation A: Quality Smell Detected
+
+```
+AskUserQuestion(questions=[{
+  question: "Worker {AGENT_NAME} completed bead {BEAD_ID} but the code contains quality concerns:\n\n{SMELL_DETAILS}\n\nCommit: {HASH}\nFiles: {FILE_LIST}\n\nHow should we proceed?",
+  header: "Quality",
+  options: [
+    {label: "Reject & rework", description: "Send worker back to redo with real implementation"},
+    {label: "Accept as-is", description: "The mock/stub is intentional for this phase"},
+    {label: "Let me review", description: "I'll check the code and decide"}
+  ],
+  multiSelect: false
+}])
+```
+
+If user says **reject**: send rejection message to worker with specific instructions.
+
+```bash
+send_message(to=["<Worker>"], thread_id="<epic-id>",
+  subject="[<bead-id>] REJECTED — incomplete implementation",
+  body_md="Your implementation contains mocks/stubs/placeholders in production code. This bead requires a REAL, complete implementation.\n\nSmells found:\n{SMELL_DETAILS}\n\nRedo with actual working code. No mocks, no stubs, no TODOs in production files.",
+  importance="high")
+```
+
+#### Situation B: Worker Stuck / No Progress
+
+If a worker has not reported progress on the current bead after completing its Task() run without closing the bead:
+
+```
+AskUserQuestion(questions=[{
+  question: "Worker {AGENT_NAME} appears stuck on bead {BEAD_ID}.\n\nLast message: {LAST_MSG_SUMMARY}\nBead status: {STATUS}\n\nWhat should we do?",
+  header: "Stuck",
+  options: [
+    {label: "Respawn worker", description: "Kill this worker and spawn a fresh one for the remaining beads"},
+    {label: "Reassign bead", description: "Move this bead to another track's worker"},
+    {label: "I'll intervene", description: "I'll handle this bead manually"}
+  ],
+  multiSelect: false
+}])
+```
+
+#### Situation C: Worker Asks for Architectural Decision
+
+If a worker message contains questions about approach, design, or asks "should I...":
+
+```
+AskUserQuestion(questions=[{
+  question: "Worker {AGENT_NAME} needs a decision on bead {BEAD_ID}:\n\n> {WORKER_QUESTION}\n\nWhat's your call?",
+  header: "Decision",
+  options: [
+    {label: "Option A", description: "{first option from worker}"},
+    {label: "Option B", description: "{second option from worker}"},
+    {label: "Let me respond directly", description: "I'll write a custom response"}
+  ],
+  multiSelect: false
+}])
+```
+
+Then relay the user's decision back to the worker.
 
 ---
 
@@ -133,14 +246,20 @@ bv --robot-triage --graph-root <epic-id> 2>/dev/null | jq '.quick_ref'
 # Read the blocker message
 # Determine if it's:
 # 1. Waiting on another track → message that worker
-# 2. Needs decision → make decision and reply
-# 3. External blocker → update bead status
+# 2. Needs architectural decision → ESCALATE TO USER (do not decide yourself)
+# 3. External blocker → ESCALATE TO USER
 
+# For cross-track coordination (orchestrator can handle):
 reply_message(
   message_id=<blocker-msg-id>,
   body_md="Resolution: ..."
 )
+
+# For decisions that affect implementation quality (MUST escalate):
+# Use AskUserQuestion — see Phase 4, Step 3, Situation C
 ```
+
+**Rule: The orchestrator coordinates, it does NOT make architectural or implementation decisions.** When in doubt, escalate to the user. Bad autonomous decisions (like approving mocks) cost more time than a 30-second user check.
 
 ### If File Conflict
 
@@ -198,7 +317,85 @@ send_message(to=["<Worker>"], thread_id="<epic-id>",
   importance="high")
 ```
 
-**Do NOT proceed to Phase 6 until ALL beads pass verification.**
+**Do NOT proceed to Phase 5.8 until ALL beads pass verification.**
+
+---
+
+## Phase 5.8: Review & Polish (Optional)
+
+**After all beads pass verification, spawn a review agent to do a cross-track quality sweep.** This catches issues that per-bead TDD and self-review miss: integration gaps, inconsistent patterns across tracks, and holistic quality.
+
+**Skip this phase if:** the epic is trivial (< 3 beads total), or the user explicitly opts out.
+
+### Spawn Review Agent
+
+Spawn a single opus agent with access to all committed code:
+
+```
+Task(subagent_type="code-reviewer", model="opus", prompt="""
+You are reviewing the completed work for epic {EPIC_ID}.
+
+## What to review
+All commits from this epic:
+```bash
+git log --all --grep="Bead:" --oneline | head -30
+```
+
+For each commit, read the full diff with `git show <hash> -p`.
+
+## Review checklist
+1. **Run UBS** — Run `ubs --format=toon` on the project. Exit code 0 = clean. Investigate each finding with reasoned consideration — fix legitimate issues, suppress false positives with `// ubs:ignore` inline.
+2. **Cross-track consistency** — Do files from different tracks use consistent naming, error handling, types, and patterns? Flag mismatches.
+3. **Integration gaps** — Do the pieces connect properly? Are there missing imports, broken references, or dead code between tracks?
+4. **Fresh-eyes bug scan** — Read the new code looking for obvious bugs, logic errors, edge cases, off-by-ones, null/undefined risks, and race conditions.
+5. **Security basics** — Any hardcoded secrets, SQL injection, XSS, or unsafe input handling?
+6. **Test coverage gaps** — Are there significant code paths without test coverage?
+
+## If this is a frontend epic
+Also check:
+- UI/UX consistency — Do components follow a coherent visual language?
+- Accessibility — Are interactive elements keyboard-navigable with proper ARIA attributes?
+- Responsive edge cases — Any layout breakage at common breakpoints?
+
+## Output format
+```markdown
+## Review: {EPIC_ID}
+
+### Critical (must fix)
+- [ ] <file:line> — <issue>
+
+### Recommended (should fix)
+- [ ] <file:line> — <issue>
+
+### Nits (optional)
+- [ ] <file:line> — <issue>
+
+### Verdict: PASS / NEEDS_FIXES
+```
+""")
+```
+
+### Handle Review Results
+
+**If verdict is PASS:** Proceed to Phase 6.
+
+**If verdict is NEEDS_FIXES with critical issues:** Escalate to user.
+
+```
+AskUserQuestion(questions=[{
+  question: "Cross-track review found issues in epic {EPIC_ID}:\n\n{CRITICAL_ISSUES}\n\nHow should we handle these?",
+  header: "Review",
+  options: [
+    {label: "Fix critical only", description: "Spawn a worker to fix critical issues, skip nits"},
+    {label: "Fix all", description: "Spawn a worker to fix critical + recommended issues"},
+    {label: "Skip fixes", description: "Accept as-is and proceed to completion"},
+    {label: "Let me review", description: "I'll look at the issues and decide"}
+  ],
+  multiSelect: false
+}])
+```
+
+**If user says fix:** Spawn an opus worker to apply fixes, then re-run verification (Phase 5.5) on the fix commit.
 
 ---
 
@@ -239,10 +436,10 @@ send_message(
 
 ### Save Summary to History
 
-Write the same summary to `history/<feature>/completion-summary.md` so it persists beyond Agent Mail:
+Write the same summary to `history/<dir>/completion-summary.md` so it persists beyond Agent Mail:
 
 ```bash
-Write("history/<feature>/summary.md", """
+Write("history/<dir>/summary.md", """
 # Epic Complete: <title>
 
 **Epic:** <epic-id>
@@ -274,7 +471,7 @@ bd close <epic-id> --reason "All tracks complete"
 Stage epic history and beads database:
 
 ```bash
-git add ./history/<feature>/
+git add ./history/<dir>/
 git add .beads/
 ```
 
@@ -283,8 +480,8 @@ Commit with a clear epic-scoped message:
 ```bash
 git commit -m "epic(<epic-id>): completion artifacts
 
-- history/<feature>/summary.md
-- history/<feature>/execution-plan.md
+- history/<dir>/summary.md
+- history/<dir>/execution-plan.md
 - Beads database updates (all beads closed)
 
 Epic: <epic-id>"
@@ -323,14 +520,23 @@ Read {PROJECT_PATH}/AGENTS.md for tool preferences.
 - Epic thread: {EPIC_ID}
 - Track thread: track:{AGENT_NAME}:{EPIC_ID}
 
+## Implementation Rules (STRICT)
+- Implement REAL, working code — no mocks, stubs, or placeholders in production files
+- Mocks are ONLY acceptable in test files (*.test.*, *.spec.*)
+- No `TODO`, `FIXME`, or `not implemented` comments in production code
+- No hardcoded fake data pretending to be real integrations
+- No `test.skip` or `it.skip` — all tests must run
+- If you cannot fully implement something, STOP and message the orchestrator explaining WHY — do not fake it
+- If you need a decision on approach, ASK the orchestrator — do not guess
+
 ## Deliverables Contract
 For EACH bead, your completion report MUST include:
 1. **Commit hash** — from `git log -1 --format='%h'`
 2. **Test counts** — N passed / M total
 3. **Bead status** — confirmed "done" via `bd show`
 
-Orchestrator VERIFIES these before accepting completion.
-Missing any field = rejection and rework.
+Orchestrator INSPECTS your code diffs for quality smells (mocks, stubs, TODOs).
+Missing any field OR quality smells found = rejection and rework.
 
 Follow the worker workflow for each bead.
 Return a summary of all work completed.
@@ -348,18 +554,25 @@ Return a summary of all work completed.
 - Proceeding to Phase 6 → ALL Phase 5.5 verifications must pass first
 - Missing deliverables (no hash, no test counts) → reject immediately
 - Skipping commit+push → artifacts lost when worktree cleaned up
+- **Mocks/stubs in production code → ALWAYS reject and escalate to user**
+- **Worker asking "should I..." → ALWAYS escalate to user, do NOT decide for them**
+- **Worker silent after Task() returns with open beads → escalate as stuck**
+- **Making architectural decisions yourself → STOP, you are haiku, escalate to user**
 
 ---
 
 ## Quick Reference
 
-| Phase      | Action                                        |
-| ---------- | --------------------------------------------- |
-| Read Plan  | `Read("history/<feature>/execution-plan.md")` |
-| Initialize | `ensure_project`, `register_agent`            |
-| Spawn      | `Task()` for each track (parallel)            |
-| Monitor    | `fetch_inbox`, `search_messages`              |
-| Resolve    | `reply_message` for blockers                  |
-| **Verify** | `git log --grep`, `bd show`, check report     |
-| Complete   | All verified, send summary, close epic        |
-| **Commit** | `git add` history + .beads/, commit, push     |
+| Phase        | Action                                        |
+| ------------ | --------------------------------------------- |
+| Read Plan    | `Read("history/<dir>/execution-plan.md")`     |
+| Initialize   | `ensure_project`, `register_agent`            |
+| Spawn        | `Task()` for each track (parallel)            |
+| **Monitor**  | Loop: `fetch_inbox`, `bv --robot-triage`      |
+| **Inspect**  | `git show <hash> -p`, grep for smells         |
+| **Escalate** | `AskUserQuestion` for stuck/quality/decisions |
+| Resolve      | `reply_message` for cross-track blockers      |
+| **Verify**   | `git log --grep`, `bd show`, check report     |
+| **Review**   | Spawn `code-reviewer` for cross-track sweep   |
+| Complete     | All verified, send summary, close epic        |
+| **Commit**   | `git add` history + .beads/, commit, push     |
