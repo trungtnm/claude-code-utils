@@ -103,8 +103,6 @@ git commit -m "$(cat <<'EOF'
 <body explaining what and why>
 
 Bead: {BEAD_ID}
-
-Co-Authored-By: Claude <noreply@anthropic.com>
 EOF
 )"
 ```
