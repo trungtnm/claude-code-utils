@@ -4,13 +4,14 @@ A plugin marketplace for [Claude Code](https://docs.anthropic.com/en/docs/claude
 
 ## Install
 
-In Claude Code session
+In Claude Code session:
 
 ```bash
-/plugin install trungtnm/claude-code-utils
+/plugin marketplace add trungtnm/claude-code-utils
+/plugin install claude-code-utils
 ```
 
-Then enable the plugins you want from the list. Each plugin can be toggled independently.
+For local development, see [DEVELOPMENT.md](DEVELOPMENT.md).
 
 ## Skills
 
