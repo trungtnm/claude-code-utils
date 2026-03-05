@@ -4,8 +4,10 @@ A plugin marketplace for [Claude Code](https://docs.anthropic.com/en/docs/claude
 
 ## Install
 
+In Claude Code session
+
 ```bash
-/install trungtnm/claude-code-utils
+/plugin install trungtnm/claude-code-utils
 ```
 
 Then enable the plugins you want from the list. Each plugin can be toggled independently.
@@ -38,6 +40,7 @@ Then enable the plugins you want from the list. Each plugin can be toggled indep
 | `/using-skills` | Skill discovery and usage conventions |
 | `/cass` | Coding Agent Session Search across multiple agents |
 | `/cm` | CASS Memory: procedural memory with confidence decay |
+| `/br` | Beads Rust issue tracker: create, triage, dependencies, sync |
 | `/bd-to-br-migration` | Beads migration utilities |
 
 ## Agents
