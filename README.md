@@ -10,82 +10,50 @@ A plugin marketplace for [Claude Code](https://docs.anthropic.com/en/docs/claude
 
 Then enable the plugins you want from the list. Each plugin can be toggled independently.
 
-## Plugins
+## Skills
 
-### workflow
+| Skill | Description |
+|-------|-------------|
+| `/planning` | Feature planning and execution plan generation |
+| `/brainstorming` | Idea-to-design process, hard-gates implementation |
+| `/test-driven-development` | Write-tests-first methodology |
+| `/ubs` | Ultimate Bug Scanner: 18 detection categories, 8 languages |
+| `/dcg` | Destructive Command Guard: blocks dangerous commands |
+| `/security-review` | Security checklist for auth, input, secrets, APIs |
+| `/qa-sweep` | Three-phase quality sweep (inspect, review, polish) |
+| `/coding-standards` | TypeScript/JavaScript/React/Node.js standards |
+| `/orchestrator` | Spawn and monitor parallel workers (haiku coordinator) |
+| `/file-beads` | File detailed Beads epics and issues from a plan |
+| `/review-beads` | Review and refine filed Beads issues |
+| `/docs-seeker` | Discover docs via llms.txt, Repomix, parallel exploration |
+| `/context-engineering` | AI agent architecture and memory system patterns |
+| `/frontend-patterns` | React, Next.js, state management patterns |
+| `/backend-patterns` | Node.js, Express, Next.js API route patterns |
+| `/vercel-react-best-practices` | Vercel Engineering optimization guidelines |
+| `/web-design-guidelines` | Web Interface Guidelines compliance review |
+| `/design-md` | Semantic design system synthesis |
+| `/reactcomponents` | Vite/React component generation from designs |
+| `/stitch-loop` | Iterative website building with Stitch |
+| `/writing-skills` | Create, edit, and verify skills |
+| `/using-skills` | Skill discovery and usage conventions |
+| `/cass` | Coding Agent Session Search across multiple agents |
+| `/cm` | CASS Memory: procedural memory with confidence decay |
+| `/bd-to-br-migration` | Beads migration utilities |
 
-Disciplined development workflows: planning, brainstorming, and TDD enforcement.
+## Agents
 
-| Skills | Agents |
-|--------|--------|
-| `/planning` — Feature planning and execution plan generation | **TDD Guide** — Test-driven development enforcement |
-| `/brainstorming` — Idea-to-design process, hard-gates implementation | |
-| `/test-driven-development` — Write-tests-first methodology | |
+| Agent | Description |
+|-------|-------------|
+| **TDD Guide** | Test-driven development enforcement |
+| **Code Reviewer** | Quality, security, maintainability review |
+| **Security Reviewer** | OWASP Top 10, secrets, injection detection |
+| **Worker** | Bead implementation agent (opus, TDD-first) |
+| **Oracle** | Advisory consultant for complex reasoning (read-only) |
+| **Architect** | System design and scalability decisions |
+| **Database Reviewer** | PostgreSQL optimization, Supabase practices |
+| **Build Error Resolver** | TypeScript/build error fixes (minimal diffs) |
 
-### quality-safety
-
-Quality gates and safety tools for AI-generated code.
-
-| Skills | Agents |
-|--------|--------|
-| `/ubs` — Ultimate Bug Scanner: 18 detection categories, 8 languages | **Code Reviewer** — Quality, security, maintainability review |
-| `/dcg` — Destructive Command Guard: blocks dangerous commands | **Security Reviewer** — OWASP Top 10, secrets, injection detection |
-| `/security-review` — Security checklist for auth, input, secrets, APIs | |
-| `/qa-sweep` — Three-phase quality sweep (inspect, review, polish) | |
-| `/coding-standards` — TypeScript/JavaScript/React/Node.js standards | |
-
-### multi-agent
-
-Orchestrator/worker architecture for parallelizing complex epics.
-
-| Skills | Agents |
-|--------|--------|
-| `/orchestrator` — Spawn and monitor parallel workers (haiku coordinator) | **Worker** — Bead implementation agent (opus, TDD-first) |
-| `/file-beads` — File detailed Beads epics and issues from a plan | |
-| `/review-beads` — Review and refine filed Beads issues | |
-
-```
-/planning → execution-plan.md
-    ↓
-/orchestrator (haiku) → spawns workers → monitors progress
-    ↓           ↓           ↓
-Worker A    Worker B    Worker C   (opus)
-Track 1     Track 2     Track 3
-    ↓           ↓           ↓
-TDD cycle → commit → report back
-```
-
-### knowledge
-
-Documentation discovery, architecture patterns, and expert advisory agents.
-
-| Skills | Agents |
-|--------|--------|
-| `/docs-seeker` — Discover docs via llms.txt, Repomix, parallel exploration | **Oracle** — Advisory consultant for complex reasoning (read-only) |
-| `/context-engineering` — AI agent architecture and memory system patterns | **Architect** — System design and scalability decisions |
-| `/frontend-patterns` — React, Next.js, state management patterns | **Database Reviewer** — PostgreSQL optimization, Supabase practices |
-| `/backend-patterns` — Node.js, Express, Next.js API route patterns | |
-| `/vercel-react-best-practices` — Vercel Engineering optimization guidelines | |
-| `/web-design-guidelines` — Web Interface Guidelines compliance review | |
-| `/design-md` — Semantic design system synthesis | |
-| `/reactcomponents` — Vite/React component generation from designs | |
-| `/stitch-loop` — Iterative website building with Stitch | |
-
-### dev-tools
-
-Developer utilities for skill authoring, session history, and build fixes.
-
-| Skills | Agents |
-|--------|--------|
-| `/writing-skills` — Create, edit, and verify skills | **Build Error Resolver** — TypeScript/build error fixes (minimal diffs) |
-| `/using-skills` — Skill discovery and usage conventions | |
-| `/cass` — Coding Agent Session Search across multiple agents | |
-| `/cm` — CASS Memory: procedural memory with confidence decay | |
-| `/bd-to-br-migration` — Beads migration utilities | |
-
-### session-commands
-
-Quick-action `t:` commands for common session tasks. Run immediately without configuration.
+## Commands
 
 | Command | Purpose |
 |---------|---------|
@@ -110,11 +78,8 @@ claude-code-utils/
 ├── .claude-plugin/
 │   └── marketplace.json        # Marketplace manifest
 ├── plugins/
-│   ├── workflow/               # Planning, brainstorming, TDD
-│   ├── quality-safety/         # UBS, DCG, security, QA
-│   ├── multi-agent/            # Orchestrator + workers
-│   ├── knowledge/              # Docs, patterns, references
-│   ├── dev-tools/              # Skill authoring, CASS, CM
-│   └── session-commands/       # t: quick-action commands
+│   ├── skills/                 # All skills (SKILL.md + references)
+│   ├── agents/                 # All agent definitions
+│   └── commands/               # All t: session commands
 └── README.md
 ```
