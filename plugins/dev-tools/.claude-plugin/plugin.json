@@ -1,0 +1,11 @@
+{
+  "name": "dev-tools",
+  "description": "Developer utilities: skill authoring, session search (CASS), procedural memory (CM), build error resolution, and migration tools",
+  "version": "1.0.0",
+  "author": {
+    "name": "trungtnm",
+    "email": "trungtnm@users.noreply.github.com"
+  },
+  "repository": "https://github.com/trungtnm/claude-code-utils",
+  "license": "MIT"
+}

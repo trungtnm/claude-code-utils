@@ -1,0 +1,83 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "claude-code-utils",
+  "description": "Custom skills, agents, and commands for Claude Code — quality gates, workflow structure, multi-agent coordination, safety guards, and knowledge references",
+  "owner": {
+    "name": "trungtnm",
+    "email": "trungtnm@users.noreply.github.com"
+  },
+  "plugins": [
+    {
+      "name": "workflow",
+      "description": "Disciplined development workflows: planning, brainstorming, and TDD enforcement",
+      "version": "1.0.0",
+      "source": "./plugins/workflow",
+      "category": "productivity",
+      "keywords": ["planning", "brainstorming", "tdd", "workflow"],
+      "author": {
+        "name": "trungtnm",
+        "email": "trungtnm@users.noreply.github.com"
+      }
+    },
+    {
+      "name": "quality-safety",
+      "description": "Quality gates and safety tools: Ultimate Bug Scanner (18 detection categories), Destructive Command Guard, security review, QA sweep, and coding standards",
+      "version": "1.0.0",
+      "source": "./plugins/quality-safety",
+      "category": "security",
+      "keywords": ["security", "static-analysis", "code-review", "quality", "safety"],
+      "author": {
+        "name": "trungtnm",
+        "email": "trungtnm@users.noreply.github.com"
+      }
+    },
+    {
+      "name": "multi-agent",
+      "description": "Multi-agent orchestration: spawn parallel worker agents for epic execution with file reservations, agent mail, and beads tracking",
+      "version": "1.0.0",
+      "source": "./plugins/multi-agent",
+      "category": "productivity",
+      "keywords": ["orchestrator", "multi-agent", "parallel", "worker", "beads"],
+      "author": {
+        "name": "trungtnm",
+        "email": "trungtnm@users.noreply.github.com"
+      }
+    },
+    {
+      "name": "knowledge",
+      "description": "Knowledge and reference library: documentation discovery, context engineering, frontend/backend patterns, Vercel best practices, web design guidelines, and expert advisory agents",
+      "version": "1.0.0",
+      "source": "./plugins/knowledge",
+      "category": "productivity",
+      "keywords": ["docs", "patterns", "react", "nextjs", "architecture", "design"],
+      "author": {
+        "name": "trungtnm",
+        "email": "trungtnm@users.noreply.github.com"
+      }
+    },
+    {
+      "name": "dev-tools",
+      "description": "Developer utilities: skill authoring, session search (CASS), procedural memory (CM), build error resolution, and migration tools",
+      "version": "1.0.0",
+      "source": "./plugins/dev-tools",
+      "category": "development",
+      "keywords": ["skills", "memory", "search", "build-errors", "migration"],
+      "author": {
+        "name": "trungtnm",
+        "email": "trungtnm@users.noreply.github.com"
+      }
+    },
+    {
+      "name": "session-commands",
+      "description": "Quick-action t: commands for common session tasks: rootfix, fresh-eyes review, peer review, polish, enriching docs/README, and more",
+      "version": "1.0.0",
+      "source": "./plugins/session-commands",
+      "category": "productivity",
+      "keywords": ["commands", "session", "review", "debugging", "documentation"],
+      "author": {
+        "name": "trungtnm",
+        "email": "trungtnm@users.noreply.github.com"
+      }
+    }
+  ]
+}
