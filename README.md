@@ -41,6 +41,7 @@ Then enable the plugins you want from the list. Each plugin can be toggled indep
 | `/cass` | Coding Agent Session Search across multiple agents |
 | `/cm` | CASS Memory: procedural memory with confidence decay |
 | `/br` | Beads Rust issue tracker: create, triage, dependencies, sync |
+| `/bv` | Beads Viewer: graph-aware triage engine with PageRank and critical path |
 | `/bd-to-br-migration` | Beads migration utilities |
 
 ## Agents
