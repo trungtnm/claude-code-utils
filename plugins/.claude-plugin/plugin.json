@@ -1,0 +1,21 @@
+{
+  "name": "claude-code-utils",
+  "description": "Skills, agents, and commands for Claude Code — planning, TDD, bug scanning, security review, multi-agent orchestration, knowledge references, and session commands",
+  "version": "1.0.0",
+  "author": {
+    "name": "trungtnm",
+    "url": "https://github.com/trungtnm"
+  },
+  "repository": "https://github.com/trungtnm/claude-code-utils",
+  "license": "MIT",
+  "keywords": [
+    "skills",
+    "agents",
+    "commands",
+    "workflow",
+    "security",
+    "quality",
+    "knowledge",
+    "multi-agent"
+  ]
+}
