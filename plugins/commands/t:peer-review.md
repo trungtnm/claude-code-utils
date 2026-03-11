@@ -1,8 +1,15 @@
-Review code written by other agents (or other contributors) across the project. Find bugs, errors, inefficiencies, security issues, and reliability problems. Diagnose root causes using first-principle analysis and fix them. Use ultrathink. Cast a wide net — don't restrict yourself to recent commits.
+Review code for bugs, errors, inefficiencies, security issues, and reliability problems. Diagnose root causes using first-principle analysis and fix them. Use ultrathink.
+
+**Scope: `$ARGUMENTS`**
+
+If a bead ID or epic ID is provided above, use `br show <id>` to understand the issue, find the relevant code changes (check git log for commits referencing that bead ID, and inspect the files touched), and focus your review on that scope. If no argument is provided, cast a wide net across the project — survey git history, check multiple branches, and don't restrict yourself to recent commits.
 
 ## Steps
 
-1. **Survey recent and not-so-recent changes** — Look at git history beyond just the latest commits. Check multiple branches if relevant. Identify code written by other agents or contributors that may not have been thoroughly reviewed.
+1. **Determine review scope** — Check whether `$ARGUMENTS` contains a bead/epic ID or description:
+   - **If a bead/epic ID is given**: Run `br show <id>` to understand the task. Find commits referencing that ID in git log. Identify all files touched by those commits. This is your review scope.
+   - **If a description is given**: Use it to locate the relevant code area and focus your review there.
+   - **If no argument is given**: Survey recent and not-so-recent git history broadly. Look at multiple branches if relevant. Identify code written by other agents or contributors that may not have been thoroughly reviewed.
 
 2. **Read with skepticism** — Approach each piece of code assuming it might contain errors. AI-generated code has characteristic failure modes:
    - Plausible-looking but subtly wrong logic
@@ -29,9 +36,12 @@ Review code written by other agents (or other contributors) across the project. 
 
 6. **Fix with precision** — Apply minimal, targeted fixes. Explain what was wrong and why your fix is correct.
 
+7. **Report back** — If reviewing a specific bead, add a comment to the bead summarizing findings: `br comments add <id> "Peer review: <summary of findings and fixes>"`.
+
 ## Rules
 
 - **Go super deep** — Surface-level review catches nothing useful. Trace execution paths, check data flow, verify assumptions.
 - **No sacred cows** — Review all code equally regardless of who wrote it or when.
 - **Fix root causes** — Don't add bandaids. If a pattern is broken, fix the pattern.
 - **Verify fixes** — Run tests after making changes. Don't introduce new bugs while fixing old ones.
+- **Stay in scope** — When a specific bead/epic is given, focus on that work. Don't wander into unrelated code unless you find a systemic issue connected to the scoped changes.
