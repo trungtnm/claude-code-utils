@@ -1,7 +1,7 @@
 ---
 name: bd-to-br-migration
 description: >-
-  Migrate docs from bd (beads) to br (beads_rust). Use when updating AGENTS.md,
+  Migrate docs from bd (beads) to br (beads_rust). Use when updating AGENTS.md, CLAUDE.md,
   converting bd commands, "bd sync" → "br sync --flush-only", or beads migration.
 ---
 
@@ -65,7 +65,7 @@ grep -c 'br sync --flush-only' file.md  # Must be > 0
 ```
 What are you migrating?
 │
-├─ Single file (AGENTS.md)
+├─ Single file (AGENTS.md/CLAUDE.md)
 │  │
 │  └─ Follow THE EXACT PROMPT above
 │     Use: ./scripts/verify-migration.sh file.md

@@ -17,7 +17,7 @@ Randomly explore code files in this project, deeply investigate their functional
    - Inconsistencies with how similar patterns are handled elsewhere in the codebase
    - Security issues (injection, unsanitized input, exposed secrets)
 
-5. **Check against project standards** — Read AGENTS.md and any referenced best-practice guides. Verify the code conforms to them.
+5. **Check against project standards** — Read AGENTS.md, CLAUDE.md and any referenced best-practice guides. Verify the code conforms to them.
 
 6. **Fix what you find** — For each issue, fix it directly. Keep fixes minimal and targeted — don't refactor working code just because you'd write it differently.
 
