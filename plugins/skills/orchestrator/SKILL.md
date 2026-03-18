@@ -288,7 +288,7 @@ git log --all --grep="Bead: <bead-id>" --oneline
 
 ### 2. Bead Is Closed
 ```bash
-bd show <bead-id>
+br show <bead-id> --json
 # Status must be "done"
 ```
 
@@ -307,7 +307,7 @@ send_message(to=["<Worker>"], thread_id="<epic-id>",
 # If bead not closed:
 send_message(to=["<Worker>"], thread_id="<epic-id>",
   subject="[<bead-id>] REJECTED — bead not closed",
-  body_md="Bead <bead-id> status is not 'done'. Run `bd close <bead-id>` and re-report.",
+  body_md="Bead <bead-id> status is not 'done'. Run `br close <bead-id>` and re-report.",
   importance="high")
 
 # If deliverables incomplete:
@@ -461,7 +461,7 @@ Write("history/<dir>/summary.md", """
 ### Close Epic
 
 ```bash
-bd close <epic-id> --reason "All tracks complete"
+br close --actor "$ACTOR" <epic-id> --reason "All tracks complete"
 ```
 
 ### Commit & Push Epic Artifacts
@@ -533,7 +533,7 @@ Read {PROJECT_PATH}/AGENTS.md for tool preferences.
 For EACH bead, your completion report MUST include:
 1. **Commit hash** — from `git log -1 --format='%h'`
 2. **Test counts** — N passed / M total
-3. **Bead status** — confirmed "done" via `bd show`
+3. **Bead status** — confirmed "done" via `br show`
 
 Orchestrator INSPECTS your code diffs for quality smells (mocks, stubs, TODOs).
 Missing any field OR quality smells found = rejection and rework.
@@ -550,7 +550,7 @@ Return a summary of all work completed.
 
 - Never accept unverified work — self-reports are not proof
 - Worker says "done" → verify commit exists via `git log --grep`
-- Bead "closed" → confirm with `bd show`, don't trust reports alone
+- Bead "closed" → confirm with `br show`, don't trust reports alone
 - Proceeding to Phase 6 → ALL Phase 5.5 verifications must pass first
 - Missing deliverables (no hash, no test counts) → reject immediately
 - Skipping commit+push → artifacts lost when worktree cleaned up
@@ -572,7 +572,7 @@ Return a summary of all work completed.
 | **Inspect**  | `git show <hash> -p`, grep for smells         |
 | **Escalate** | `AskUserQuestion` for stuck/quality/decisions |
 | Resolve      | `reply_message` for cross-track blockers      |
-| **Verify**   | `git log --grep`, `bd show`, check report     |
+| **Verify**   | `git log --grep`, `br show`, check report     |
 | **Review**   | Spawn `code-reviewer` for cross-track sweep   |
 | Complete     | All verified, send summary, close epic        |
 | **Commit**   | `git add` history + .beads/, commit, push     |

@@ -27,8 +27,9 @@ This step takes 30 seconds and prevents hours of rework from violating establish
 
 ## 2. Claim the Bead
 
-- Use `bd show {BEAD_ID}` to get full bead details
-- Use `bd update {BEAD_ID} --status in_progress` to claim it
+- Resolve actor: `ACTOR="${BR_ACTOR:-assistant}"`
+- Use `br show {BEAD_ID} --json` to get full bead details
+- Use `br update --actor "$ACTOR" {BEAD_ID} --status in_progress` to claim it
 - Report what you're working on
 
 ## 3. Execute with TDD
@@ -135,7 +136,7 @@ COMMIT_HASH=$(git log -1 --format='%h')
 | Temptation                          | Reality                                         |
 | ----------------------------------- | ------------------------------------------------ |
 | "I'll commit later"                 | Gates are blocking — no commit = no completion   |
-| "Bead admin is overhead"            | `bd close` IS the deliverable, not extra work    |
+| "Bead admin is overhead"            | `br close` IS the deliverable, not extra work    |
 | "Orchestrator trusts me"            | Orchestrator VERIFIES commits and bead status    |
 | "I'll batch commits at the end"     | One commit per bead — orchestrator checks each   |
 
@@ -143,10 +144,10 @@ COMMIT_HASH=$(git log -1 --format='%h')
 
 ## 6. Complete the Bead
 
-**Both `bd close` and the deliverables report are MANDATORY.**
+**Both `br close` and the deliverables report are MANDATORY.**
 
-- Close bead: `bd close {BEAD_ID} --reason "Summary of work done"`
-- Confirm closure: `bd show {BEAD_ID}` → status must be "done"
+- Close bead: `br close --actor "$ACTOR" {BEAD_ID} --reason "Summary of work done"`
+- Confirm closure: `br show {BEAD_ID} --json` → status must be "done"
 - Report to orchestrator with **structured deliverables**:
   ```
   send_message(
@@ -157,7 +158,7 @@ COMMIT_HASH=$(git log -1 --format='%h')
   ## Deliverables: {BEAD_ID}
   - **Commit:** `{COMMIT_HASH}` (from `git log -1 --format='%h'`)
   - **Tests:** {N} passed / {M} total
-  - **Bead status:** done (confirmed via `bd show`)
+  - **Bead status:** done (confirmed via `br show`)
   - **Summary:** <what was implemented>
   - **Next:** {NEXT_BEAD_ID}
   """
@@ -271,9 +272,10 @@ Wait for orchestrator response before proceeding.
 # Available Tools
 
 **Beads:**
-- `bd show` - Get bead details
-- `bd update` - Update status
-- `bd close` - Complete bead
+- `br show <id> --json` - Get bead details
+- `br update --actor "$ACTOR" <id> --status <status>` - Update status
+- `br close --actor "$ACTOR" <id> --reason "<reason>"` - Complete bead
+- `br comments add --actor "$ACTOR" <id> --message "<text>"` - Add comment
 
 **Agent Mail:**
 - `register_agent` - Register identity
@@ -312,7 +314,7 @@ Wait for orchestrator response before proceeding.
 - Committing without tests passing → Fix first
 - Completing bead without commit → **BLOCKED** — gate fails
 - Reporting without deliverables → Orchestrator will reject
-- Skipping `bd close` → Work doesn't count
+- Skipping `br close` → Work doesn't count
 - "I'll do admin later" → Gates are blocking, not optional
 
 # Proactive Bias

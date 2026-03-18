@@ -312,63 +312,92 @@ claude-code-utils/
 └── README.md
 ```
 
-## Usage Examples
+## Daily Workflow
 
-### Session Workflow
+The goal of this plugin is to make each day more productive than the last. Here's what a typical day looks like:
 
-A typical session using this plugin:
+### Starting a Session
 
-```
-# Start: orient yourself
-/t:prime
-
-# Plan a feature with structured decomposition
-/planning
-
-# Solve all beads using agentflywheel workflow
-/t:flywheel
-
-# review and polish
-/t:peer-review
-/t:polish
-
-# Pre-commit quality gate
-/ubs
-
-# Review security before pushing
-/security-review
-
-# End: wrap up and sync
-/t:done
+```bash
+/t:recover                    # Resuming? Get a briefing of where you left off
+/t:next                       # Not sure what to do? Get one clear recommendation
+/t:prime                      # New codebase? Deep orientation first
 ```
 
-### Finding Documentation
+### New Feature Work
+
+```bash
+# Full guided pipeline (medium/large features)
+/recipe new-feature           # Chains: discuss → plan → file-beads → flywheel → review → done
+
+# Quick feature (you already know what to build)
+/t:discuss add pagination     # Requirements gathering, then jump to planning
+
+# Bug fix fast path
+/recipe bug-fix TypeError in auth middleware
+```
+
+### During Active Coding
+
+```bash
+# Random idea pops up? Capture it in <5 seconds, keep coding
+/t:capture this API should have rate limiting
+/t:capture refactor auth module to use middleware pattern
+
+# Between tasks, triage your captures into real work items
+/triage                       # Classifies each as: quick-fix / new-bead / defer / out-of-scope
+```
+
+### Autonomous Execution
+
+```bash
+/t:flywheel                   # Single-agent: pick bead → implement with TDD → verify → commit → loop
+/orchestrator                 # Multi-agent: parallel workers with file reservation and quality gates
+```
+
+Both include: verification gates (tests/lint/typecheck), auto-fix retries on failure, evidence logging to `.ccu/EVIDENCE.md`, and checkpoints for crash recovery.
+
+### Ending a Session
+
+```bash
+/t:handoff                    # Mid-work? Write state for next session (decisions, dead ends, next action)
+/t:commit                     # Commit with enriched Context: sections for future git archaeology
+/t:done                       # Finished? Close beads, sync state, clean up
+```
+
+### A Typical Day
 
 ```
-# Discover docs for a library via llms.txt and Repomix
-/docs-seeker
+Morning:
+  /t:recover                    ← "You were mid-flywheel, 2 beads left"
+  /t:flywheel                   ← Resumes, completes remaining beads with verification
+  /t:capture fix the flaky test in auth.test.ts
 
-# Check your React code against Vercel's optimization rules
-/vercel-react-best-practices
+Midday:
+  /triage                       ← "flaky test → quick-fix (doing now)"
+  /t:next                       ← "3 ready beads. Start a02-4e5f"
+  /t:flywheel                   ← Works through ready beads
 
-# Audit UI against Web Interface Guidelines
-/web-design-guidelines
+Afternoon:
+  /t:discuss add SSO support    ← Requirements gathering for next feature
+  /planning                     ← Decompose into beads
+  /t:commit                     ← Commit planning artifacts with Context: sections
+  /t:handoff                    ← Write state for tomorrow's session
 ```
 
-### Multi-Agent Feature Execution
+### Quick Reference
 
-```
-# 1. Plan and decompose into beads
-/planning
+```bash
+# Finding documentation
+/docs-seeker                  # Discover docs via llms.txt and Repomix
 
-# 2. File beads from the plan
-/file-beads
+# Quality gates
+/ubs                          # Static analysis (18 categories, 8 languages)
+/security-review              # Quick security checklist
+/t:peer-review                # Deep code review
 
-# 3. Review filed beads for quality
-/review-beads
-
-# 4. Launch parallel execution
-/orchestrator
+# Multi-agent feature execution
+/planning → /file-beads → /review-beads → /orchestrator
 ```
 
 ## Contributing

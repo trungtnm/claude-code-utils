@@ -17,6 +17,8 @@ This skill ensures all code follows security best practices and identifies poten
 - Storing or transmitting sensitive data
 - Integrating third-party APIs
 
+> **Quick checklist vs. deep audit:** This skill is a security checklist for use during development. For a comprehensive security audit with automated scanning tools (npm audit, semgrep, trufflehog) and code remediation, spawn the `security-reviewer` agent instead.
+
 ## Security Checklist
 
 ### 1. Secrets Management

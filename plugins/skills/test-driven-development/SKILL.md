@@ -26,6 +26,8 @@ Write the test first. Watch it fail. Write minimal code to pass.
 - Generated code
 - Configuration files
 
+> **Methodology reference vs. active guidance:** This skill is the TDD methodology reference (the "what" and "why"). For hands-on TDD enforcement during implementation with 80%+ coverage targets, spawn the `tdd-guide` agent instead.
+
 Thinking "skip TDD just this once"? Stop. That's rationalization.
 
 ## The Iron Law
