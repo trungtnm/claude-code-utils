@@ -19,6 +19,12 @@ skills/react-components
 skills/remotion
 skills/shadcn-ui
 
+# ccu session artifacts (ephemeral — personal session state)
+.ccu/SESSION.md
+.ccu/CHECKPOINT.md
+.ccu/CAPTURES.md
+.ccu/HANDOFF.md
+
 # Temporary files
 *.tmp
 *.bak
