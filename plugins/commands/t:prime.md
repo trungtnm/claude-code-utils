@@ -4,6 +4,19 @@ First read ALL of the AGENTS.md, CLAUDE.md file and README.md file super careful
 
 1. **Read project documentation** -- Read the entire AGENTS.md, CLAUDE.md and README.md files from start to finish. Do not skim. Absorb every detail about project purpose, architecture, conventions, agent workflows, and rules.
 
+1.5. **Initialize .ccu/ session state** -- If `.ccu/` does not exist at the project root, create it:
+   - `mkdir -p .ccu`
+   - Create empty files: `SESSION.md`, `CHECKPOINT.md`, `CAPTURES.md`, `HANDOFF.md`, `EVIDENCE.md`, `DECISIONS.md`
+   - Ensure the project's `.gitignore` includes entries for ephemeral artifacts:
+     ```
+     .ccu/SESSION.md
+     .ccu/CHECKPOINT.md
+     .ccu/CAPTURES.md
+     .ccu/HANDOFF.md
+     ```
+   - Write initial SESSION.md: `phase: priming, command: t:prime`
+   If `.ccu/` already exists, read `SESSION.md`, `CHECKPOINT.md`, and `HANDOFF.md` to understand prior session state. Report any findings to the user.
+
 2. **Investigate the codebase** -- Use your code exploration capabilities to systematically understand:
    - Project structure and file organization
    - Key source files, their roles, and how they interconnect
