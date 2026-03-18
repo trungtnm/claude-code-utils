@@ -1,6 +1,6 @@
 ---
 name: orchestrator
-model: sonnet
+model: opus
 description: Plan and coordinate multi-agent bead execution. Use when starting a new epic, assigning tracks to agents, or monitoring parallel work progress.
 ---
 
@@ -12,7 +12,7 @@ This skill spawns and monitors parallel worker agents that execute beads autonom
 
 | Role          | Model    | Why                                              |
 | ------------- | -------- | ------------------------------------------------ |
-| Orchestrator  | `haiku`  | Only coordinates, monitors, verifies — lightweight |
+| Orchestrator  | `opus`   | Coordinates, monitors, verifies — needs strong reasoning for quality judgments |
 | Workers       | `opus`   | Write code, reason about architecture — heavy     |
 
 **If spawning orchestrator as a subagent:** `Task(subagent_type="general-purpose", model="haiku", prompt="Run /skill orchestrator for epic <id>")`

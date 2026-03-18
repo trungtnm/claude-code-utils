@@ -12,7 +12,7 @@ Generate quality plans through systematic discovery, synthesis, verification, an
 **This skill replaces Claude Code's built-in planning.** When this skill is active:
 
 - Do **NOT** use `EnterPlanMode` — this skill IS the plan mode
-- Do **NOT** use `TaskCreate`, `TaskUpdate`, or `TaskList` — use beads (`bd`) for task tracking instead
+- Do **NOT** use `TaskCreate`, `TaskUpdate`, or `TaskList` — use beads (`br`) for task tracking instead
 - Do **NOT** ask the user to approve a plan before executing — just run the pipeline phases sequentially
 - Do **NOT** pause between phases to ask "should I continue?" — proceed through all 8 phases automatically
 - The only user interaction should be `AskUserQuestion` when genuine ambiguity exists (e.g., choosing between approach options in Phase 2)
@@ -142,9 +142,9 @@ Save to `history/<dir>/approach.md` using the template at `templates/approach.md
 Spikes are mini-plans executed via parallel Task() calls:
 
 ```bash
-bd create "Spike: <question to answer>" -t epic -p 0
-bd create "Spike: Test X" -t task --blocks <spike-epic>
-bd create "Spike: Verify Y" -t task --blocks <spike-epic>
+br create "Spike: <question to answer>" -t epic -p 0
+br create "Spike: Test X" -t task --blocks <spike-epic>
+br create "Spike: Verify Y" -t task --blocks <spike-epic>
 ```
 
 Use the spike template at `templates/spike.md`.
@@ -156,7 +156,7 @@ Use parallel Task() calls:
 1. `bv --robot-plan` to parallelize spikes
 2. Launch multiple `Task(subagent_type="general-purpose")` calls in a single message
 3. Workers write to `.spikes/<dir>/<spike-id>/`
-4. Close with learnings: `bd close <id> --reason "<result>"`
+4. Close with learnings: `br close <id> --reason "<result>"`
 
 ### Aggregate Spike Results
 
@@ -252,10 +252,10 @@ Skill(skill="review-beads")
 
 ```bash
 # Correct dependency direction
-bd dep add frontend-user-list backend-users-endpoint
+br dep add frontend-user-list backend-users-endpoint
 
 # WRONG - frontend cannot be worked on until backend exists
-# bd dep add backend-users-endpoint frontend-user-list  # inverted
+# br dep add backend-users-endpoint frontend-user-list  # inverted
 ```
 
 ### Run bv Analysis
@@ -272,13 +272,13 @@ bv --robot-triage --graph-root <epic-id> 2>/dev/null | jq '.quick_ref'  # Triage
 Verify the plan is structurally sound before proceeding to track planning:
 
 ```bash
-bd ready --json      # Confirm entry points exist (some issues are unblocked)
-bd stats --json      # Open/closed/blocked counts — sanity check
-bd blocked --json    # Catch unexpectedly blocked beads
+br ready --json      # Confirm entry points exist (some issues are unblocked)
+br stats --json      # Open/closed/blocked counts — sanity check
+br blocked --json    # Catch unexpectedly blocked beads
 ```
 
-If `bd ready` returns empty, the dependency graph has no entry points — fix it before continuing.
-If `bd blocked` shows beads that shouldn't be blocked, investigate missing or incorrect dependencies.
+If `br ready` returns empty, the dependency graph has no entry points — fix it before continuing.
+If `br blocked` shows beads that shouldn't be blocked, investigate missing or incorrect dependencies.
 
 ### Verify Stack Dependencies
 
@@ -291,9 +291,9 @@ After running `bv --robot-suggest`, manually verify:
 ### Fix Issues
 
 ```bash
-bd dep add <from> <to>      # Add missing deps
-bd dep remove <from> <to>   # Break cycles
-bd update <id> --priority X # Adjust priorities
+br dep add <from> <to>      # Add missing deps
+br dep remove <from> <to>   # Break cycles
+br update <id> --priority X # Adjust priorities
 ```
 
 ### Oracle Final Review
@@ -323,7 +323,7 @@ For each track, determine the file scope based on beads in that track:
 
 ```bash
 # For each bead, check which files it touches
-bd show <bead-id>  # Look at description for file hints
+br show <bead-id>  # Look at description for file hints
 ```
 
 **Rules:**
@@ -381,7 +381,7 @@ ls .beads/*.md
 | External patterns  | `WebSearch`                             |
 | Library docs       | `mcp__exa__get_code_context_exa`        |
 | Gap analysis       | `Task(subagent_type="Oracle")`          |
-| Create beads       | `Skill(skill="file-beads")` + `bd create` |
+| Create beads       | `Skill(skill="file-beads")` + `br create` |
 | Validate graph     | `bv --robot-*`                          |
 
 ### Common Mistakes

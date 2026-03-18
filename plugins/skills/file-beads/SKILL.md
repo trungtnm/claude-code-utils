@@ -40,7 +40,7 @@ Before filing any issues, analyze the plan for:
 Create epics for major workstreams using:
 
 ```bash
-bd create "Epic: <title>" -t epic -p <priority> --json
+br create "Epic: <title>" -t epic -p <priority> --json
 ```
 
 Epics should:
@@ -54,7 +54,7 @@ Epics should:
 For each epic, create child issues with:
 
 ```bash
-bd create "<task title>" -t <type> -p <priority> --deps <parent-epic-id> --json
+br create "<task title>" -t <type> -p <priority> --deps <parent-epic-id> --json
 ```
 
 Each issue MUST include:
@@ -134,8 +134,8 @@ Compare this with a minimal bead that says "Add rate limiting to API" — the se
 After filing all issues, run:
 
 ```bash
-bd list --json
-bd ready --json
+br list --json
+br ready --json
 ```
 
 Verify:

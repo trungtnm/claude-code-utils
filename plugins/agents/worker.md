@@ -65,18 +65,38 @@ npm test path/to/test.test.ts
 ### Repeat
 Next failing test for next functionality.
 
-## 4. Verify All Checks Pass
+## 4. Verify All Checks Pass (with Auto-Fix Retry)
 
-Before completing, ALL must pass:
+### 4.1 Discover Verification Commands
 
+Check what verification commands are available:
 ```bash
-npm test                    # All tests pass
-npm run lint               # No lint errors
-npm run typecheck          # No type errors
-npm run build              # Build succeeds (if applicable)
+cat package.json 2>/dev/null | jq '.scripts | keys[]' 2>/dev/null
 ```
 
-**If any fail:** Fix issues, re-verify. Do NOT proceed until green.
+Map discovered scripts: `test*` -> Tests, `lint*` -> Lint, `typecheck`/`tsc` -> Types, `build` -> Build. If no `package.json` or no matching scripts, use project-specific commands from CLAUDE.md. Skip gates that have no corresponding command.
+
+### 4.2 Run Gates
+
+Run each discovered gate in order: tests -> lint -> typecheck -> build.
+
+### 4.3 Auto-Fix on Failure (up to 2 attempts)
+
+If any gate FAILS:
+1. **Analyze the error output** — read the error messages carefully
+2. **Attempt a targeted fix:**
+   - Type errors: add annotations, fix imports, add null checks
+   - Lint errors: run `--fix` if available, otherwise fix manually
+   - Test failures: fix the implementation (NOT the test)
+   - Build errors: fix module resolution, missing exports, config
+3. **Re-run the failed gate** — verify the fix worked
+4. **If still failing after 2 fix attempts:**
+   - Mark bead blocked: `br update --actor "$ACTOR" {BEAD_ID} --status blocked`
+   - Add failure context: `br comments add --actor "$ACTOR" {BEAD_ID} --message "Verification gate '{GATE}' failed after 2 attempts. Error: {ERROR_SUMMARY}"`
+   - Report BLOCKED to orchestrator (not COMPLETE)
+   - Do NOT proceed to step 4.5
+
+**After all gates pass**, continue to Step 4.5.
 
 ## 4.5 Fresh Self-Review
 
@@ -141,6 +161,28 @@ COMMIT_HASH=$(git log -1 --format='%h')
 | "I'll batch commits at the end"     | One commit per bead — orchestrator checks each   |
 
 **If any gate fails:** Fix the issue, re-run ALL gates, then proceed.
+
+## 5.7 Record Evidence
+
+If `.ccu/EVIDENCE.md` exists, append a structured evidence entry. This creates an objective, verifiable record that the orchestrator and peer-review can inspect.
+
+```markdown
+---
+## {BEAD_ID} — {BEAD_TITLE}
+- **commit:** {COMMIT_HASH from git log -1 --format='%h'}
+- **files_changed:** {from git diff --name-only HEAD~1}
+- **lines:** +{added} / -{removed} {from git diff --stat HEAD~1}
+- **verification:**
+  - tests: {N} passed / {M} total
+  - lint: {pass | N/A}
+  - typecheck: {pass | N/A}
+  - build: {pass | N/A}
+  - ubs: {pass | N/A}
+- **completed:** {ISO timestamp}
+- **actor:** {AGENT_NAME}
+```
+
+If `.ccu/` does not exist, skip this step (graceful degradation).
 
 ## 6. Complete the Bead
 

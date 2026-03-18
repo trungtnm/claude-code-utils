@@ -136,7 +136,7 @@ All robot JSON includes:
   "quick_wins": [...],
   "blockers_to_clear": [...],
   "project_health": { "distributions": {...}, "graph_metrics": {...} },
-  "commands": { "claim": "bd claim bd-123", "view": "bv --bead bd-123" }
+  "commands": { "claim": "br update --actor \"$ACTOR\" bd-123 --status in_progress", "view": "bv --bead bd-123" }
 }
 ```
 
@@ -180,12 +180,13 @@ if [ "$CYCLES" != "[]" ]; then
 fi
 
 # 3. Claim the task
-bd claim "$NEXT_TASK"
+ACTOR="${BR_ACTOR:-assistant}"
+br update --actor "$ACTOR" "$NEXT_TASK" --status in_progress
 
 # 4. Work on it...
 
 # 5. Close when done
-bd close "$NEXT_TASK"
+br close --actor "$ACTOR" "$NEXT_TASK" --reason "Completed"
 ```
 
 ## TUI Views (for Humans)
@@ -204,17 +205,17 @@ When running `bv` interactively (not for agents):
 | `f` | Flow matrix (cross-label dependencies) |
 | `]` | Attention view (label priority ranking) |
 
-## Integration with bd CLI
+## Integration with br CLI
 
-BV reads from `.beads/beads.jsonl` created by the `bd` CLI:
+BV reads from `.beads/beads.jsonl` created by the `br` CLI:
 
 ```bash
-bd init                    # Initialize beads in project
-bd create "Task title"     # Create a bead
-bd list                    # List beads
-bd ready                   # Show actionable beads
-bd claim bd-123            # Claim a bead
-bd close bd-123            # Close a bead
+br init                    # Initialize beads in project
+br create "Task title"     # Create a bead
+br list                    # List beads
+br ready                   # Show actionable beads
+br update bd-123 --status in_progress  # Claim a bead
+br close bd-123 --reason "Done"        # Close a bead
 ```
 
 ## Integration with Agent Mail

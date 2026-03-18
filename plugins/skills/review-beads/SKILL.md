@@ -18,8 +18,8 @@ Review time is the highest-leverage investment in the entire pipeline. Every min
 First, get the current state:
 
 ```bash
-bd list --json
-bd ready --json
+br list --json
+br ready --json
 ```
 
 If specific IDs were provided (`$ARGUMENTS`), focus on those. Otherwise, review all issues.
@@ -94,37 +94,37 @@ Watch for and correct:
 
 ## Step 4: Update Issues
 
-Use bd update to fix issues:
+Use br update to fix issues:
 
 ```bash
-bd update <id> --title "Improved title" --json
-bd update <id> --priority <new-priority> --json
-bd update <id> --description "New description" --json
-bd update <id> --acceptance "Acceptance criteria" --json
+br update <id> --title "Improved title" --json
+br update <id> --priority <new-priority> --json
+br update <id> --description "New description" --json
+br update <id> --acceptance "Acceptance criteria" --json
 ```
 
 For adding reasoning, context, or review notes that don't fit in the main description:
 
 ```bash
-bd comments add <id> "Project context: This enables the Developer Platform epic by..." --json
-bd comments add <id> "Reasoning: Chose token-bucket over sliding window because..." --json
-bd comments add <id> "Review note: Consider merging with bd-15 if scope overlaps" --json
+br comments add <id> "Project context: This enables the Developer Platform epic by..." --json
+br comments add <id> "Reasoning: Chose token-bucket over sliding window because..." --json
+br comments add <id> "Review note: Consider merging with bd-15 if scope overlaps" --json
 ```
 
-Manage dependencies separately with `bd dep`:
+Manage dependencies separately with `br dep`:
 
 ```bash
-bd dep add <issue-id> <dependency-id> --json   # Add dependency
-bd dep remove <issue-id> <dependency-id> --json # Remove dependency
-bd dep tree <issue-id> --json                   # View dependency tree
-bd dep cycles --json                            # Check for circular deps
+br dep add <issue-id> <dependency-id> --json   # Add dependency
+br dep remove <issue-id> <dependency-id> --json # Remove dependency
+br dep tree <issue-id> --json                   # View dependency tree
+br dep cycles --json                            # Check for circular deps
 ```
 
 For major rewrites, close and recreate:
 
 ```bash
-bd close <id> --reason "Replaced by <new-id>" --json
-bd create "Better title" -t <type> -p <priority> --deps <dep-id> --json
+br close <id> --reason "Replaced by <new-id>" --json
+br create "Better title" -t <type> -p <priority> --deps <dep-id> --json
 ```
 
 ## Step 5: Dependency Graph Validation
@@ -132,11 +132,11 @@ bd create "Better title" -t <type> -p <priority> --deps <dep-id> --json
 After refinements, validate:
 
 ```bash
-bd list --json                    # View all issues
-bd list --status open --json      # View only open issues
-bd ready --json                   # View unblocked issues ready for work
-bd dep cycles --json              # Check for circular dependencies
-bd dep tree <epic-id> --json      # View dependency tree for an epic
+br list --json                    # View all issues
+br list --status open --json      # View only open issues
+br ready --json                   # View unblocked issues ready for work
+br dep cycles --json              # Check for circular dependencies
+br dep tree <epic-id> --json      # View dependency tree for an epic
 ```
 
 Check:

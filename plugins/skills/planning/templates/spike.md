@@ -15,4 +15,4 @@ Can we <specific technical question>?
 
 ## On Completion
 
-Close with: `bd close <id> --reason "YES: <approach>" or "NO: <blocker>"`
+Close with: `br close <id> --reason "YES: <approach>" or "NO: <blocker>"`
