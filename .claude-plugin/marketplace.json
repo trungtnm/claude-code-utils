@@ -1,6 +1,6 @@
 {
   "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
-  "name": "claude-code-utils",
+  "name": "ccu",
   "description": "Custom skills, agents, and commands for Claude Code — quality gates, workflow structure, multi-agent coordination, safety guards, and knowledge references",
   "owner": {
     "name": "trungtnm",
@@ -8,7 +8,7 @@
   },
   "plugins": [
     {
-      "name": "claude-code-utils",
+      "name": "ccu",
       "description": "Skills, agents, and commands for Claude Code — planning, TDD, bug scanning, security review, multi-agent orchestration, knowledge references, and session commands",
       "version": "1.0.0",
       "source": "./plugins",
