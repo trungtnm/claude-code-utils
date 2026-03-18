@@ -14,7 +14,13 @@ Register with MCP Agent Mail and introduce yourself to the other agents. Be sure
 
 6. **Communicate** -- Keep fellow agents informed of progress, blockers, and completions via agent mail. Respond promptly to any incoming messages between work steps.
 
-7. **Loop** -- When a bead is complete, close it, sync, and return to step 2. Repeat until no actionable work remains.
+7. **Write checkpoint** -- After completing (or attempting) each bead, update `.ccu/CHECKPOINT.md` if `.ccu/` exists:
+   - Record which beads were completed this session (with commit hashes)
+   - Record current in-progress bead and its state
+   - Record remaining beads in queue
+   This enables crash recovery via `/t:recover`.
+
+8. **Loop** -- When a bead is complete, close it, sync, and return to step 2. Repeat until no actionable work remains.
 
 ## Rules
 
