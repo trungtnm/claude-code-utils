@@ -13,19 +13,15 @@ Append an idea or observation to `.ccu/CAPTURES.md` for later triage. Supports t
    - [ ] {YYYY-MM-DD HH:MM} — {$ARGUMENTS}
    ```
 
-   **Image file** (screenshot, photo, diagram) — If the user provides or references an image file:
-   - Read/view the image to understand its content
-   - Write a brief text summary of what the image shows
-   - Copy the file to `.ccu/captures/{YYYY-MM-DD-HH-MM}-{descriptive-name}.{ext}` (create the directory if needed)
-   - Append to CAPTURES.md:
+   **Image or document file** (screenshot, photo, diagram, PDF, markdown) — If the user pastes an image or provides a file:
+   - Read/view the file to understand its content
+   - Write a brief text summary of what it shows
+   - **MUST copy the file to `.ccu/captures/`** — pasted images live in temp paths that get deleted. Run:
+     ```bash
+     mkdir -p .ccu/captures
+     cp "{source_path}" ".ccu/captures/{YYYY-MM-DD-HH-MM}-{descriptive-name}.{ext}"
      ```
-     - [ ] {YYYY-MM-DD HH:MM} — {text summary of image} [attachment: .ccu/captures/{filename}]
-     ```
-
-   **Document file** (PDF, markdown, text) — If the user provides or references a document:
-   - Read the document to understand its content
-   - Write a brief text summary of the key point
-   - Copy the file to `.ccu/captures/{YYYY-MM-DD-HH-MM}-{descriptive-name}.{ext}`
+     The source path is the temporary file path shown in the conversation (e.g., `/tmp/...` or `/var/folders/...`). If you can see the file but don't have a path, ask the user for it.
    - Append to CAPTURES.md:
      ```
      - [ ] {YYYY-MM-DD HH:MM} — {text summary} [attachment: .ccu/captures/{filename}]
