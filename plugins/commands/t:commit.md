@@ -7,6 +7,15 @@ Commit all changed files now in a series of logically connected groupings with d
 - **Skip ephemeral files** — Do not commit obviously ephemeral files (`.DS_Store`, `*.log`, `node_modules/`, `__pycache__/`, `.env`, editor swap files, etc.). If unsure whether a file is ephemeral, err on the side of skipping it.
 - **Logical groupings** — Group related changes into separate commits. One commit per logical unit of work (e.g., a new feature, a refactor, a docs update). Do not lump unrelated changes into a single commit.
 - **Detailed messages** — Each commit message should explain *what* changed and *why*. Use a short summary line (≤72 chars), then a blank line, then a detailed body. Use conventional commit prefixes (`feat:`, `fix:`, `docs:`, `refactor:`, `chore:`, `test:`, `style:`).
+- **Enriched Context footer** — After the body, add a `Context:` section that captures session intelligence for future git archaeology. This compounds over weeks into a searchable decision log. Format:
+  ```
+  Context:
+  - Bead: {bead-id, if applicable}
+  - Session: {what workflow was running, e.g., "auto iteration 3" or "manual bug fix"}
+  - Decisions: {key choices made and why, e.g., "chose retry over skip because blocked beads get human review"}
+  - Dead-ends: {approaches tried and abandoned, if any}
+  ```
+  Omit fields that don't apply. At minimum include Session and Decisions if they're meaningful.
 - **Correct ordering** — Commit foundational changes before dependent ones (e.g., a new utility before the feature that uses it).
 - **Push at the end** — After all commits are made, push to the remote.
 
