@@ -80,8 +80,8 @@ Session commands (`t:` prefix) are single-purpose instruction scripts that drive
 | `t:opinion` | Get an honest, critical assessment of the project |
 
 ```bash
-# New to a codebase? Orient first, then immediately start the agent flywheel
-/t:prime /t:flywheel
+# New to a codebase? Orient first, then immediately start the agent auto
+/t:prime /t:auto
 
 # Orient, then review the DEVELOPMENT.md for improvements
 /t:prime review @DEVELOPMENT.md and suggest improvements
@@ -98,7 +98,7 @@ Session commands (`t:` prefix) are single-purpose instruction scripts that drive
 
 | Command | Purpose |
 |---------|---------|
-| `t:flywheel` | Register with Agent Mail, check inbox, and work through beads |
+| `t:auto` | Register with Agent Mail, check inbox, and work through beads |
 | `t:peer-review` | Review code written by other agents or contributors |
 | `t:fresh-eyes` | Re-read session code and catch bugs with fresh perspective |
 | `t:random-inspect` | Randomly explore code files, trace flows, fix issues |
@@ -107,7 +107,7 @@ Session commands (`t:` prefix) are single-purpose instruction scripts that drive
 
 ```bash
 # Launch an autonomous agent that picks up beads and works through them
-/t:flywheel
+/t:auto
 
 # After an agent swarm finishes, review what a specific worker produced
 /t:peer-review a02-1a2b
@@ -228,7 +228,7 @@ graph TD
 ```
 
 **Key design decisions:**
-- **Orchestrator runs on Haiku** (lightweight, cost-efficient) — it only coordinates, never writes code
+- **Orchestrator** — it only coordinates, never writes code
 - **Workers run on Opus** — they do the heavy implementation work with full TDD
 - **Beads are the source of truth** — bead ID links to Agent Mail threads, git commits (`Bead: <id>` footer), and dependency graphs
 - **Quality gates are objective** — orchestrator greps diffs for `mock`, `stub`, `TODO`, `FIXME` rather than trusting self-reports
@@ -328,7 +328,7 @@ The goal of this plugin is to make each day more productive than the last. Here'
 
 ```bash
 # Full guided pipeline (medium/large features)
-/recipe new-feature           # Chains: discuss → plan → file-beads → flywheel → review → done
+/recipe new-feature           # Chains: discuss → plan → file-beads → auto → review → done
 
 # Quick feature (you already know what to build)
 /t:discuss add pagination     # Requirements gathering, then jump to planning
@@ -351,7 +351,7 @@ The goal of this plugin is to make each day more productive than the last. Here'
 ### Autonomous Execution
 
 ```bash
-/t:flywheel                   # Single-agent: pick bead → implement with TDD → verify → commit → loop
+/t:auto                   # Single-agent: pick bead → implement with TDD → verify → commit → loop
 /orchestrator                 # Multi-agent: parallel workers with file reservation and quality gates
 ```
 
@@ -369,14 +369,14 @@ Both include: verification gates (tests/lint/typecheck), auto-fix retries on fai
 
 ```
 Morning:
-  /t:recover                    ← "You were mid-flywheel, 2 beads left"
-  /t:flywheel                   ← Resumes, completes remaining beads with verification
+  /t:recover                    ← "You were mid-auto, 2 beads left"
+  /t:auto                   ← Resumes, completes remaining beads with verification
   /t:capture fix the flaky test in auth.test.ts
 
 Midday:
   /triage                       ← "flaky test → quick-fix (doing now)"
   /t:next                       ← "3 ready beads. Start a02-4e5f"
-  /t:flywheel                   ← Works through ready beads
+  /t:auto                   ← Works through ready beads
 
 Afternoon:
   /t:discuss add SSO support    ← Requirements gathering for next feature

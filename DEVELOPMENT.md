@@ -105,7 +105,7 @@ Describe the task in imperative voice. This is the instruction Claude will follo
 If a target is provided above, focus on that scope. Otherwise, sweep everything.
 ```
 
-Example invocations: `/t:prime /t:flywheel`, `/t:polish sidebar`, `/t:peer-review a02-1a2b`.
+Example invocations: `/t:prime /t:auto`, `/t:polish sidebar`, `/t:peer-review a02-1a2b`.
 
 ## Verification
 
