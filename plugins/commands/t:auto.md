@@ -2,11 +2,20 @@ Register with MCP Agent Mail and introduce yourself to the other agents. Be sure
 
 ## Steps
 
+0. **Load project context** -- Before doing anything else, build situational awareness by reading (skip any that don't exist):
+   - `CLAUDE.md` or `AGENTS.md` — project conventions, rules, architecture, coding patterns
+   - `README.md` — what the project is, tech stack, how it works
+   - `.ccu/DECISIONS.md` — prior architectural decisions (so you don't contradict them)
+   - `.ccu/EVIDENCE.md` — what was recently completed (so you don't duplicate work)
+   - `.ccu/HANDOFF.md` — if a previous session left a handoff, read it for context and next-action guidance
+   - `git log --oneline -15` — recent activity and direction
+   This context shapes how you implement every bead. Without it, you risk writing code that violates project conventions or duplicates existing work.
+
 1. **Register and introduce** -- Use MCP Agent Mail to register yourself and introduce yourself to the other agents. List your capabilities and availability.
 
 2. **Check inbox** -- Fetch and read all pending messages. Acknowledge any contact requests and respond to any messages that need replies.
 
-3. **Assess work** -- Use `bv` (Beads Viewer) to survey the backlog and identify the highest-priority beads you can usefully work on.
+3. **Assess work** -- Use `bv` (Beads Viewer) to survey the backlog and identify the highest-priority beads you can usefully work on. If no beads exist, check `.ccu/CAPTURES.md` for untriaged items and process them.
 
 4. **Pick and start** -- Claim the next ready bead, update its status, and notify fellow agents via agent mail that you are starting work on it.
 
