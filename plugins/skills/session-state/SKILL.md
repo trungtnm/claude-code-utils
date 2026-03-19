@@ -59,6 +59,7 @@ Six files, split into ephemeral (gitignored) and persistent (committed):
 | File | Purpose | Written By |
 |------|---------|-----------|
 | `EVIDENCE.md` | Structured post-bead completion records | worker agent |
+| `REQUIREMENTS.md` | Requirements with states (active/validated/deferred) | `t:discuss` |
 | `DECISIONS.md` | Append-only architectural decisions | `t:discuss`, planning, worker |
 
 Read `references/SCHEMAS.md` for exact file formats.

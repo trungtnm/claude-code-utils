@@ -230,10 +230,10 @@ Use bead ID as thread_id for multi-agent coordination:
 
 | Concept | Value |
 |---------|-------|
-| Mail `thread_id` | `bd-###` (the issue ID) |
-| Mail subject | `[bd-###] ...` |
-| File reservation `reason` | `bd-###` |
-| Commit messages | Include `bd-###` for traceability |
+| Mail `thread_id` | `<bead-id>` (e.g., `bd-123`) |
+| Mail subject | `[<bead-id>] ...` |
+| File reservation `reason` | `<bead-id>` |
+| Commit messages | Include `<bead-id>` for traceability |
 
 ```python
 # 1. Reserve files for bead

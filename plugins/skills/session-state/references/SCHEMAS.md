@@ -44,6 +44,12 @@ Exact formats for each artifact file. Commands and skills should follow these fo
 
 ## Recovery Instructions
 {Free-text guidance for the next session on how to resume.}
+
+## Recipe State (if a recipe is active)
+- **recipe:** {name, e.g., new-feature}
+- **step:** {current step number}
+- **completed:** [{list of completed step numbers}]
+- **context:** {$ARGUMENTS passed to the recipe}
 ```
 
 ## HANDOFF.md
@@ -88,6 +94,22 @@ Each entry is a structured record appended after a bead is completed. Entries ar
   - ubs: {pass | fail | N/A}
 - **completed:** {ISO timestamp}
 - **actor:** {agent name or "user"}
+```
+
+## REQUIREMENTS.md
+
+Requirements gathered from `/t:discuss` sessions. Each requirement has a state. Append new requirements, update states in place.
+
+```markdown
+# Requirements
+
+---
+## R001 — {short title}
+- **date:** {YYYY-MM-DD}
+- **state:** {active | validated | deferred | out-of-scope}
+- **description:** {what is needed}
+- **acceptance:** {how to verify it's done}
+- **source:** {which /t:discuss session or conversation}
 ```
 
 ## DECISIONS.md
