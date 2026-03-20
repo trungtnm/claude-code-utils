@@ -41,6 +41,7 @@ Read the capture text. Briefly investigate the codebase for context — check th
 | **quick-fix** | Can be done in <5 minutes, no design decisions | Do it now, commit, mark capture |
 | **new-bead** | Substantial work requiring tracking | Discuss with user, then create rich bead |
 | **inject** | Belongs in an existing open bead | `br comments add <existing-bead>`, mark capture |
+| **reopen** | Feedback on a closed bead that reveals incomplete/broken work | Reopen bead with new acceptance criteria |
 | **defer** | Valid but not urgent, no active epic for it | Leave unchecked, append `[deferred]` |
 | **out-of-scope** | Not relevant to current project goals | Mark checked with `(out-of-scope: reason)` |
 
@@ -92,6 +93,32 @@ br comments add --actor "$ACTOR" <existing-bead-id> --message "From capture: {te
 ```
 Update capture: `- [x] 2026-03-19 10:15 — {text} (injected into {bead-id})`
 
+**reopen**: When a capture references work that was already done (a closed bead), investigate whether the closed bead actually addressed the concern. Check the bead's acceptance criteria, the commit that closed it, and the current code state.
+
+- If the original fix is **incomplete or broken** — reopen the bead with the new feedback:
+  ```bash
+  br reopen --actor "$ACTOR" <bead-id>
+  br comments add --actor "$ACTOR" <bead-id> --message "Reopened: {feedback from capture}. Original fix did not address: {what's still wrong}."
+  br update --actor "$ACTOR" <bead-id> --description "$(cat <<'BEAD'
+  ## Context
+  <Original context + why it's being reopened>
+
+  ## What Still Needs to Change
+  <Specific gaps or regressions found>
+
+  ## Acceptance Criteria
+  - [ ] <new/updated verifiable criteria based on feedback>
+  - [ ] <original criteria that were not met>
+
+  ## Technical Notes
+  <What the original fix did, what it missed, relevant files>
+  BEAD
+  )"
+  ```
+  Update capture: `- [x] 2026-03-19 10:15 — {text} (reopened bead {bead-id})`
+
+- If the original fix is **actually correct** and the capture is a misunderstanding or a new/separate concern — classify as **new-bead** or **out-of-scope** instead. Don't reopen beads unnecessarily.
+
 **defer**: Append tag, don't check the box:
 ```
 - [ ] 2026-03-19 10:15 — {text} [deferred]
@@ -110,6 +137,7 @@ Triage complete:
 - N quick-fixes applied
 - N new beads created
 - N injected into existing beads
+- N beads reopened
 - N deferred
 - N out-of-scope
 ```

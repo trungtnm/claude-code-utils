@@ -151,6 +151,13 @@ Session commands (`t:` prefix) are single-purpose instruction scripts that drive
 /t:reorganize src/lib
 ```
 
+### Capture & Triage
+
+| Command | Purpose |
+|---------|---------|
+| `t:capture` | Record an idea, observation, or bug in <5 seconds — never lose flow |
+| `/triage` | Classify captures into quick-fixes, new beads, or deferrals |
+
 ### Session Lifecycle
 
 | Command | Purpose |
@@ -337,16 +344,37 @@ The goal of this plugin is to make each day more productive than the last. Here'
 /recipe bug-fix TypeError in auth middleware
 ```
 
-### During Active Coding
+### Capture Everything, Triage Later
+
+The single most valuable habit you can build with this plugin is **capturing ideas the moment they occur**. While you're deep in implementation, you'll notice bugs, think of improvements, spot missing tests — and if you stop to act on them, you lose flow. If you ignore them, they're gone forever.
+
+`/t:capture` solves this. It takes less than 5 seconds and never breaks your focus:
 
 ```bash
-# Random idea pops up? Capture it in <5 seconds, keep coding
+# Observations while coding — just dump them and keep going
 /t:capture this API should have rate limiting
+/t:capture the error message on line 42 is misleading
 /t:capture refactor auth module to use middleware pattern
+/t:capture flaky test in checkout.test.ts — race condition?
 
-# Between tasks, triage your captures into real work items
+# Spotted something in a screenshot or diagram? Paste it
+/t:capture [paste image]      # Image is saved to .ccu/captures/, summarized in text
+
+# Even half-formed thoughts are worth capturing
+/t:capture something feels wrong about the caching layer
+```
+
+Everything lands in `.ccu/CAPTURES.md` as a timestamped checklist — no analysis, no formatting, no interruption. Your captures accumulate throughout the day like a scratchpad.
+
+**Then, between tasks, triage:**
+
+```bash
 /triage                       # Classifies each as: quick-fix / new-bead / defer / out-of-scope
 ```
+
+Triage reviews every unchecked capture and decides what to do with it: small fixes get done immediately, substantial ideas become beads for future work, and noise gets consciously discarded. This two-step rhythm — capture fast, triage deliberately — means good ideas never slip through the cracks and you never lose flow chasing them.
+
+**Make it a habit:** Run `/t:capture` the moment any thought crosses your mind. Run `/triage` at natural breaks — between beads, before lunch, at end of day. The captures compound: after a week of consistent use, your triage sessions surface patterns you'd never have noticed in the moment.
 
 ### Autonomous Execution
 
