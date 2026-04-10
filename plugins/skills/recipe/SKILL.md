@@ -112,6 +112,39 @@ Emergency fast path when production is down. Skip all ceremony — just fix and 
 
 No bead creation before the fix. No evidence logging. No TDD requirement. No peer review. Speed and correctness only.
 
+### quality-review
+
+Three-layer quality sweep with issue accumulator: find bugs, catch session mistakes, polish the experience, then fix everything before committing.
+
+**Issue Accumulator:** Maintain a running markdown checklist of all issues found but NOT fixed across steps. Initialize as empty at recipe start. After each step, append any unfixed issues with their source step and severity:
+```markdown
+## Accumulated Unfixed Issues
+- [ ] [peer-review/HIGH] Missing null check in parseConfig() — src/config.ts:42
+- [ ] [fresh-eyes/MEDIUM] Duplicated validation logic between routes — src/api/auth.ts, src/api/users.ts
+- [ ] [ubs/LOW] Unused import — src/utils.ts:3
+```
+
+**Sequence:**
+1. **Peer review** — `/t:peer-review {$ARGUMENTS}` for deep bug/logic/security analysis
+   - Skip if: no code changes exist (clean git status and no session changes)
+   - After: append any issues found but not fixed to the accumulator
+2. **Fresh eyes** — `/t:fresh-eyes` to re-read session changes with a fresh perspective
+   - Skip if: no files were modified in this session
+   - After: append any issues found but not fixed to the accumulator
+3. **Polish** — `/t:polish {$ARGUMENTS}` for UI/UX refinement
+   - Skip if: project has no UI (pure CLI tool, library, or backend-only)
+   - After: append any issues found but not fixed to the accumulator
+4. **Run UBS** — `ubs --diff --format=toon` as final static analysis gate
+   - Skip if: `ubs` not installed
+   - After: append any findings to the accumulator (exclude false positives)
+5. **Final fix pass** — Review the full accumulated issues list. If no unfixed issues remain, skip this step.
+   - Present the complete accumulator to the user with a summary: "{N} unfixed issues from {steps}."
+   - Fix ALL issues that are fixable. Work through them systematically, highest severity first.
+   - For issues that genuinely cannot or should not be fixed (false positives, intentional tradeoffs, out of scope), the user can explicitly defer them by marking with `[deferred: reason]`.
+   - After fixing, re-run verification for the affected files: tests, lint, typecheck as applicable.
+   - Repeat until the accumulator contains only deferred items or is empty.
+6. **Commit fixes** — `/t:commit` if any fixes were made
+
 ## How to Use
 
 ```
