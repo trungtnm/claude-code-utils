@@ -1,11 +1,11 @@
 ---
 name: session-state
 description: >-
-  Manages the .ccu/ artifact directory for session continuity, evidence logging,
-  decision tracking, and crash recovery. Use when initializing a project session,
-  writing evidence after bead completion, recording architectural decisions, or
-  preparing session handoffs. Triggers on .ccu, session state, evidence, checkpoint,
-  handoff, decisions.
+  Manages the .ccu/ staging directory and Obsidian vault integration for session
+  continuity, evidence logging, decision tracking, and crash recovery. Use when
+  initializing a project session, writing evidence after bead completion, recording
+  architectural decisions, or preparing session handoffs. Triggers on .ccu, session
+  state, evidence, checkpoint, handoff, decisions.
 domain: project-management
 role: specialist
 triggers:
@@ -20,86 +20,188 @@ triggers:
 
 # Session State Management
 
-The `.ccu/` directory is the session memory layer for ccu-managed projects. It stores state that survives context resets and session boundaries — the bridge between "in-memory conversation" and "committed to git."
+Session state uses a two-layer architecture:
 
-## Why This Exists
+1. **`.ccu/` (staging layer)** — Fast, local, ephemeral. Quick-write buffer for captures and prime cache. Minimal footprint.
+2. **Obsidian vault (persistence layer)** — Browsable, linkable, searchable. Decisions, evidence, handoffs, and session summaries live here as individual notes with frontmatter.
 
-AI coding sessions die — terminals close, context fills up, connections drop. Without disk-resident state, the next session starts blind. `.ccu/` solves this by externalizing session memory to markdown files that any future session can read.
+## Configuration
 
-## Quick Reference
+The Obsidian vault path is stored in `.ccu/config`:
 
-```bash
-# Initialize (usually done by t:prime)
-mkdir -p .ccu
-
-# Check state
-cat .ccu/SESSION.md          # Where am I?
-cat .ccu/CHECKPOINT.md        # What was I doing when the session ended?
-cat .ccu/HANDOFF.md           # What did the last session leave me?
-cat .ccu/EVIDENCE.md          # What's been completed?
-cat .ccu/DECISIONS.md         # What choices were made and why?
-cat .ccu/CAPTURES.md          # What ideas are queued?
+```
+obsidian_vault: ~/Obsidian
 ```
 
-## Artifact Schema
+When reading this config:
+1. Read `.ccu/config` and extract the `obsidian_vault:` value
+2. Expand `~` to the user's home directory
+3. The ccu subfolder is at `{vault}/ccu/` with subdirectories: `captures/`, `decisions/`, `evidence/`, `sessions/`
 
-Six files, split into ephemeral (gitignored) and persistent (committed):
+If `.ccu/config` does not exist or has no `obsidian_vault:` entry, **skip all Obsidian writes silently**. The .ccu/ staging layer still works standalone.
 
-### Ephemeral (gitignored)
+## .ccu/ Staging Layer
 
-| File | Purpose | Written By |
-|------|---------|-----------|
-| `SESSION.md` | Current phase, active beads, last action | `t:prime`, `t:auto`, `t:next` |
-| `CHECKPOINT.md` | Resumable state for crash recovery | `t:auto`, orchestrator, planning |
-| `CAPTURES.md` | Ad-hoc ideas queue | `t:capture` |
-| `HANDOFF.md` | Session handoff (decisions, dead ends, next action) | `t:handoff` |
-
-### Persistent (committed)
+Minimal footprint — only two active files:
 
 | File | Purpose | Written By |
 |------|---------|-----------|
-| `EVIDENCE.md` | Structured post-bead completion records | worker agent |
-| `REQUIREMENTS.md` | Requirements with states (active/validated/deferred) | `t:discuss` |
-| `DECISIONS.md` | Append-only architectural decisions | `t:discuss`, planning, worker |
+| `CAPTURES.md` | Ad-hoc ideas queue (fast-write buffer) | `t:capture` |
+| `PRIME-CACHE.md` | Cached prime synthesis | `t:prime` |
+| `config` | Vault path and settings | User/setup |
 
-Read `references/SCHEMAS.md` for exact file formats.
+All other `.ccu/` files (`SESSION.md`, `CHECKPOINT.md`, `HANDOFF.md`) are deprecated and should not be created or written to. If they exist from a prior session, they can be ignored or deleted.
+
+### .gitignore
+
+```
+# ccu session artifacts (ephemeral)
+.ccu/CAPTURES.md
+.ccu/PRIME-CACHE.md
+```
+
+Note: `.ccu/config` is NOT gitignored — it should be committed so all sessions share the same vault path.
+
+## Obsidian Persistence Layer
+
+### Folder Structure
+
+```
+~/Obsidian/ccu/
+├── captures/        # Triaged captures as individual notes
+├── decisions/       # One note per architectural decision
+├── evidence/        # One note per completed bead
+└── sessions/        # Handoff and session summary notes
+```
+
+### Writing to Obsidian
+
+When a command needs to persist data to Obsidian, follow this pattern:
+
+1. Read `.ccu/config` to get the vault path
+2. If not configured, skip silently
+3. Write a markdown file with YAML frontmatter to the appropriate subfolder
+4. Use slugified filenames: `{ID}-{short-title}.md` (e.g., `D001-keep-t-command-prefix.md`)
+
+### Frontmatter Convention
+
+All Obsidian notes use YAML frontmatter for Dataview queryability:
+
+```yaml
+---
+id: {identifier}
+title: {human-readable title}
+date: {YYYY-MM-DD}
+tags: [{category}, {subcategory}]
+project: {project name}
+bead: {bead-id, if applicable}
+---
+```
+
+### Decision Notes (`decisions/`)
+
+One file per decision. Filename: `{ID}-{slugified-title}.md`
+
+```markdown
+---
+id: D001
+title: "Keep t: command prefix"
+date: 2026-03-19
+tags: [decision, architecture]
+project: claude-code-utils
+---
+
+# D001 — {title}
+
+**Date:** {YYYY-MM-DD}
+**Context:** {what prompted this}
+**Decision:** {what was decided}
+**Rationale:** {why}
+**Alternatives:** {what else was considered}
+```
+
+### Evidence Notes (`evidence/`)
+
+One file per completed bead. Filename: `{bead-id}-{slugified-title}.md`
+
+```markdown
+---
+id: {bead-id}
+title: {bead title}
+date: {completion date}
+tags: [evidence, {type}]
+project: {project name}
+commit: {hash}
+---
+
+# {bead-id} — {title}
+
+**Commit:** {hash}
+**Files changed:** {list}
+**Lines:** +{added} / -{removed}
+**Verification:**
+- tests: {result}
+- lint: {result}
+- typecheck: {result}
+**Completed:** {ISO timestamp}
+**Actor:** {agent name or "user"}
+```
+
+### Session Notes (`sessions/`)
+
+One file per handoff. Filename: `{YYYY-MM-DD}-{HH-MM}-handoff.md`
+
+```markdown
+---
+title: "Session handoff"
+date: {YYYY-MM-DD}
+tags: [session, handoff]
+project: {project name}
+---
+
+# Session Handoff — {date}
+
+## Decisions Made
+- {decision and why}
+
+## Next Action
+{ONE clear recommendation}
+
+## Open Questions
+- {unresolved items}
+
+## In-Progress Beads
+- {bead-id} — {title}: {state}
+```
 
 ## Initialization
 
 When initializing `.ccu/` (typically via `t:prime`):
 
-1. Create `.ccu/` directory
-2. Create empty files: `SESSION.md`, `CHECKPOINT.md`, `CAPTURES.md`, `HANDOFF.md`, `EVIDENCE.md`, `DECISIONS.md`
-3. Ensure the project's `.gitignore` includes:
-   ```
-   # ccu session artifacts (ephemeral)
-   .ccu/SESSION.md
-   .ccu/CHECKPOINT.md
-   .ccu/CAPTURES.md
-   .ccu/HANDOFF.md
-   ```
-4. Write initial SESSION.md with current phase
+1. Create `.ccu/` directory if it doesn't exist
+2. Create `CAPTURES.md` if it doesn't exist
+3. Ensure `.gitignore` includes `.ccu/CAPTURES.md` and `.ccu/PRIME-CACHE.md`
+4. If `.ccu/config` exists, verify the Obsidian vault path is accessible. Create `{vault}/ccu/` subdirectories if missing.
 
-If `.ccu/` already exists, read existing state — don't overwrite.
+Do NOT create SESSION.md, CHECKPOINT.md, or HANDOFF.md — these are deprecated.
 
 ## Cleanup
 
 When ending a session (`t:done`):
-- Clear SESSION.md and CHECKPOINT.md (write empty or delete)
-- Clear HANDOFF.md (session is done, not handed off)
-- Do NOT touch EVIDENCE.md or DECISIONS.md (these are permanent)
 - Warn if CAPTURES.md has unchecked items
+- Do NOT clear or delete any .ccu/ files (captures and cache persist across sessions)
 
 ## Graceful Degradation
 
-Every command and skill that reads `.ccu/` must check if it exists first. If not:
-- Skip the read (don't error)
-- Optionally create it (if the command's role includes initialization)
-- Never fail because `.ccu/` is missing
+- **No `.ccu/` directory** — create it, or skip if the command is read-only
+- **No `.ccu/config`** — skip all Obsidian writes, use .ccu/ staging only
+- **Obsidian vault path doesn't exist** — warn and skip Obsidian writes
+- **Never fail** because Obsidian is not configured — it's an enhancement, not a requirement
 
 ## Rules
 
-- **EVIDENCE.md and DECISIONS.md are append-only** — never remove or modify existing entries
-- **One owner per write** — SESSION.md is written by the active command, not by workers
-- **Ephemeral means ephemeral** — gitignored files can be deleted without data loss
-- **Persistent means committed** — EVIDENCE.md and DECISIONS.md should be committed to git
+- **CAPTURES.md is the fast lane** — captures always go to .ccu/CAPTURES.md first (speed matters). During triage, important items flow to Obsidian.
+- **Obsidian notes are append-only** — never remove or modify existing decision/evidence notes
+- **Frontmatter is mandatory** — every Obsidian note needs YAML frontmatter for Dataview queries
+- **Slugify filenames** — lowercase, hyphens, no spaces: `D001-keep-t-command-prefix.md`
+- **Config is committed** — `.ccu/config` goes into git so all sessions share settings

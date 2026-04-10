@@ -1,12 +1,10 @@
 The user has confirmed that the current work is complete. Follow these steps:
 
-0.5. **Clean up .ccu/ ephemeral artifacts** — If `.ccu/` exists:
-   - Clear `SESSION.md` and `CHECKPOINT.md` (write empty content or delete)
-   - Clear `HANDOFF.md` (session is done, not handed off)
-   - Do NOT touch `EVIDENCE.md` or `DECISIONS.md` (these are permanent records)
-   - If `CAPTURES.md` has unchecked items, warn: "There are N untriaged captures in .ccu/CAPTURES.md. Consider running /triage before ending the session."
+0.5. **Audit decisions** — If significant work was done this session (beads completed, features implemented), run `/t:audit-decisions today` to capture undocumented decisions. If Obsidian is configured (`.ccu/config` has `obsidian_vault:`), write each new decision as an individual note to `{vault}/ccu/decisions/`.
 
-1. **Commit changes** — Check `git status` and `git diff` for any uncommitted work. If there are staged or unstaged changes, commit them using the standard commit workflow (review changes, draft a descriptive message, commit). If there are no changes to commit, skip this step. Include the bead ID in the commit message if one exists from this session.
+0.8. **Check for untriaged captures** — If `.ccu/CAPTURES.md` has unchecked items, warn: "There are N untriaged captures in .ccu/CAPTURES.md. Consider running /triage before ending the session."
+
+1. **Commit changes** — Check `git status` and `git diff` for any uncommitted work. If there are staged or unstaged changes, commit them using the standard commit workflow (review changes, draft a descriptive message, commit). Do NOT add any `Co-Authored-By` trailer to commit messages. If there are no changes to commit, skip this step. Include the bead ID in the commit message if one exists from this session.
 
 2. **Check if Beads is available** — Look for a `.beads/` directory at the repo root. If it does not exist, inform the user that the commit is done and Beads is not set up in this workspace, then skip the remaining steps.
 
@@ -30,4 +28,14 @@ The user has confirmed that the current work is complete. Follow these steps:
    br sync --flush-only
    ```
 
-7. **Confirm** — Let the user know the session tracking is complete.
+7. **Record session outcome in CM** — If `cm` is installed, record the session outcome so CM can learn from this work (skip silently if `cm` is not available):
+   ```bash
+   cm outcome success <rule-ids-used-this-session> 2>/dev/null
+   ```
+   If any CM rules were particularly helpful or harmful during this session, record feedback:
+   ```bash
+   cm mark <bullet-id> --helpful 2>/dev/null
+   cm mark <bullet-id> --harmful --reason "<why>" 2>/dev/null
+   ```
+
+8. **Confirm** — Let the user know the session tracking is complete.

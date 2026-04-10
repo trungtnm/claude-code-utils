@@ -4,19 +4,17 @@ First read ALL of the AGENTS.md, CLAUDE.md file and README.md file super careful
 
 1. **Read project documentation** -- Read the entire AGENTS.md, CLAUDE.md and README.md files from start to finish. Do not skim. Absorb every detail about project purpose, architecture, conventions, agent workflows, and rules.
 
-1.5. **Initialize .ccu/ session state** -- If `.ccu/` does not exist at the project root, create it:
+1.5. **Initialize .ccu/ staging layer** -- If `.ccu/` does not exist at the project root, create it:
    - `mkdir -p .ccu`
-   - Create empty files: `SESSION.md`, `CHECKPOINT.md`, `CAPTURES.md`, `HANDOFF.md`, `EVIDENCE.md`, `DECISIONS.md`
+   - Create `CAPTURES.md` if it doesn't exist (the fast-write buffer for ideas)
    - Ensure the project's `.gitignore` includes entries for ephemeral artifacts:
      ```
-     .ccu/SESSION.md
-     .ccu/CHECKPOINT.md
      .ccu/CAPTURES.md
-     .ccu/HANDOFF.md
      .ccu/PRIME-CACHE.md
      ```
-   - Write initial SESSION.md: `phase: priming, command: t:prime`
-   If `.ccu/` already exists, read `SESSION.md`, `CHECKPOINT.md`, and `HANDOFF.md` to understand prior session state. **Reality-check for staleness:** compare .ccu/ file modification times against recent git log. If .ccu/ content contradicts git state (e.g., says "no code written" but commits exist, or references beads that are now closed), flag it as stale and prefer git/br as ground truth. Report any findings (including staleness warnings) to the user.
+   If `.ccu/config` exists, read it for the `obsidian_vault:` path. If configured, verify the vault path is accessible and create `{vault}/ccu/` subdirectories (`captures/`, `decisions/`, `evidence/`, `sessions/`) if missing.
+   If `.ccu/` already has legacy files (`SESSION.md`, `CHECKPOINT.md`, `HANDOFF.md`), ignore them — these are deprecated. Check Obsidian vault `ccu/sessions/` for recent handoff notes instead.
+   Report any findings to the user.
 
 1.8. **Load procedural memory** -- If `cm` is installed, check system health and load relevant context:
    ```bash
