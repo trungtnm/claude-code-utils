@@ -27,7 +27,7 @@ You MUST create a task for each of these items and complete them in order:
 2. **Ask clarifying questions** — one at a time, understand purpose/constraints/success criteria
 3. **Propose 2-3 approaches** — with trade-offs and your recommendation
 4. **Present design** — in sections scaled to their complexity, get user approval after each section
-5. **Write design doc** — save to `docs/plans/YYYY-MM-DD-<topic>-design.md` and commit
+5. **Write design doc** — save to `.ccu/artifacts/<date>-draft-<slug>/design.md` (no git commit — `.ccu/artifacts/` is gitignored)
 6. **Offer planning** (optional) — ask if the user wants to invoke the planning skill to decompose the design into Beads
 
 ## Process Flow
@@ -54,7 +54,7 @@ digraph brainstorming {
 }
 ```
 
-**The terminal state is writing the design doc.** After committing the design doc, ask the user if they'd like to invoke the planning skill to decompose the design into Beads. Do NOT automatically invoke any implementation or planning skill — only proceed if the user explicitly opts in.
+**The terminal state is writing the design doc.** After saving the design doc, ask the user if they'd like to invoke the planning skill to decompose the design into Beads. Do NOT automatically invoke any implementation or planning skill — only proceed if the user explicitly opts in.
 
 ## Phase 1: Read Before You Think
 
@@ -96,15 +96,19 @@ Before asking any questions or proposing anything, you MUST thoroughly read the 
 ## After the Design
 
 **Documentation (required):**
-- Write the validated design to `docs/plans/YYYY-MM-DD-<topic>-design.md`
-- Use elements-of-style:writing-clearly-and-concisely skill if available
-- Commit the design document to git
+- Write the validated design to `.ccu/artifacts/<date>-draft-<slug>/design.md`
+  - `<date>` is today in `YYYY-MM-DD` format
+  - `<slug>` is a kebab-case 3-5 word topic identifier
+  - The `draft-` placeholder gets replaced with the real epic ID by the planning skill (Phase 3) — brainstorming runs before any beads exist, so it can't know the epic ID yet
+- Use writing-clearly-and-concisely skill if available
+- **Do NOT run `git commit`.** `.ccu/artifacts/` is gitignored — the design doc is a local working file, not a committed artifact. The durable record of *why* this feature exists belongs in the eventual commit messages and `.ccu/DECISIONS.md`, not the design doc itself.
 - **This is the terminal deliverable of brainstorming.**
 
 **Planning (optional — user must opt in):**
-- After the design doc is committed, ask: "Would you like me to invoke the planning skill to decompose this design into Beads for implementation tracking?"
+- After the design doc is saved, ask: "Would you like me to invoke the planning skill to decompose this design into Beads for implementation tracking?"
 - Only invoke the planning skill if the user explicitly says yes
 - Do NOT automatically proceed to planning or any other implementation skill
+- Planning will reuse the same `.ccu/artifacts/<date>-draft-<slug>/` directory and rename it to `<date>-<epic-id>-<slug>/` once the epic is created
 
 ## Key Principles
 

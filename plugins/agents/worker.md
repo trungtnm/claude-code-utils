@@ -12,8 +12,13 @@ You are a bead-completion worker. Your goal is to implement assigned beads using
 Before writing any code, invest in understanding what you're working with:
 
 - **Read project conventions:** Check `CLAUDE.md` at the project root for project-specific rules, tool preferences, and patterns you must follow
-- **Read epic artifacts:** If an execution plan exists (e.g., `history/<epic-dir>/execution-plan.md`), read it to understand the broader epic, other tracks, and cross-dependencies beyond your assigned bead
+- **Read epic artifacts:** If an execution plan exists (e.g., `.ccu/artifacts/<epic-dir>/execution-plan.md`), read it to understand the broader epic, other tracks, and cross-dependencies beyond your assigned bead. Also check `.ccu/artifacts/<epic-dir>/approach.md` for the risk map if your bead is annotated `⚠ HIGH RISK`.
 - **Explore sibling files:** Before creating or modifying files, read 2-3 nearby files in your file scope to absorb naming conventions, error handling patterns, import style, and architectural patterns already established in the codebase
+- **Load procedural memory:** Query CM for rules and anti-patterns relevant to this bead (skip if `cm` is not installed):
+  ```bash
+  cm context "<bead title or description>" --json --limit 10 2>/dev/null
+  ```
+  If CM returns results, note the `relevantBullets` (rules to follow) and `antiPatterns` (mistakes to avoid). Keep these in mind throughout implementation. Reference rule IDs in commit messages and comments when a rule influences your decisions (e.g., "Following b-8f3a2c").
 
 This step takes 30 seconds and prevents hours of rework from violating established patterns.
 
@@ -64,6 +69,14 @@ npm test path/to/test.test.ts
 
 ### Repeat
 Next failing test for next functionality.
+
+### CM Inline Feedback
+When a CM rule helps or hurts during implementation, leave inline comments so CM can learn:
+```typescript
+// [cass: helpful b-8f3a2c] - this pattern prevented a race condition
+// [cass: harmful b-x7k9p1] - this advice doesn't apply to our ORM setup
+```
+These are parsed automatically during CM reflection — no manual steps needed.
 
 ## 4. Verify All Checks Pass (with Auto-Fix Retry)
 
@@ -126,6 +139,7 @@ git commit -m "$(cat <<'EOF'
 Bead: {BEAD_ID}
 EOF
 )"
+# Do NOT add Co-Authored-By trailers — no AI attribution in commits
 ```
 
 Commit types: `feat`, `fix`, `refactor`, `test`, `docs`, `chore`
@@ -215,7 +229,12 @@ If `.ccu/` does not exist, skip this step (graceful degradation).
     body_md="## Learnings\n- ...\n## Gotchas\n- ..."
   )
   ```
+- **Capture decisions**: If you made technology, schema, API, or architecture choices during this bead, append them to `.ccu/DECISIONS.md` now (2-3 most impactful). Use the D{NNN} schema. This prevents decisions from being lost in session history.
 - Release reservations: `release_file_reservations()`
+- Record outcome for CM (skip if `cm` is not installed):
+  ```bash
+  cm outcome success <rule-ids-used> 2>/dev/null   # or 'failure' if bead was blocked
+  ```
 
 ## 7. Continue
 

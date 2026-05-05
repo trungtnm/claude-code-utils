@@ -3,8 +3,8 @@ name: recipe
 description: >-
   Pre-built workflow sequences for common development patterns. Chains ccu commands
   in the right order, skipping completed phases. Use for new-feature, bug-fix,
-  refactor, or spike workflows. Triggers on recipe, workflow, new feature pipeline,
-  bug fix workflow, guided development, end-to-end feature.
+  refactor, hotfix, or quality-review workflows. Triggers on recipe, workflow,
+  new feature pipeline, bug fix workflow, guided development, end-to-end feature.
 domain: project-management
 role: guide
 triggers:
@@ -13,7 +13,6 @@ triggers:
   - new feature
   - bug fix
   - refactor
-  - spike
   - guided
   - end-to-end
 ---
@@ -71,29 +70,6 @@ Safe refactoring with verification gates.
 5. **Verify after each increment** — re-run tests, ensure no regressions vs baseline
 6. **Evidence** — Record to `.ccu/EVIDENCE.md`
 7. **Commit** — `/t:commit`
-
-### spike
-
-Time-boxed investigation to answer a technical question.
-
-**Sequence:**
-1. **Frame the question** — from `$ARGUMENTS` or ask user
-2. **Track** — Create spike bead:
-   ```bash
-   br create --actor "$ACTOR" "Spike: {question}" --type task --labels spike --priority 1
-   ```
-3. **Time box** — Set expectation: ~30 minutes max
-4. **Investigate** — Read code, run experiments, check docs, try approaches
-5. **Record findings** — Append to `.ccu/DECISIONS.md`:
-   ```markdown
-   ## D{N} — Spike: {question}
-   - **date:** {today}
-   - **decision:** {answer/recommendation}
-   - **rationale:** {evidence from investigation}
-   - **alternatives:** {other options considered}
-   ```
-6. **Close** — `br close {ID} --reason "Finding: {one-line answer}"`
-7. **Present** — Summarize findings and recommend next steps
 
 ### hotfix
 
@@ -153,7 +129,7 @@ Three-layer quality sweep with issue accumulator: find bugs, catch session mista
 /recipe bug-fix auth crash on login               # Bug fix with context
 /recipe hotfix 500 error on /api/users endpoint   # Emergency, skip ceremony
 /recipe refactor extract auth into middleware      # Safe refactor with baseline
-/recipe spike "Can we use SQLite instead of Postgres?"
+/recipe quality-review                            # Three-layer quality sweep
 ```
 
 Everything after the recipe name is context that flows through all steps — it scopes the investigation, names the bead, and focuses the fix. Be specific: `/recipe bug-fix high priority, auth module, user reports 500 on login` is better than `/recipe bug-fix auth`.

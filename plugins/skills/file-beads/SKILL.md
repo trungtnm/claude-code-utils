@@ -11,7 +11,7 @@ You are tasked with converting a plan into a comprehensive set of Beads epics an
 
 First, review the plan context provided: `$ARGUMENTS`
 
-If no specific plan is provided, ask the user to share the plan or point to a planning document (check `history/` directory for recent plans).
+If no specific plan is provided, ask the user to share the plan or point to a planning document (check `.ccu/artifacts/` directory for recent plans).
 
 ## Self-Documentation Principle
 
@@ -21,9 +21,10 @@ Self-documenting beads include:
 - **The "why"** — project context that connects this task to overarching goals
 - **Reasoning / justification** — why this approach was chosen, what alternatives were considered
 - **Considerations** — constraints, edge cases, related decisions from planning
-- **Context lineage** — references to discovery, approach docs, or spike learnings that informed this bead
+- **Context lineage** — references to discovery or approach docs in `.ccu/artifacts/<dir>/` that informed this bead
+- **Risk annotation** — for HIGH-risk components, prefix with `⚠ HIGH RISK: <reason>` and explicit "investigate before coding" guidance (read docs, validate API surface, test assumptions before deep implementation)
 
-Workers should never need to read `history/` artifacts to understand a bead. Push context forward — don't require backward lookups.
+Workers should never need to read `.ccu/artifacts/` to understand a bead. Push context forward — don't require backward lookups.
 
 ## Step 2: Analyze and Structure
 
@@ -33,7 +34,7 @@ Before filing any issues, analyze the plan for:
 2. **Individual tasks** - These become issues under epics
 3. **Dependencies** - What must complete before other work can start?
 4. **Parallelization opportunities** - What can be worked on simultaneously?
-5. **Technical risks** - What needs spikes or investigation first?
+5. **Technical risks** - Which components are novel or external? These need `⚠ HIGH RISK` annotations so workers investigate before coding.
 
 ## Step 3: File Epics First
 
@@ -85,6 +86,10 @@ Here's an example showing how a well-documented bead gives workers everything th
 ```markdown
 # Implement rate limiting middleware for public API
 
+⚠ HIGH RISK: Token-bucket implementation depends on Redis MULTI/EXEC atomicity
+under concurrent load — validate the Lua script handles race conditions before
+relying on it for billing-tier enforcement.
+
 ## Project Context
 
 Our public API currently has no rate limiting, which is the #1 blocker for
@@ -97,6 +102,12 @@ Chose token-bucket algorithm over sliding window because:
 - Our Redis instance already supports atomic MULTI/EXEC (no extra infra)
 - Token bucket handles burst traffic better for our webhook-heavy use case
 - Alternative: sliding window was simpler but penalizes legitimate bursts
+
+## Investigate Before Coding
+
+- Confirm Redis Lua script atomicity guarantees match our cluster config
+- Test bucket refill behavior under simulated burst traffic
+- Verify that auth middleware exposes `req.user` early enough in the chain
 
 ## Considerations
 
@@ -116,7 +127,7 @@ Chose token-bucket algorithm over sliding window because:
 
 - Existing auth middleware at `src/middleware/auth.ts` extracts `req.user`
 - Redis client already configured in `src/lib/redis.ts`
-- See `.spikes/api-platform/rate-limit-test/` for working prototype
+- See `.ccu/artifacts/<dir>/approach.md` for the rejected alternatives and full risk analysis
 ```
 
 Compare this with a minimal bead that says "Add rate limiting to API" — the self-documenting version lets a worker start immediately without reading discovery or approach docs.

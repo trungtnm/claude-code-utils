@@ -22,6 +22,7 @@ skills/shadcn-ui
 # ccu staging layer (ephemeral — personal session state)
 .ccu/CAPTURES.md
 .ccu/PRIME-CACHE.md
+.ccu/artifacts/
 
 # Temporary files
 *.tmp

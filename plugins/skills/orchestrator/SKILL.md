@@ -19,7 +19,7 @@ This skill spawns and monitors parallel worker agents that execute beads autonom
 
 ## Prerequisites
 
-1. **Required**: Run `/skill planning` first to generate `history/<dir>/execution-plan.md`
+1. **Required**: Run `/skill planning` first to generate `.ccu/artifacts/<dir>/execution-plan.md`
 2. **Recommended**: Run `/skill review-beads` to validate bead quality before spawning workers
 
 ## Architecture (Mode B: Autonomous)
@@ -73,15 +73,15 @@ This skill spawns and monitors parallel worker agents that execute beads autonom
 
 ## Phase 1: Read Execution Plan
 
-The planning skill outputs `history/<dir>/execution-plan.md` with:
+The planning skill outputs `.ccu/artifacts/<dir>/execution-plan.md` with:
 
 - Track assignments (agent name, beads, file scope)
 - Cross-track dependencies
-- Key learnings from spikes
+- High-risk components flagged for worker investigation
 
 ```bash
 # Read the execution plan
-Read("history/<dir>/execution-plan.md")
+Read(".ccu/artifacts/<dir>/execution-plan.md")
 ```
 
 Extract:
@@ -434,12 +434,12 @@ send_message(
 )
 ```
 
-### Save Summary to History
+### Save Summary Locally
 
-Write the same summary to `history/<dir>/completion-summary.md` so it persists beyond Agent Mail:
+Write the same summary to `.ccu/artifacts/<dir>/summary.md` so it persists beyond Agent Mail:
 
 ```bash
-Write("history/<dir>/summary.md", """
+Write(".ccu/artifacts/<dir>/summary.md", """
 # Epic Complete: <title>
 
 **Epic:** <epic-id>
@@ -458,38 +458,28 @@ Write("history/<dir>/summary.md", """
 """)
 ```
 
+`.ccu/artifacts/` is gitignored, so this summary stays local. The durable record of the epic lives in:
+- Commit messages from each bead (the actual work)
+- `.beads/` JSONL exports (closed beads with reasons)
+- `.ccu/DECISIONS.md` (architectural decisions made during the epic)
+
 ### Close Epic
 
 ```bash
 br close --actor "$ACTOR" <epic-id> --reason "All tracks complete"
 ```
 
-### Commit & Push Epic Artifacts
+### Commit & Push Beads Database
 
-**After closing the epic, commit and push all orchestration artifacts so they persist in the shared repo.**
-
-Stage epic history and beads database:
+**After closing the epic, commit the beads database so closed-bead state persists in the shared repo.**
 
 ```bash
-git add ./history/<dir>/
 git add .beads/
-```
+git commit -m "epic(<epic-id>): close all beads
 
-Commit with a clear epic-scoped message:
-
-```bash
-git commit -m "epic(<epic-id>): completion artifacts
-
-- history/<dir>/summary.md
-- history/<dir>/execution-plan.md
-- Beads database updates (all beads closed)
+All tracks complete. See bead reasons for individual deliverables.
 
 Epic: <epic-id>"
-```
-
-Push to the current branch:
-
-```bash
 git push
 ```
 
@@ -499,7 +489,7 @@ git push
 git pull --rebase && git push
 ```
 
-**Do NOT skip this step.** Without it, epic artifacts exist only locally and will be lost when the worktree is cleaned up.
+The `.ccu/artifacts/<dir>/` summary is intentionally NOT committed — it's a local artifact for the orchestrator's own reference. Worker commits already capture the durable record of what was built.
 
 ---
 
@@ -553,7 +543,7 @@ Return a summary of all work completed.
 - Bead "closed" → confirm with `br show`, don't trust reports alone
 - Proceeding to Phase 6 → ALL Phase 5.5 verifications must pass first
 - Missing deliverables (no hash, no test counts) → reject immediately
-- Skipping commit+push → artifacts lost when worktree cleaned up
+- Skipping `.beads/` commit+push → closed-bead state lost when worktree cleaned up
 - **Mocks/stubs in production code → ALWAYS reject and escalate to user**
 - **Worker asking "should I..." → ALWAYS escalate to user, do NOT decide for them**
 - **Worker silent after Task() returns with open beads → escalate as stuck**
@@ -565,7 +555,7 @@ Return a summary of all work completed.
 
 | Phase        | Action                                        |
 | ------------ | --------------------------------------------- |
-| Read Plan    | `Read("history/<dir>/execution-plan.md")`     |
+| Read Plan    | `Read(".ccu/artifacts/<dir>/execution-plan.md")`     |
 | Initialize   | `ensure_project`, `register_agent`            |
 | Spawn        | `Task()` for each track (parallel)            |
 | **Monitor**  | Loop: `fetch_inbox`, `bv --robot-triage`      |
@@ -575,4 +565,4 @@ Return a summary of all work completed.
 | **Verify**   | `git log --grep`, `br show`, check report     |
 | **Review**   | Spawn `code-reviewer` for cross-track sweep   |
 | Complete     | All verified, send summary, close epic        |
-| **Commit**   | `git add` history + .beads/, commit, push     |
+| **Commit**   | `git add .beads/`, commit, push               |
