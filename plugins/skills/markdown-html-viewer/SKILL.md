@@ -1,0 +1,103 @@
+---
+name: markdown-html-viewer
+description: >
+  Turn a Markdown document into a polished, self-contained HTML reading page — branded header,
+  sticky table-of-contents sidebar, GFM tables, live Mermaid diagrams, light/dark theme toggle,
+  GFM-alert callouts, copy buttons, and a print-to-PDF stylesheet. CRUCIALLY, also covers how to
+  make a document readable in the first place: convert
+  flows/state/relationships/architecture into Mermaid diagrams, dense field/parameter/data-model
+  prose into clean tables, and leave literal artifacts (signatures, JSON, formulas, code) as code.
+  Use this whenever the user wants to view, share, present, or "make readable/beautiful" a Markdown
+  spec, design doc, README, report, or any .md; render Markdown as HTML; build a doc viewer; add a
+  table of contents; or when a doc has dense data, wide code blocks, or describes a flow/architecture
+  that a diagram or table would clarify — even if they don't say "HTML" or "Mermaid" explicitly.
+---
+
+# Markdown → HTML document viewer
+
+Two jobs, in order. The second (rendering) is mechanical; the first (readability) is where the value is.
+
+1. **Make the Markdown render well** — convert flows, relationships, and dense data into diagrams and tables. See `references/readability.md` — read it before restructuring any substantial doc. This is the part users actually feel.
+2. **Generate the viewer** — wrap the `.md` in a styled HTML shell with `scripts/md2html.py`.
+
+A document that is just walls of prose and runny inline-code chips is hard to scan no matter how nicely it's styled. The win comes from picking the right *representation* for each piece of content, then letting the viewer present it cleanly.
+
+## Step 1 — Improve readability (the important part)
+
+Skim the document and reshape content by what it *is*. The quick rule:
+
+| Content shape | Best representation | Why |
+|---|---|---|
+| A process, handshake, request/response sequence | **Mermaid** `sequenceDiagram` / `flowchart` | shows order & actors at a glance |
+| A lifecycle / status machine (states + transitions) | **Mermaid** `stateDiagram-v2` | transitions are invisible in prose |
+| Entities & how they relate (data model, schema) | **Mermaid** `erDiagram` + per-entity tables | the join structure is the point |
+| A system's parts and how data flows | **Mermaid** `flowchart` (subgraphs + `classDef`) | replaces ASCII art that overflows |
+| Field/parameter lists, config options, comparisons | **Markdown table** | runny prose with inline-code chips is unscannable |
+| A wide SQL `CREATE TABLE` / column dump | **Markdown table(s)** (+ an `erDiagram` for relations) | wide code blocks scroll horizontally and get cut off |
+| A warning, gotcha, key decision, or recommendation | **GFM alert** (`> [!WARNING]`, `[!NOTE]`, `[!TIP]`, `[!IMPORTANT]`, `[!CAUTION]`) | the viewer renders these as colored, icon-titled callout boxes — pulls the critical line out of the prose |
+| Literal artifacts: signatures, IDs, JSON/YAML, formulas, real code/pseudocode | **Leave as a code block** | a diagram or table of a literal string *loses fidelity* — this is the one thing not to "improve" |
+
+Full recipes, copy-paste diagram skeletons, before/after examples, and the Mermaid parser-safety rules (which characters break `sequenceDiagram`/`stateDiagram` labels) live in **`references/readability.md`**. Read it whenever you're restructuring a doc.
+
+The guiding idea: pick the representation that makes the *structure* visible. Don't force it — if something is genuinely just a paragraph, leave it a paragraph; and never turn a literal artifact into a picture.
+
+## Step 2 — Generate the HTML viewer
+
+`scripts/md2html.py` (standard library only) wraps a `.md` in a styled shell that renders client-side: marked.js for GFM (tables included), mermaid.js for ` ```mermaid ` fences, a sticky TOC sidebar with scroll-spy, and a print stylesheet so **Print → Save as PDF** exports cleanly.
+
+```bash
+python3 scripts/md2html.py spec.md
+python3 scripts/md2html.py spec.md --brand "ACME" --badge "DRAFT v0.1" --mark "AC" \
+  --link "design.html|Design →" --link "api.html|API ↗"
+python3 scripts/md2html.py spec.md --lang vi          # Vietnamese chrome labels
+```
+
+Useful flags: `--title`, `--subtitle`, `--brand`, `--badge` (doc-type/status chip), `--mark` (1–3 char logo glyph), `--lang` (chrome language), `--link "href|label"` (repeatable header nav), `-o OUT.html`. Title defaults to the first `# H1`.
+
+**What the reader gets, automatically** (all client-side — the `.md` stays the source, nothing is baked into HTML):
+
+- **Light / dark theme toggle** — header button, persisted in `localStorage`, defaults to the OS `prefers-color-scheme`. Mermaid diagrams re-render to match the theme.
+- **Callouts from GFM alerts** — a blockquote starting `> [!NOTE]` / `[!TIP]` / `[!IMPORTANT]` / `[!WARNING]` / `[!CAUTION]` becomes a colored, icon-titled callout. Marker text is stripped; a plain `>` blockquote stays a plain blockquote. (This is the markdown-native way to get the reference repo's "callout" component without putting raw HTML in the source.)
+- **Copy buttons** on code blocks (hover-reveal), **hover-reveal heading anchor links**, a **scroll progress bar**, a **skip-to-content** link, and **reduced-motion** support.
+- **Auto reading-time** estimate in the header, and a **mobile TOC drawer** (hamburger + backdrop) below 1000px.
+- **Localized chrome** — `--lang` (en, vi, zh, ja, ko, es, fr, de) translates the TOC label, copy button, callout titles, and reading-time string, and sets `<html lang>`. Body content always renders in the source language; only the UI chrome is translated. Vietnamese labels carry full diacritics.
+
+### Two output modes (this is a real fork — get it right)
+
+- **`--fetch` (default):** the HTML loads the `.md` with `fetch()` at runtime, so the `.md` stays the **single live source** — edit it, refresh, done. No copy of the content lives in the HTML. This is the default because keeping one source of truth is almost always what you want for a doc you're still editing.
+- **`--inline`:** embeds the Markdown inside the HTML → a portable single file anyone can double-click. Use this only for **sharing/emailing one file**; it's a snapshot, so regenerate after editing the `.md`.
+
+If a user says "no inline content" / "keep the .md as the source" → `--fetch`. If they say "I want to send this to someone" / "just double-click it" → `--inline`.
+
+## Step 3 — View it with no server
+
+A `--fetch` page can't be loaded by a plain double-click: normal browsers block `file://` from fetching a sibling file (CORS). Two no-server options:
+
+- **Dev browser (recommended for live editing):** open the file in Chrome started with `--allow-file-access-from-files` and its own profile dir — the flag lifts the restriction. Use the helper:
+  ```bash
+  scripts/open_in_dev_browser.sh spec.html
+  ```
+  (The dedicated `--user-data-dir` matters — Chrome ignores the flag if it attaches to an already-running default profile.)
+- **Portable copy:** regenerate with `--inline`, then double-click in any browser.
+
+A `--fetch` page opened in a normal browser doesn't fail silently — it shows a banner explaining both options. Serving over HTTP (`python3 -m http.server`) also works but is usually unnecessary.
+
+## Step 4 — Verify it actually renders
+
+Don't assume — confirm, especially that Mermaid diagrams parsed (a single bad label silently drops a diagram). Two cheap checks:
+
+- **Validate Mermaid syntax** with the CLI (catches parse errors per diagram):
+  ```bash
+  npx -y @mermaid-js/mermaid-cli -i diagram.mmd -o /tmp/out.svg   # needs Chrome; pass -p puppeteer.json with executablePath if no bundled Chromium
+  ```
+- **Render check** (if a headless browser is available): load the page (for `--fetch`, with `--allow-file-access-from-files`), wait a few seconds, then assert in the DOM that `#toc a`, `.content table`, and `.content .mermaid svg` counts match expectations and there are no `pageerror`s. A quick screenshot is worth a thousand assumptions — confirm tables don't overflow and diagrams rendered as SVG (not raw code).
+
+If diagrams are missing, the cause is almost always a Mermaid label syntax issue — see the parser-safety section in `references/readability.md`.
+
+## Gotchas worth remembering
+
+- **Mermaid label characters:** a literal `→` arrow and unescaped parentheses/commas inside `sequenceDiagram`/`stateDiagram` transition labels are common parse-breakers. Prefer plain words ("to" not "→") and `<br/>` for line breaks in `flowchart` node labels.
+- **`</script>` in inline mode:** the generator escapes `</script` → `<\/script` so embedded Markdown can't prematurely close the tag. (Only relevant for `--inline`.)
+- **Callout syntax is strict:** the alert marker must be the **first line** of the blockquote, on its own (`> [!WARNING]`), with the body on the following `>` lines. `> [!warning] text on the same line` still works (case-insensitive), but an unknown tag (e.g. `[!FYI]`) silently falls back to a plain blockquote — use only the five GitHub tags.
+- **Theme-aware callout/TOC tints use `color-mix()`** (Chrome 111+, Safari 16.2+, Firefox 113+). Current viewers handle it fine; on an ancient browser the tint just falls back to no background — harmless.
+- **CDN dependency:** marked.js and mermaid.js load from a CDN (works even over `file://`). Fully offline use needs vendored copies — note that to the user if it comes up.
