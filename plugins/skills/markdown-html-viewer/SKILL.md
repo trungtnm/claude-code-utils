@@ -3,7 +3,8 @@ name: markdown-html-viewer
 description: >
   Turn a Markdown document into a polished, self-contained HTML reading page — branded header,
   sticky table-of-contents sidebar, GFM tables, live Mermaid diagrams, light/dark theme toggle,
-  GFM-alert callouts, copy buttons, and a print-to-PDF stylesheet. CRUCIALLY, also covers how to
+  GFM-alert callouts, copy buttons, and a print-to-PDF stylesheet — or point it at several .md
+  files / a folder to get one index with a document switcher. CRUCIALLY, also covers how to
   make a document readable in the first place: convert
   flows/state/relationships/architecture into Mermaid diagrams, dense field/parameter/data-model
   prose into clean tables, and leave literal artifacts (signatures, JSON, formulas, code) as code.
@@ -46,13 +47,17 @@ The guiding idea: pick the representation that makes the *structure* visible. Do
 `scripts/md2html.py` (standard library only) wraps a `.md` in a styled shell that renders client-side: marked.js for GFM (tables included), mermaid.js for ` ```mermaid ` fences, a sticky TOC sidebar with scroll-spy, and a print stylesheet so **Print → Save as PDF** exports cleanly.
 
 ```bash
-python3 scripts/md2html.py spec.md
+python3 scripts/md2html.py spec.md                    # one .md → spec.html
+python3 scripts/md2html.py *.md                        # many .md → one index.html with a switcher
+python3 scripts/md2html.py docs/                       # a directory → one index.html (all docs/*.md)
 python3 scripts/md2html.py spec.md --brand "ACME" --badge "DRAFT v0.1" --mark "AC" \
   --link "design.html|Design →" --link "api.html|API ↗"
 python3 scripts/md2html.py spec.md --lang vi          # Vietnamese chrome labels
 ```
 
 Useful flags: `--title`, `--subtitle`, `--brand`, `--badge` (doc-type/status chip), `--mark` (1–3 char logo glyph), `--lang` (chrome language), `--link "href|label"` (repeatable header nav), `-o OUT.html`. Title defaults to the first `# H1`.
+
+**Multiple docs → one index (this is the multi-doc fork):** pass several `.md` paths or a directory and you get a **single** HTML with a **document-switcher dropdown** in the header. The content area swaps between docs — each gets its own TOC, reading time, Mermaid render, and callouts. `README.md` sorts first; the rest alphabetically. The output defaults to `index.html` in the first doc's folder. Both modes apply: `--fetch` keeps every `.md` a live source (the index fetches whichever is selected); `--inline` embeds all of them into one portable file. Deep links are routable: `index.html#doc=api.md` opens a specific doc, and `#doc=api.md&s=sec-3` jumps to a section within it — the in-page TOC and heading anchors generate these automatically, so switching docs never clobbers the selected one.
 
 **What the reader gets, automatically** (all client-side — the `.md` stays the source, nothing is baked into HTML):
 
@@ -100,4 +105,5 @@ If diagrams are missing, the cause is almost always a Mermaid label syntax issue
 - **`</script>` in inline mode:** the generator escapes `</script` → `<\/script` so embedded Markdown can't prematurely close the tag. (Only relevant for `--inline`.)
 - **Callout syntax is strict:** the alert marker must be the **first line** of the blockquote, on its own (`> [!WARNING]`), with the body on the following `>` lines. `> [!warning] text on the same line` still works (case-insensitive), but an unknown tag (e.g. `[!FYI]`) silently falls back to a plain blockquote — use only the five GitHub tags.
 - **Theme-aware callout/TOC tints use `color-mix()`** (Chrome 111+, Safari 16.2+, Firefox 113+). Current viewers handle it fine; on an ancient browser the tint just falls back to no background — harmless.
+- **Multi-doc `--fetch` needs every `.md` reachable from the index's folder.** Paths in the switcher are stored relative to the output HTML, so generating an index for files spread across distant directories still works, but moving the HTML away from the docs breaks the relative links. For a self-contained bundle to move/share, use `--inline`.
 - **CDN dependency:** marked.js and mermaid.js load from a CDN (works even over `file://`). Fully offline use needs vendored copies — note that to the user if it comes up.

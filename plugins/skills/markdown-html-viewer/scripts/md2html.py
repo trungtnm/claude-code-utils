@@ -1,12 +1,19 @@
 #!/usr/bin/env python3
-"""md2html.py — render a Markdown file as a self-contained, styled HTML page.
+"""md2html.py — render Markdown as a self-contained, styled HTML page (or a multi-doc index).
 
 The page renders client-side with marked.js (GFM tables) + mermaid.js (```mermaid``` fences),
 and builds a sticky table-of-contents sidebar with scroll-spy. Includes a print stylesheet
 (hides chrome) so the browser's Print → Save as PDF gives a clean export.
 
+Single doc vs. many
+-------------------
+Pass ONE .md           → a viewer for that file.
+Pass SEVERAL .md       → one HTML with a document-switcher dropdown in the header; the content
+  (or a DIRECTORY)       area swaps between docs. Deep links: #doc=<file>&s=<section-id>.
+
 Reader-experience features (all client-side, the .md stays the source of truth):
   - light / dark theme toggle (persisted, follows prefers-color-scheme by default)
+  - document switcher (multi-doc mode) with per-doc TOC, reading time, and hash deep-links
   - copy-to-clipboard buttons on code blocks
   - GitHub-style callouts from blockquotes: > [!NOTE] / [!TIP] / [!IMPORTANT] / [!WARNING] / [!CAUTION]
   - hover-reveal heading anchor links
@@ -16,54 +23,54 @@ Reader-experience features (all client-side, the .md stays the source of truth):
 
 Modes
 -----
---fetch   (default)  The HTML fetch()es the .md at load → one live source (edit, refresh),
+--fetch   (default)  The HTML fetch()es each .md at load → live source (edit, refresh),
                      no copy of the content in the HTML. Open it with NO server using a
                      "dev browser" (Chrome with --allow-file-access-from-files; see
                      scripts/open_in_dev_browser.sh). A plain double-click in a normal
                      browser is blocked by file:// CORS and shows a friendly banner.
---inline             Embed the Markdown in the HTML → opens by double-click in any browser,
+--inline             Embed every .md in the HTML → opens by double-click in any browser,
                      good for emailing/sharing one file. The HTML carries a snapshot,
                      so regenerate after editing the .md.
 
 Usage
 -----
   python md2html.py INPUT.md                       # fetch mode, <input>.html beside it
-  python md2html.py INPUT.md --inline              # portable single file
-  python md2html.py INPUT.md --lang vi             # Vietnamese chrome labels
+  python md2html.py *.md                            # one index.html with a doc switcher
+  python md2html.py docs/                           # all docs/*.md → one index.html
+  python md2html.py *.md --inline -o site.html      # portable multi-doc single file
+  python md2html.py INPUT.md --lang vi              # Vietnamese chrome labels
   python md2html.py INPUT.md --title "My Spec" --brand "ACME" --badge "DRAFT v0.1"
-  python md2html.py INPUT.md --link "other.html|Design →" --link "api.html|API ↗"
-  python md2html.py INPUT.md -o /tmp/out.html
 
 Only the standard library is used. CDN scripts load over https even from file:// pages.
 """
-import argparse, html, pathlib, re, sys
+import argparse, html, json, os, pathlib, re, sys
 
 # Chrome strings localized per --lang. Body content always renders in the source language;
 # only these few UI labels change. Vietnamese carries full diacritics on purpose.
 LANGS = {
     'en': dict(contents='Contents', copy='Copy', copied='Copied!', skip='Skip to content',
-               read='%s min read', theme='Toggle theme', menu='Contents',
+               read='%s min read', theme='Toggle theme', menu='Contents', doc='Document',
                cNOTE='Note', cTIP='Tip', cIMPORTANT='Important', cWARNING='Warning', cCAUTION='Caution'),
     'vi': dict(contents='Mục lục', copy='Sao chép', copied='Đã chép!', skip='Đến nội dung',
-               read='%s phút đọc', theme='Đổi giao diện', menu='Mục lục',
+               read='%s phút đọc', theme='Đổi giao diện', menu='Mục lục', doc='Tài liệu',
                cNOTE='Ghi chú', cTIP='Mẹo', cIMPORTANT='Quan trọng', cWARNING='Cảnh báo', cCAUTION='Thận trọng'),
     'zh': dict(contents='目录', copy='复制', copied='已复制!', skip='跳到内容',
-               read='阅读约 %s 分钟', theme='切换主题', menu='目录',
+               read='阅读约 %s 分钟', theme='切换主题', menu='目录', doc='文档',
                cNOTE='注意', cTIP='提示', cIMPORTANT='重要', cWARNING='警告', cCAUTION='当心'),
     'ja': dict(contents='目次', copy='コピー', copied='コピーしました!', skip='本文へスキップ',
-               read='読了 %s 分', theme='テーマ切替', menu='目次',
+               read='読了 %s 分', theme='テーマ切替', menu='目次', doc='ドキュメント',
                cNOTE='メモ', cTIP='ヒント', cIMPORTANT='重要', cWARNING='警告', cCAUTION='注意'),
     'ko': dict(contents='목차', copy='복사', copied='복사됨!', skip='본문으로 건너뛰기',
-               read='%s분 분량', theme='테마 전환', menu='목차',
+               read='%s분 분량', theme='테마 전환', menu='목차', doc='문서',
                cNOTE='참고', cTIP='팁', cIMPORTANT='중요', cWARNING='경고', cCAUTION='주의'),
     'es': dict(contents='Contenido', copy='Copiar', copied='¡Copiado!', skip='Saltar al contenido',
-               read='%s min de lectura', theme='Cambiar tema', menu='Contenido',
+               read='%s min de lectura', theme='Cambiar tema', menu='Contenido', doc='Documento',
                cNOTE='Nota', cTIP='Consejo', cIMPORTANT='Importante', cWARNING='Advertencia', cCAUTION='Precaución'),
     'fr': dict(contents='Sommaire', copy='Copier', copied='Copié !', skip='Aller au contenu',
-               read='%s min de lecture', theme='Changer de thème', menu='Sommaire',
+               read='%s min de lecture', theme='Changer de thème', menu='Sommaire', doc='Document',
                cNOTE='Note', cTIP='Astuce', cIMPORTANT='Important', cWARNING='Avertissement', cCAUTION='Attention'),
     'de': dict(contents='Inhalt', copy='Kopieren', copied='Kopiert!', skip='Zum Inhalt springen',
-               read='%s Min. Lesezeit', theme='Thema wechseln', menu='Inhalt',
+               read='%s Min. Lesezeit', theme='Thema wechseln', menu='Inhalt', doc='Dokument',
                cNOTE='Hinweis', cTIP='Tipp', cIMPORTANT='Wichtig', cWARNING='Warnung', cCAUTION='Vorsicht'),
 }
 
@@ -109,6 +116,9 @@ TEMPLATE = r"""<!DOCTYPE html>
   .brand .readtime{color:#9FB6CC;font-size:11.5px;white-space:nowrap}
   .brand a{color:#C9D8E8;text-decoration:none;font-size:12.5px;padding:6px 12px;border:1px solid var(--btn-border);border-radius:7px;margin-left:8px}
   .brand a:hover{background:rgba(255,255,255,.1)}
+  .docpicker{background:rgba(255,255,255,.10);color:var(--header-text);border:1px solid var(--btn-border);border-radius:7px;font-size:12.5px;padding:5px 9px;max-width:280px;font-family:inherit;cursor:pointer}
+  .docpicker:hover{background:rgba(255,255,255,.16)}
+  .docpicker option{color:#1A2433;background:#fff}
   .icon-btn{display:inline-flex;align-items:center;justify-content:center;background:transparent;color:var(--header-text);border:1px solid var(--btn-border);border-radius:7px;width:34px;height:32px;margin-left:8px;cursor:pointer;padding:0}
   .icon-btn:hover{background:rgba(255,255,255,.1)}
   .tocbtn{display:none}
@@ -164,7 +174,7 @@ TEMPLATE = r"""<!DOCTYPE html>
   .loaderr{padding:30px 6px;color:var(--help-text);font-size:14px;line-height:1.7}
   .loaderr code{background:var(--help-bg);border:1px solid var(--help-line);border-radius:5px;padding:2px 7px;font-family:Consolas,monospace;color:var(--primary-d);font-weight:600}
   @media print{
-    .brand,.toc,.helpbox,#progress,.skip,.copy-btn,.icon-btn,.anchor,.backdrop{display:none !important}
+    .brand,.toc,.helpbox,#progress,.skip,.copy-btn,.icon-btn,.docpicker,.anchor,.backdrop{display:none !important}
     .content{margin:0;border:none;box-shadow:none;border-radius:0;max-width:100%;background:#fff}
     body{background:#fff;color:#000;font-size:11pt}
     .content pre,.content table,.content blockquote,.callout,.content img{break-inside:avoid}
@@ -172,6 +182,7 @@ TEMPLATE = r"""<!DOCTYPE html>
   @media (prefers-reduced-motion: reduce){ html{scroll-behavior:auto} *{transition:none !important} }
   @media(max-width:1000px){
     .tocbtn{display:inline-flex}
+    .docpicker{max-width:150px}
     .toc{position:fixed;top:0;left:0;height:100vh;width:282px;z-index:50;background:var(--bg);transform:translateX(-100%);transition:transform .22s ease;box-shadow:2px 0 22px rgba(0,0,0,.28);padding-top:58px;display:block}
     .toc.open{transform:none}
     .backdrop.open{display:block;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:40}
@@ -186,6 +197,7 @@ TEMPLATE = r"""<!DOCTYPE html>
     <button class="icon-btn tocbtn" id="tocToggle" type="button" aria-label="Contents"></button>
     <div class="mark">__MARK__</div>
     <div><b>__BRAND__</b><small>__SUBTITLE__</small></div>
+    <select class="docpicker" id="docpicker" aria-label="Select document" style="display:none"></select>
     __BADGE__
     <div class="sp"></div>
     <span class="readtime" id="readtime"></span>
@@ -203,6 +215,10 @@ __MD_SCRIPT__
   <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
   <script>
     var LANG = __LANGOBJ__;
+    var DOCS = __DOCS__;        // [{file, label, id}]  — id is the inline <script> id, or null in fetch mode
+    var loadedDoc = null;       // file of the doc currently rendered (shared so render() can build hrefs)
+    function curDocFile(){ return loadedDoc || (DOCS[0] && DOCS[0].file) || ''; }
+    function sectionHref(id){ return '#doc=' + encodeURIComponent(curDocFile()) + '&s=' + id; }
     var SVG = {
       sun:'<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.5 1.5M17.5 17.5L19 19M19 5l-1.5 1.5M6.5 17.5L5 19"/></svg>',
       moon:'<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>',
@@ -274,19 +290,21 @@ __MD_SCRIPT__
         pre.appendChild(btn);
       });
 
-      // Build TOC + heading anchors, with scroll-spy
+      // Build TOC + heading anchors, with scroll-spy. Hrefs carry the current doc so
+      // clicking them never clobbers the selected document (#doc=<file>&s=<id>).
       var toc = document.getElementById('toc');
+      toc.innerHTML = '<div class="toc-h" id="toc-h">' + LANG.contents + '</div>';
       var heads = content.querySelectorAll('h1, h2, h3');
       var entries = [];
       heads.forEach(function(h, i){
         var id = 'sec-' + i; h.id = id;
         var label = h.textContent;
         var a = document.createElement('a');
-        a.href = '#' + id; a.textContent = label;
+        a.href = sectionHref(id); a.textContent = label;
         a.className = 'lvl' + h.tagName.substring(1);
         toc.appendChild(a);
         var anchor = document.createElement('a');
-        anchor.className = 'anchor'; anchor.href = '#' + id;
+        anchor.className = 'anchor'; anchor.href = sectionHref(id);
         anchor.setAttribute('aria-label', 'Link to ' + label); anchor.textContent = '#';
         h.appendChild(anchor);
         entries.push({ el:h, link:a });
@@ -296,11 +314,19 @@ __MD_SCRIPT__
         entries.forEach(function(e){ if (e.el.offsetTop <= top) cur = e; });
         entries.forEach(function(e){ e.link.classList.toggle('active', e === cur); });
       };
+      window.removeEventListener('scroll', window.__mdvSpy || function(){});
+      window.__mdvSpy = spy;
       window.addEventListener('scroll', spy, { passive:true });
       spy();
     }
 
-    // --- Chrome wiring (runs once; independent of content) ---
+    function showReadTime(src){
+      var words = (src.trim().match(/\S+/g) || []).length;
+      var mins = Math.max(1, Math.round(words / 200));
+      document.getElementById('readtime').textContent = LANG.read.replace('%s', mins);
+    }
+
+    // --- Chrome wiring (runs once; independent of which doc is shown) ---
     (function(){
       var root = document.documentElement;
       var themeBtn = document.getElementById('themeBtn');
@@ -327,48 +353,70 @@ __MD_SCRIPT__
       function prog(){ var d = document.documentElement; var max = d.scrollHeight - d.clientHeight; bar.style.width = (max > 0 ? (d.scrollTop / max * 100) : 0) + '%'; }
       window.addEventListener('scroll', prog, { passive:true });
       window.addEventListener('resize', prog); prog();
-    })();
 
-    function showReadTime(src){
-      var words = (src.trim().match(/\S+/g) || []).length;
-      var mins = Math.max(1, Math.round(words / 200));
-      document.getElementById('readtime').textContent = LANG.read.replace('%s', mins);
-    }
+      // --- Document switcher (multi-doc) + hash routing (#doc=<file>&s=<section>) ---
+      var picker = document.getElementById('docpicker');
+      function parseHash(){
+        var h = location.hash.replace(/^#/, ''), o = {};
+        h.split('&').forEach(function(p){ var i = p.indexOf('='); if (i > 0) o[p.slice(0, i)] = decodeURIComponent(p.slice(i + 1)); });
+        return o;
+      }
+      function validDoc(f){ for (var i = 0; i < DOCS.length; i++) if (DOCS[i].file === f) return true; return false; }
+      if (DOCS.length > 1){
+        DOCS.forEach(function(d){ var o = document.createElement('option'); o.value = d.file; o.textContent = d.label; picker.appendChild(o); });
+        picker.style.display = '';
+        picker.addEventListener('change', function(){ location.hash = 'doc=' + encodeURIComponent(picker.value); });
+      }
+      function go(){
+        var hp = parseHash();
+        var f = (hp.doc && validDoc(hp.doc)) ? hp.doc : DOCS[0].file;
+        var sec = hp.s;
+        function after(){
+          if (sec){ var t = document.getElementById(sec); if (t) t.scrollIntoView(); }
+          else { window.scrollTo(0, 0); }
+        }
+        if (f !== loadedDoc){
+          loadedDoc = f;
+          if (picker) picker.value = f;
+          loadDoc(f).then(after);
+        } else { after(); }
+      }
+      window.addEventListener('hashchange', go);
+      go();
+    })();
   </script>
 </body>
 </html>
 """
 
-INLINE_BOOTSTRAP = """var src = document.getElementById('md').textContent;
-    window.addEventListener('DOMContentLoaded', function(){ render(src); showReadTime(src); });"""
+# loadDoc(file) — mode-specific; returns a Promise that resolves once the doc is rendered.
+INLINE_BOOTSTRAP = """function loadDoc(file){
+      var id = null;
+      for (var i = 0; i < DOCS.length; i++) if (DOCS[i].file === file) id = DOCS[i].id;
+      var el = id ? document.getElementById(id) : null;
+      var src = el ? el.textContent : '';
+      render(src); showReadTime(src);
+      return Promise.resolve();
+    }"""
 
-FETCH_BOOTSTRAP = """var MD_FILE = "__MDFILE__";
-    var isFile = location.protocol === 'file:';
-    fetch(MD_FILE, { cache: 'no-store' })
-      .then(function(r){ if(!r.ok) throw new Error('HTTP ' + r.status); return r.text(); })
-      .then(function(src){ render(src); showReadTime(src); })
-      .catch(function(e){
-        if (isFile) document.getElementById('helpbox').style.display = 'block';
-        document.getElementById('content').innerHTML = isFile
-          ? '<div class="loaderr">Could not load <code>' + MD_FILE + '</code> because this is a normal browser opening <code>file://</code> (fetch is blocked).' +
-            '<br><br>View with <b>no server</b> in either of two ways:' +
-            '<br>• <b>Dev browser:</b> open this file in Chrome started with <code>--allow-file-access-from-files</code> (see <code>scripts/open_in_dev_browser.sh</code>).' +
-            '<br>• <b>Portable copy:</b> regenerate with <code>--inline</code> to embed the Markdown, then double-click.' +
-            '<br><br>(Or serve over HTTP: <code>python3 -m http.server 8080</code>.)</div>'
-          : '<div class="loaderr">Could not load <code>' + MD_FILE + '</code>: ' + e.message + '</div>';
-      });"""
-
-
-def js_str(s):
-    """Escape a Python string for safe embedding inside a JS double-quoted literal."""
-    return s.replace('\\', '\\\\').replace('"', '\\"')
-
-
-def lang_object(lang):
-    """Build the JS object literal of localized chrome strings for the chosen language."""
-    table = LANGS.get(lang, LANGS['en'])
-    pairs = ', '.join('%s: "%s"' % (k, js_str(v)) for k, v in table.items())
-    return '{ ' + pairs + ' }'
+FETCH_BOOTSTRAP = """function loadDoc(file){
+      var content = document.getElementById('content');
+      content.innerHTML = '<p style="color:var(--muted)">Loading…</p>';
+      var isFile = location.protocol === 'file:';
+      return fetch(file, { cache: 'no-store' })
+        .then(function(r){ if(!r.ok) throw new Error('HTTP ' + r.status); return r.text(); })
+        .then(function(src){ render(src); showReadTime(src); })
+        .catch(function(e){
+          if (isFile) document.getElementById('helpbox').style.display = 'block';
+          content.innerHTML = isFile
+            ? '<div class="loaderr">Could not load <code>' + file + '</code> because this is a normal browser opening <code>file://</code> (fetch is blocked).' +
+              '<br><br>View with <b>no server</b> in either of two ways:' +
+              '<br>• <b>Dev browser:</b> open this file in Chrome started with <code>--allow-file-access-from-files</code> (see <code>scripts/open_in_dev_browser.sh</code>).' +
+              '<br>• <b>Portable copy:</b> regenerate with <code>--inline</code> to embed the Markdown, then double-click.' +
+              '<br><br>(Or serve over HTTP: <code>python3 -m http.server 8080</code>.)</div>'
+            : '<div class="loaderr">Could not load <code>' + file + '</code>: ' + e.message + '</div>';
+        });
+    }"""
 
 
 def first_h1(md_text, fallback):
@@ -379,11 +427,29 @@ def first_h1(md_text, fallback):
     return fallback
 
 
-def build(md_path, out_path, mode, title, brand, subtitle, badge, mark, links, lang):
-    md_text = pathlib.Path(md_path).read_text(encoding='utf-8')
-    md_name = pathlib.Path(md_path).name
-    title = title or first_h1(md_text, pathlib.Path(md_path).stem)
-    subtitle = subtitle if subtitle is not None else title
+def build(inputs, out_path, mode, title, brand, subtitle, badge, mark, links, lang):
+    out_dir = pathlib.Path(out_path).resolve().parent
+    docs, md_scripts = [], []
+    for i, mp in enumerate(inputs):
+        mp = pathlib.Path(mp)
+        text = mp.read_text(encoding='utf-8')
+        label = first_h1(text, mp.stem)
+        rel = os.path.relpath(mp.resolve(), out_dir).replace(os.sep, '/')
+        entry = {'file': rel, 'label': label, 'id': None}
+        if mode == 'inline':
+            sid = f'md-{i}'
+            entry['id'] = sid
+            safe_md = re.sub(r'</(script)', r'<\\/\1', text, flags=re.I)
+            md_scripts.append(
+                f'  <script id="{sid}" type="text/markdown" data-file="{html.escape(rel)}">\n{safe_md}\n</script>'
+            )
+        docs.append(entry)
+
+    multi = len(docs) > 1
+    if title is None:
+        title = docs[0]['label'] if not multi else (out_dir.name or 'Documents')
+    if subtitle is None:
+        subtitle = title if not multi else f'{len(docs)} documents'
 
     badge_html = f'<span class="badge">{html.escape(badge)}</span>' if badge else ''
     links_html = ''.join(
@@ -393,15 +459,15 @@ def build(md_path, out_path, mode, title, brand, subtitle, badge, mark, links, l
 
     if mode == 'fetch':
         md_script = ''
-        bootstrap = FETCH_BOOTSTRAP.replace('__MDFILE__', md_name)
+        bootstrap = FETCH_BOOTSTRAP
+        first = html.escape(docs[0]['file'])
         helpbox = (
             '  <div class="helpbox" id="helpbox">⚠️ Opened via <code>file://</code> — '
-            f'the browser blocked loading <code>{html.escape(md_name)}</code> (CORS). '
-            'Serve the folder over HTTP, or regenerate without <code>--fetch</code> for double-click viewing.</div>'
+            f'the browser blocked loading <code>{first}</code> (CORS). '
+            'Serve the folder over HTTP, or regenerate with <code>--inline</code> for double-click viewing.</div>'
         )
     else:  # inline
-        safe_md = re.sub(r'</(script)', r'<\\/\1', md_text, flags=re.I)
-        md_script = f'  <script id="md" type="text/markdown">\n{safe_md}\n</script>'
+        md_script = '\n'.join(md_scripts)
         bootstrap = INLINE_BOOTSTRAP
         helpbox = ''
 
@@ -415,26 +481,51 @@ def build(md_path, out_path, mode, title, brand, subtitle, badge, mark, links, l
            .replace('__LINKS__', links_html)
            .replace('__HELPBOX__', helpbox)
            .replace('__MD_SCRIPT__', md_script)
-           .replace('__LANGOBJ__', lang_object(lang))
+           .replace('__LANGOBJ__', json.dumps(LANGS.get(lang, LANGS['en']), ensure_ascii=False))
+           .replace('__DOCS__', json.dumps(docs, ensure_ascii=False))
            .replace('__BOOTSTRAP__', bootstrap))
     pathlib.Path(out_path).write_text(out, encoding='utf-8')
     return out_path
 
 
+def collect_inputs(paths):
+    """Expand each path: a directory → its *.md (sorted), a file → itself. Dedupe, README first."""
+    found = []
+    for p in paths:
+        pp = pathlib.Path(p)
+        if pp.is_dir():
+            found.extend(sorted(pp.glob('*.md'), key=lambda x: x.name.lower()))
+        elif pp.suffix.lower() in ('.md', '.markdown') or pp.is_file():
+            found.append(pp)
+        else:
+            sys.exit(f'not a .md file or directory: {p}')
+    # dedupe preserving order
+    seen, uniq = set(), []
+    for f in found:
+        key = str(f.resolve())
+        if key not in seen:
+            seen.add(key); uniq.append(f)
+    # bring any README to the front
+    uniq.sort(key=lambda x: (0 if x.stem.lower() == 'readme' else 1))
+    if not uniq:
+        sys.exit('no .md files found')
+    return uniq
+
+
 def main():
-    ap = argparse.ArgumentParser(description='Render a Markdown file as a self-contained styled HTML page.')
-    ap.add_argument('input', help='input .md file')
-    ap.add_argument('-o', '--out', help='output .html (default: input with .html)')
+    ap = argparse.ArgumentParser(description='Render Markdown as a self-contained styled HTML page (single file or multi-doc index).')
+    ap.add_argument('input', nargs='+', help='one or more .md files, or a directory of .md files')
+    ap.add_argument('-o', '--out', help='output .html (default: <input>.html for one file, index.html for many)')
     mode = ap.add_mutually_exclusive_group()
     mode.add_argument('--fetch', action='store_const', const='fetch', dest='mode',
-                      help='fetch the .md at load (default) — live source, no inline copy; '
+                      help='fetch each .md at load (default) — live source, no inline copy; '
                            'view with no server via a dev browser, or serve over http')
     mode.add_argument('--inline', action='store_const', const='inline', dest='mode',
                       help='embed the Markdown — portable single file, double-click in any browser')
     ap.set_defaults(mode='fetch')
-    ap.add_argument('--title', help='page <title> / header subtitle (default: first H1)')
+    ap.add_argument('--title', help='page <title> / header subtitle (default: first H1, or dir name for multi-doc)')
     ap.add_argument('--brand', default='Document', help='brand name shown in the header')
-    ap.add_argument('--subtitle', help='header subtitle (default: title)')
+    ap.add_argument('--subtitle', help='header subtitle (default: title, or "N documents" for multi-doc)')
     ap.add_argument('--badge', help='small badge text, e.g. "DRAFT v0.1"')
     ap.add_argument('--mark', default='❖', help='1-3 char glyph in the header logo box')
     ap.add_argument('--lang', default='en', choices=sorted(LANGS),
@@ -443,6 +534,8 @@ def main():
                     help='header nav link, repeatable, e.g. --link "design.html|Design →"')
     args = ap.parse_args()
 
+    inputs = collect_inputs(args.input)
+
     links = []
     for spec in args.link:
         if '|' not in spec:
@@ -450,10 +543,16 @@ def main():
         href, label = spec.split('|', 1)
         links.append((href.strip(), label.strip()))
 
-    out_path = args.out or str(pathlib.Path(args.input).with_suffix('.html'))
-    build(args.input, out_path, args.mode, args.title, args.brand,
+    if args.out:
+        out_path = args.out
+    elif len(inputs) == 1:
+        out_path = str(inputs[0].with_suffix('.html'))
+    else:
+        out_path = str(inputs[0].resolve().parent / 'index.html')
+
+    build(inputs, out_path, args.mode, args.title, args.brand,
           args.subtitle, args.badge, args.mark, links, args.lang)
-    print(f'wrote {out_path}  (mode={args.mode}, lang={args.lang}, source={pathlib.Path(args.input).name})')
+    print(f'wrote {out_path}  (mode={args.mode}, lang={args.lang}, docs={len(inputs)})')
 
 
 if __name__ == '__main__':
