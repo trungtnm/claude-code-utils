@@ -16,10 +16,11 @@ description: >
 
 # Markdown → HTML document viewer
 
-Two jobs, in order. The second (rendering) is mechanical; the first (readability) is where the value is.
+Three core jobs, in order (then view + verify). The readability work is where the value is; the rendering is mechanical — but **Step 2 (asking the user how to build it) is required on every single run** and must never be skipped, even when the choice seems obvious.
 
 1. **Make the Markdown render well** — convert flows, relationships, and dense data into diagrams and tables. See `references/readability.md` — read it before restructuring any substantial doc. This is the part users actually feel.
-2. **Generate the viewer** — wrap the `.md` in a styled HTML shell with `scripts/md2html.py`.
+2. **Ask how to build it (REQUIRED every run)** — confirm the output mode and, when there are multiple files, the layout, before generating anything. See Step 2.
+3. **Generate the viewer** — wrap the `.md`(s) in a styled HTML shell with `scripts/md2html.py`.
 
 A document that is just walls of prose and runny inline-code chips is hard to scan no matter how nicely it's styled. The win comes from picking the right *representation* for each piece of content, then letting the viewer present it cleanly.
 
@@ -42,7 +43,35 @@ Full recipes, copy-paste diagram skeletons, before/after examples, and the Merma
 
 The guiding idea: pick the representation that makes the *structure* visible. Don't force it — if something is genuinely just a paragraph, leave it a paragraph; and never turn a literal artifact into a picture.
 
-## Step 2 — Generate the HTML viewer
+## Step 2 — Ask how to build it (REQUIRED — do this every run, before calling the script)
+
+**This step is mandatory on every invocation.** Before generating anything, confirm the build choices with the user using the question tool (`AskUserQuestion`). Do not assume defaults and skip the ask — even when the request looks obvious, ask. Put the recommended option first.
+
+First determine how many `.md` files are in scope (the file(s) the user named, or the `.md` files in the target directory). Then:
+
+1. **Output mode — ALWAYS ask.** "Embed the content, or load the `.md` live?"
+   - **Fetch — live `.md` loader (recommended):** the HTML `fetch()`es the `.md` at runtime, so the `.md` stays the single live source (edit, refresh). Needs a dev browser or HTTP to view (file:// CORS). → no `--inline` flag. This is the skill's whole point, so recommend it for anything still being edited.
+   - **Inline — embed content:** the Markdown is baked into the HTML → one portable file that double-clicks open in any browser. It's a snapshot, so it must be regenerated after edits. → `--inline`. Recommend when the user wants to send/share one file.
+
+2. **Layout — ask ONLY when there is more than one `.md` in scope.** "One index with a document switcher, or a separate HTML per file?"
+   - **One index with switcher (recommended):** a single HTML whose header dropdown swaps between docs. → one `md2html.py` call with all the files (or the directory).
+   - **Separate HTML per file:** one standalone page beside each `.md`. → call `md2html.py` once per file.
+   - If there is only **one** `.md`, skip this question entirely (it doesn't apply).
+
+Map the answers to commands:
+
+| Files in scope | Layout | Mode | Command(s) |
+|---|---|---|---|
+| one | — (n/a) | Fetch | `md2html.py doc.md` |
+| one | — (n/a) | Inline | `md2html.py doc.md --inline` |
+| many | One index | Fetch | `md2html.py a.md b.md …` (or a directory) |
+| many | One index | Inline | `md2html.py a.md b.md … --inline` |
+| many | Separate | Fetch | run `md2html.py X.md` once **per file** |
+| many | Separate | Inline | run `md2html.py X.md --inline` once **per file** |
+
+Only after both answers are in (or the layout question was correctly skipped for a single file) do you move on to generate.
+
+## Step 3 — Generate the HTML viewer
 
 `scripts/md2html.py` (standard library only) wraps a `.md` in a styled shell that renders client-side: marked.js for GFM (tables included), mermaid.js for ` ```mermaid ` fences, a sticky TOC sidebar with scroll-spy, and a print stylesheet so **Print → Save as PDF** exports cleanly.
 
@@ -72,9 +101,9 @@ Useful flags: `--title`, `--subtitle`, `--brand`, `--badge` (doc-type/status chi
 - **`--fetch` (default):** the HTML loads the `.md` with `fetch()` at runtime, so the `.md` stays the **single live source** — edit it, refresh, done. No copy of the content lives in the HTML. This is the default because keeping one source of truth is almost always what you want for a doc you're still editing.
 - **`--inline`:** embeds the Markdown inside the HTML → a portable single file anyone can double-click. Use this only for **sharing/emailing one file**; it's a snapshot, so regenerate after editing the `.md`.
 
-If a user says "no inline content" / "keep the .md as the source" → `--fetch`. If they say "I want to send this to someone" / "just double-click it" → `--inline`.
+You still ask in Step 2 every time — but use any signal the user already gave to pick which option you mark "(Recommended)": "keep the .md as the source" / "no inline content" → lead with **Fetch**; "I want to send this to someone" / "just double-click it" → lead with **Inline**.
 
-## Step 3 — View it with no server
+## Step 4 — View it with no server
 
 A `--fetch` page can't be loaded by a plain double-click: normal browsers block `file://` from fetching a sibling file (CORS). Two no-server options:
 
@@ -87,7 +116,7 @@ A `--fetch` page can't be loaded by a plain double-click: normal browsers block 
 
 A `--fetch` page opened in a normal browser doesn't fail silently — it shows a banner explaining both options. Serving over HTTP (`python3 -m http.server`) also works but is usually unnecessary.
 
-## Step 4 — Verify it actually renders
+## Step 5 — Verify it actually renders
 
 Don't assume — confirm, especially that Mermaid diagrams parsed (a single bad label silently drops a diagram). Two cheap checks:
 
