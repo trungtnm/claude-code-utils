@@ -125,7 +125,7 @@ TEMPLATE = r"""<!DOCTYPE html>
   .helpbox{display:none;padding:13px 22px;background:var(--help-bg);border-bottom:1px solid var(--help-line);color:var(--help-text);font-size:13px;line-height:1.6}
   .helpbox code{background:var(--card);border:1px solid var(--help-line);border-radius:5px;padding:2px 7px;font-family:Consolas,monospace;color:var(--primary-d);font-weight:600}
   .helpbox b{color:var(--help-text)}
-  .layout{display:flex;gap:0;align-items:flex-start;max-width:1280px;margin:0 auto}
+  .layout{display:flex;gap:0;align-items:flex-start;max-width:min(1680px,95vw);margin:0 auto}
   .toc{position:sticky;top:58px;align-self:flex-start;width:280px;flex-shrink:0;max-height:calc(100vh - 58px);overflow-y:auto;padding:22px 14px 40px 22px;font-size:13px}
   .toc .toc-h{font-size:11px;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);font-weight:700;margin:0 0 10px}
   .toc a{display:block;color:var(--text);text-decoration:none;padding:3px 8px;border-left:2px solid transparent;border-radius:0 4px 4px 0;opacity:.85}
@@ -145,12 +145,18 @@ TEMPLATE = r"""<!DOCTYPE html>
   .content p{margin:10px 0}
   .content a{color:var(--link);text-decoration:none}
   .content a:hover{text-decoration:underline}
+  /* In-body section cross-references (§2, §3.1 …) → click-to-scroll links */
+  .content a.secref{color:var(--accent);font-weight:600;text-decoration:none;white-space:nowrap;border-bottom:1px dashed color-mix(in srgb,var(--accent) 45%,transparent);scroll-margin-top:70px}
+  .content a.secref:hover{text-decoration:none;border-bottom-style:solid;background:color-mix(in srgb,var(--accent) 12%,transparent);border-radius:3px}
   .content ul,.content ol{margin:10px 0;padding-left:24px}
   .content li{margin:4px 0}
   .content code{background:var(--code-bg);border:1px solid var(--line);border-radius:5px;padding:1px 6px;font-family:'SF Mono',Consolas,Monaco,monospace;font-size:12.8px;color:var(--primary-d)}
   .content pre{position:relative;background:var(--code-bg);border:1px solid var(--line);border-radius:10px;padding:14px 16px;overflow-x:auto;margin:14px 0}
   .content pre code{background:none;border:none;padding:0;color:var(--code-text);font-size:12.6px;line-height:1.55;display:block;white-space:pre}
-  .content pre.mermaid{background:var(--card);text-align:center;border-style:dashed}
+  .content pre.mermaid{background:var(--card);text-align:center;border-style:dashed;overflow-x:auto}
+  .content pre.mermaid svg{max-width:none;height:auto}
+  /* Safety net: keep subgraph/cluster titles legible if mermaid drops its own label color */
+  .content pre.mermaid .cluster-label .nodeLabel,.content pre.mermaid .cluster .nodeLabel{fill:var(--text);color:var(--text)}
   .copy-btn{position:absolute;top:8px;right:8px;background:var(--card);color:var(--muted);border:1px solid var(--line);border-radius:6px;font-size:11px;padding:3px 9px;cursor:pointer;opacity:0;transition:opacity .15s;font-family:inherit}
   .content pre:hover .copy-btn,.copy-btn:focus{opacity:1}
   .copy-btn:hover{color:var(--primary);border-color:var(--primary)}
@@ -168,6 +174,7 @@ TEMPLATE = r"""<!DOCTYPE html>
   .callout-note{--c:#2563EB}.callout-tip{--c:#0E9F8A}.callout-important{--c:#8B5CF6}.callout-warning{--c:#B7791F}.callout-caution{--c:#DC2626}
   [data-theme="dark"] .callout-note{--c:#60A5FA}[data-theme="dark"] .callout-tip{--c:#2DD4BF}[data-theme="dark"] .callout-important{--c:#A78BFA}[data-theme="dark"] .callout-warning{--c:#E0A82E}[data-theme="dark"] .callout-caution{--c:#F87171}
   .content hr{border:none;border-top:1px solid var(--line);margin:28px 0}
+  .content img{max-width:100%;height:auto;display:block;margin:18px auto;border:1px solid var(--line);border-radius:8px;box-shadow:0 1px 3px rgba(10,30,60,.05)}
   .anchor{margin-left:8px;color:var(--muted);text-decoration:none;opacity:0;font-weight:400;font-size:.8em}
   .content h1:hover .anchor,.content h2:hover .anchor,.content h3:hover .anchor{opacity:.6}
   .anchor:hover{opacity:1 !important;color:var(--accent)}
@@ -232,13 +239,35 @@ __MD_SCRIPT__
 
     __BOOTSTRAP__
 
-    function mermaidTheme(){ return document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'neutral'; }
+    // Use mermaid's 'base' theme + explicit themeVariables so node-label text always has
+    // strong contrast against the node fill (dark-on-light / light-on-dark). Prebuilt themes
+    // bundle their own text color, which renders light labels on diagram-overridden fills.
+    function mermaidThemeVars(){
+      var dark = document.documentElement.getAttribute('data-theme') === 'dark';
+      return dark ? {
+        darkMode:true,
+        background:'#161e29', primaryColor:'#243447', secondaryColor:'#2a3a4d', tertiaryColor:'#1f2c3d',
+        primaryBorderColor:'#3d5775', secondaryBorderColor:'#3d5775', tertiaryBorderColor:'#3d5775',
+        primaryTextColor:'#e8eef5', secondaryTextColor:'#e8eef5', tertiaryTextColor:'#e8eef5',
+        textColor:'#e8eef5', nodeTextColor:'#e8eef5', titleColor:'#e8eef5',
+        mainBkg:'#243447', lineColor:'#8aa0b8', edgeLabelBackground:'#161e29',
+        clusterBkg:'#1f2c3d', clusterBorder:'#3d5775', labelBoxBkgColor:'#243447', labelTextColor:'#e8eef5'
+      } : {
+        darkMode:false,
+        background:'#ffffff', primaryColor:'#eef3f8', secondaryColor:'#f4f7fa', tertiaryColor:'#ffffff',
+        primaryBorderColor:'#9fb6cc', secondaryBorderColor:'#c2d2e0', tertiaryBorderColor:'#cdd9e5',
+        primaryTextColor:'#1a2433', secondaryTextColor:'#1a2433', tertiaryTextColor:'#1a2433',
+        textColor:'#1a2433', nodeTextColor:'#1a2433', titleColor:'#1a2433',
+        mainBkg:'#eef3f8', lineColor:'#5a6b7d', edgeLabelBackground:'#ffffff',
+        clusterBkg:'#f7f9fb', clusterBorder:'#cdd9e5', labelBoxBkgColor:'#eef3f8', labelTextColor:'#1a2433'
+      };
+    }
     function runMermaid(){
       document.querySelectorAll('.content .mermaid').forEach(function(m){
         if (m.dataset.src){ m.removeAttribute('data-processed'); m.innerHTML = m.dataset.src; }
       });
       try {
-        mermaid.initialize({ startOnLoad:false, theme:mermaidTheme(), securityLevel:'loose', flowchart:{useMaxWidth:true} });
+        mermaid.initialize({ startOnLoad:false, theme:'base', themeVariables:mermaidThemeVars(), securityLevel:'loose', flowchart:{useMaxWidth:false}, sequence:{useMaxWidth:false} });
         mermaid.run({ querySelector:'.content .mermaid' });
       } catch(e){ console.warn('mermaid', e); }
     }
@@ -296,9 +325,13 @@ __MD_SCRIPT__
       toc.innerHTML = '<div class="toc-h" id="toc-h">' + LANG.contents + '</div>';
       var heads = content.querySelectorAll('h1, h2, h3');
       var entries = [];
+      var secMap = {};            // section number as written ("2", "3.1") → heading id, for §-refs
       heads.forEach(function(h, i){
         var id = 'sec-' + i; h.id = id;
         var label = h.textContent;
+        // Derive the author's section number from the heading text ("§2 …", "2. …", "3.1 …").
+        var num = label.replace(/^\s*§\s*/, '').match(/^(\d+(?:\.\d+)*)/);
+        if (num && !(num[1] in secMap)) secMap[num[1]] = id;
         var a = document.createElement('a');
         a.href = sectionHref(id); a.textContent = label;
         a.className = 'lvl' + h.tagName.substring(1);
@@ -309,6 +342,10 @@ __MD_SCRIPT__
         h.appendChild(anchor);
         entries.push({ el:h, link:a });
       });
+
+      // In-body cross-references like "§2", "Mục §3.1" → links that scroll to that section.
+      linkSectionRefs(content, secMap);
+
       var spy = function(){
         var top = window.scrollY + 90, cur = null;
         entries.forEach(function(e){ if (e.el.offsetTop <= top) cur = e; });
@@ -318,6 +355,46 @@ __MD_SCRIPT__
       window.__mdvSpy = spy;
       window.addEventListener('scroll', spy, { passive:true });
       spy();
+    }
+
+    // Turn in-body section references (§2, § 3.1, …) into links that scroll to the matching
+    // heading. Walks text nodes only — never rewrites inside code, pre, or an existing link —
+    // and only links references whose number actually matches a heading in this doc.
+    function linkSectionRefs(content, secMap){
+      if (!secMap || !Object.keys(secMap).length) return;
+      var REF = /§\s?(\d+(?:\.\d+)*)/g;
+      var walker = document.createTreeWalker(content, NodeFilter.SHOW_TEXT, {
+        acceptNode: function(node){
+          if (!node.nodeValue || node.nodeValue.indexOf('§') === -1) return NodeFilter.FILTER_REJECT;
+          for (var p = node.parentNode; p && p !== content; p = p.parentNode){
+            var n = p.nodeName;
+            if (n === 'A' || n === 'CODE' || n === 'PRE' || n === 'H1' || n === 'H2' || n === 'H3')
+              return NodeFilter.FILTER_REJECT;
+          }
+          return NodeFilter.FILTER_ACCEPT;
+        }
+      });
+      var targets = [];
+      while (walker.nextNode()) targets.push(walker.currentNode);
+      targets.forEach(function(node){
+        var text = node.nodeValue, m, last = 0, frag = null;
+        REF.lastIndex = 0;
+        while ((m = REF.exec(text))){
+          if (!(m[1] in secMap)) continue;           // §N with no matching heading → leave as text
+          frag = frag || document.createDocumentFragment();
+          if (m.index > last) frag.appendChild(document.createTextNode(text.slice(last, m.index)));
+          var a = document.createElement('a');
+          a.className = 'secref';
+          a.href = sectionHref(secMap[m[1]]);
+          a.textContent = m[0];
+          frag.appendChild(a);
+          last = m.index + m[0].length;
+        }
+        if (frag){
+          if (last < text.length) frag.appendChild(document.createTextNode(text.slice(last)));
+          node.parentNode.replaceChild(frag, node);
+        }
+      });
     }
 
     function showReadTime(src){

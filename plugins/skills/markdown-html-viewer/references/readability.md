@@ -103,6 +103,12 @@ common culprits, learned the hard way:
 - **Use `<br/>` for line breaks in `flowchart` node labels**, and wrap edge labels in quotes when they
   contain spaces or punctuation: `A -->|"create VA · sign(req)"| B`.
 - **`erDiagram` relationship labels**: keep them one word, or quote them: `product ||--o{ line : "appears in"`.
+- **Long step chains: prefer `flowchart TB` (top-to-bottom) over `LR`.** A left-to-right chain of more
+  than ~5–6 nodes renders very wide and short — on screen it either scrolls horizontally or (in older
+  viewers) shrinks until the labels are unreadable. `TB` runs the same chain down the page: it fits the
+  container width, grows taller instead of wider, and stays legible. Reserve `LR` for short flows (≤5 nodes)
+  or genuinely horizontal pipelines. The viewer no longer down-scales diagrams to fit (so labels keep their
+  size), which means an over-wide `LR` becomes a horizontal scroll — another reason to pick `TB` for long flows.
 
 When a diagram is missing, assume a label problem first. Validate the single diagram in isolation:
 ```bash

@@ -92,6 +92,7 @@ Useful flags: `--title`, `--subtitle`, `--brand`, `--badge` (doc-type/status chi
 
 - **Light / dark theme toggle** — header button, persisted in `localStorage`, defaults to the OS `prefers-color-scheme`. Mermaid diagrams re-render to match the theme.
 - **Callouts from GFM alerts** — a blockquote starting `> [!NOTE]` / `[!TIP]` / `[!IMPORTANT]` / `[!WARNING]` / `[!CAUTION]` becomes a colored, icon-titled callout. Marker text is stripped; a plain `>` blockquote stays a plain blockquote. (This is the markdown-native way to get the reference repo's "callout" component without putting raw HTML in the source.)
+- **Section cross-reference links** — an in-body reference like `§2`, `§ 3.1`, or `Mục §10` becomes a click-to-scroll link to the matching heading. The section number is read from the heading's own text (`## 2. Tech stack`, `## §3 …`, `### 3.1 …`), so it works with hand-numbered docs. References inside code blocks or existing links are left alone, and a `§N` with no matching heading stays plain text. Uses the same deep-link routing as the TOC, so it never clobbers the selected doc in multi-doc mode.
 - **Copy buttons** on code blocks (hover-reveal), **hover-reveal heading anchor links**, a **scroll progress bar**, a **skip-to-content** link, and **reduced-motion** support.
 - **Auto reading-time** estimate in the header, and a **mobile TOC drawer** (hamburger + backdrop) below 1000px.
 - **Localized chrome** — `--lang` (en, vi, zh, ja, ko, es, fr, de) translates the TOC label, copy button, callout titles, and reading-time string, and sets `<html lang>`. Body content always renders in the source language; only the UI chrome is translated. Vietnamese labels carry full diacritics.
@@ -101,7 +102,7 @@ Useful flags: `--title`, `--subtitle`, `--brand`, `--badge` (doc-type/status chi
 - **`--fetch` (default):** the HTML loads the `.md` with `fetch()` at runtime, so the `.md` stays the **single live source** — edit it, refresh, done. No copy of the content lives in the HTML. This is the default because keeping one source of truth is almost always what you want for a doc you're still editing.
 - **`--inline`:** embeds the Markdown inside the HTML → a portable single file anyone can double-click. Use this only for **sharing/emailing one file**; it's a snapshot, so regenerate after editing the `.md`.
 
-You still ask in Step 2 every time — but use any signal the user already gave to pick which option you mark "(Recommended)": "keep the .md as the source" / "no inline content" → lead with **Fetch**; "I want to send this to someone" / "just double-click it" → lead with **Inline**.
+tYou still ask in Step 2 every time — but use any signal the user already gave to pick which option you mark "(Recommended)": "keep the .md as the source" / "no inline content" → lead with **Fetch**; "I want to send this to someone" / "just double-click it" → lead with **Inline**.
 
 ## Step 4 — View it with no server
 
@@ -135,4 +136,5 @@ If diagrams are missing, the cause is almost always a Mermaid label syntax issue
 - **Callout syntax is strict:** the alert marker must be the **first line** of the blockquote, on its own (`> [!WARNING]`), with the body on the following `>` lines. `> [!warning] text on the same line` still works (case-insensitive), but an unknown tag (e.g. `[!FYI]`) silently falls back to a plain blockquote — use only the five GitHub tags.
 - **Theme-aware callout/TOC tints use `color-mix()`** (Chrome 111+, Safari 16.2+, Firefox 113+). Current viewers handle it fine; on an ancient browser the tint just falls back to no background — harmless.
 - **Multi-doc `--fetch` needs every `.md` reachable from the index's folder.** Paths in the switcher are stored relative to the output HTML, so generating an index for files spread across distant directories still works, but moving the HTML away from the docs breaks the relative links. For a self-contained bundle to move/share, use `--inline`.
+- **Section refs match the heading's *written* number, not its position.** `§2` links to the heading whose text starts with `2` (or `§2`) — e.g. `## 2. Tech stack` — not to the second heading. So the doc must number its headings for `§N` links to resolve; an unnumbered heading can't be a `§` target. Only the bare `§N` token is linked (surrounding `[ ]` in `[§2]` stay as plain text). If two headings claim the same number, the first wins.
 - **CDN dependency:** marked.js and mermaid.js load from a CDN (works even over `file://`). Fully offline use needs vendored copies — note that to the user if it comes up.
