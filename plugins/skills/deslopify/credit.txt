@@ -1,0 +1,6 @@
+Vendored from: https://github.com/glaforge/deslopify/tree/main/deslopify
+Author: Guillaume Laforge (@glaforge)
+Style guide source: tropes.fyi
+
+Copied unmodified into this repo. No executable code — two Markdown files only
+(SKILL.md + references/style_guide.md). Reviewed and confirmed safe before adding.

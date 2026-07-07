@@ -1,0 +1,3 @@
+## Credits https://github.com/obra/the-elements-of-style
+
+Skill created by [**obra**](https://github.com/obra), from [`obra/the-elements-of-style`](https://github.com/obra/the-elements-of-style/tree/main/skills/writing-clearly-and-concisely). Vendored into this project unmodified. The underlying text of *The Elements of Style* (William Strunk Jr., 1918) is public domain.
