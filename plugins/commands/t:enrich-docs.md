@@ -30,6 +30,8 @@ Find undocumented or under-documented functionality in the project and create co
 
 - **Incremental only** — Never delete, rewrite, or restructure existing documentation. Only add.
 - **Narrative over reference** — Don't produce a dry dump of methods and parameters. Write prose that explains the "what", "why", and "how" so a new contributor can actually understand the system.
+- **Frame everything as if it was always present** — Write documentation in the voice of timeless reference material. Do NOT write "we added X", "X is now Y", "recently introduced", "new in this version", "previously X did Y but now it does Z", or any other changelog-style phrasing. Describe the current state of the code as a standing fact.
+- **Cover new commands, options, and features exhaustively** — During the codebase inventory, explicitly hunt for commands, flags, CLI subcommands, configuration keys, environment variables, hooks, skills, plugins, extension points, and public APIs that do not appear in existing docs. Missing surface area is the primary reason docs drift — document every one you find.
 - **Match existing style** — Follow the tone, formatting, and conventions already used in the existing docs.
 - **Be exhaustive but organized** — Cover everything you find, but group related topics into coherent pages rather than one giant page.
 - **Keep it pragmatic** — Focus on what a developer actually needs to know to use and contribute to the project. Skip trivial internals that don't affect usage.
