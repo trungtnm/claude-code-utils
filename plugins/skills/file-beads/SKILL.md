@@ -1,17 +1,24 @@
 ---
-description: File detailed Beads epics and issues from a plan
+description: File detailed Beads epics and issues from a plan, or a single rich bead from an enriched capture. Authoritative source for bead structure and templates — other skills (e.g. triage) delegate here.
 argument-hint: <plan-description-or-context>
 ---
 
-# File Beads Epics and Issues from Plan
+# File Beads Epics and Issues
 
-You are tasked with converting a plan into a comprehensive set of Beads epics and issues. Follow these steps carefully:
+This skill is the **single source of truth for bead structure** in this project. It covers two entry modes:
+
+- **Plan mode** (default): convert a multi-workstream plan into epics + child issues with dependencies. Use when invoked directly with a plan or planning doc.
+- **Single-bead mode**: produce one self-contained bead from an already-enriched context (a capture + investigation + answered questions). Use when invoked by the `triage` skill, or when the user has a single concrete task to file. Skip Steps 3, 5, 7 in this mode.
+
+Other skills (notably [[triage]]) MUST delegate to this skill rather than embedding their own bead templates, so the template stays consistent.
 
 ## Step 1: Understand the Plan
 
 First, review the plan context provided: `$ARGUMENTS`
 
 If no specific plan is provided, ask the user to share the plan or point to a planning document (check `.ccu/artifacts/` directory for recent plans).
+
+In **single-bead mode**, `$ARGUMENTS` will be a structured object from the caller (title, context, what-to-change, acceptance criteria, technical notes). Skip discovery and proceed directly to Step 4 using the appropriate template tier.
 
 ## Self-Documentation Principle
 
@@ -52,22 +59,39 @@ Epics should:
 
 ## Step 4: File Detailed Issues
 
-For each epic, create child issues with:
+For each epic (plan mode) or each enriched capture (single-bead mode), create the issue with:
 
 ```bash
 br create "<task title>" -t <type> -p <priority> --deps <parent-epic-id> --json
 ```
 
-Each issue MUST include:
+### Template Tiers
+
+Match template depth to the task — don't ceremonially pad small beads, but don't under-document risky ones either.
+
+**Tier 1 — Minimal** (small scope, well-trodden path, no design decisions). Required sections:
+- Project context (1 sentence — why this exists)
+- What to change (specific files/behaviors)
+- Acceptance criteria (verifiable checklist)
+
+**Tier 2 — Standard** (default for most beads). All of Tier 1, plus:
+- Reasoning / justification (why this approach, what alternatives were considered)
+- Considerations (constraints, edge cases, related decisions)
+- Technical notes (existing patterns, relevant files, gotchas)
+
+**Tier 3 — High-risk** (novel infra, external dependencies, security/billing/data-loss surface, anything where being wrong is expensive). All of Tier 2, plus:
+- `⚠ HIGH RISK: <reason>` prefix in the description
+- **Investigate before coding** section listing what to validate before writing the implementation (read docs, prototype the risky API surface, confirm assumptions)
+- Explicit rollback / blast-radius notes if the change is destructive
+
+When in doubt, escalate one tier. The cost of over-documenting a bead is a few extra minutes; the cost of under-documenting one is a stuck or wrong worker.
+
+### Required fields (all tiers)
 
 - **Clear title** - Action-oriented (e.g., "Implement X", "Add Y", "Configure Z")
-- **Project context** - How this task serves overarching goals (1-2 sentences connecting to the bigger picture)
-- **Detailed description** - What exactly needs to be done
-- **Reasoning / justification** - Why this approach? What alternatives were considered and why rejected?
-- **Acceptance criteria** - How do we know it's done?
-- **Considerations** - Constraints, edge cases, related decisions from planning that affect implementation
-- **Technical notes** - Implementation hints, gotchas, relevant files
-- **Dependencies** - Link to blocking issues with `--deps bd-<id>`
+- **Type** - `task`, `bug`, `feature`, or `epic`
+- **Priority** - see Step 6
+- **Dependencies** - Link to blocking issues with `--deps bd-<id>` (plan mode only)
 
 ## Step 5: Map Dependencies Carefully
 
@@ -79,9 +103,9 @@ For each issue, consider:
 
 Use `--deps bd-X,bd-Y` for multiple dependencies.
 
-## Example: Self-Documenting Bead
+## Example: Self-Documenting Bead (Tier 3 — High-risk)
 
-Here's an example showing how a well-documented bead gives workers everything they need:
+This example shows a fully-loaded Tier 3 bead. A Tier 1 bead would have just Project Context + What to Change + Acceptance Criteria.
 
 ```markdown
 # Implement rate limiting middleware for public API

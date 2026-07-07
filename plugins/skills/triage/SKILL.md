@@ -52,38 +52,28 @@ Read the capture text. Briefly investigate the codebase for context — check th
 - [x] 2026-03-19 10:15 — fix typo in error message (quick-fix, commit abc123)
 ```
 
-**new-bead**: A one-liner capture is NOT enough for an agent to work on. Before creating the bead, run a mini-discussion to enrich it:
+**new-bead**: A one-liner capture is NOT enough for an agent to work on. Before creating the bead, run a mini-discussion to enrich it, then delegate the actual filing to the [[file-beads]] skill (single-bead mode):
 
-1. **Investigate the codebase** — find relevant files, existing patterns, constraints
+1. **Investigate the codebase** — find relevant files, existing patterns, constraints. Note any high-risk surface (novel infra, security, billing, data-loss).
 2. **Ask the user 1-3 targeted questions** — one at a time, multiple choice preferred:
    - What exactly should change? (scope)
    - What does success look like? (acceptance criteria)
    - Any constraints or preferences? (approach)
    Skip questions you can answer from the codebase investigation.
-3. **Create a rich bead** with enough context for an agent to work autonomously:
-   ```bash
-   ACTOR="${BR_ACTOR:-assistant}"
-   br create --actor "$ACTOR" "<clear title>" \
-     --priority <assessed> \
-     --type <task|bug|feature> \
-     --labels from-capture \
-     --description "$(cat <<'BEAD'
-   ## Context
-   <Why this matters. What prompted it.>
+3. **Pick a template tier** (see [[file-beads]] Step 4):
+   - **Tier 1 (minimal)** — small, well-trodden, no design decisions
+   - **Tier 2 (standard)** — most beads land here (default)
+   - **Tier 3 (high-risk)** — novel/external infra, security, billing, anything where being wrong is expensive
+4. **Delegate to [[file-beads]]** in single-bead mode, passing the enriched payload:
+   - Title (action-oriented)
+   - Type, priority, labels (include `from-capture`)
+   - Project context, what to change, acceptance criteria
+   - For Tier 2+: reasoning, considerations, technical notes
+   - For Tier 3: `⚠ HIGH RISK` reason + "investigate before coding" items
 
-   ## What to Change
-   <Specific files, modules, or behaviors to modify.>
+   file-beads owns the canonical `br create` invocation and template — do not embed your own template here.
 
-   ## Acceptance Criteria
-   - [ ] <verifiable criterion 1>
-   - [ ] <verifiable criterion 2>
-
-   ## Technical Notes
-   <Existing patterns to follow, constraints, relevant files found during investigation.>
-   BEAD
-   )"
-   ```
-4. Update capture: `- [x] 2026-03-19 10:15 — {text} (-> bead {ID})`
+5. Update capture: `- [x] 2026-03-19 10:15 — {text} (-> bead {ID})`
 
 The bead description must be self-contained — a worker agent with zero prior context should be able to read it and start implementing without asking questions.
 
@@ -150,7 +140,9 @@ If `br` is not available: skip bead creation and injection. Instead, write actio
 
 - **Process ALL unchecked captures** — don't skip any (except `[deferred]` items, re-assess those only if context has changed)
 - **Classify quickly, enrich thoroughly** — classification is fast (seconds), but new-bead enrichment takes time (1-3 questions per bead). This is intentional: cheap captures in, rich beads out.
-- **Beads must be agent-ready** — a worker agent reading the bead description should be able to start implementing without asking questions. If the bead doesn't have context, acceptance criteria, and technical notes, it's not ready.
+- **Delegate bead structure to [[file-beads]]** — never embed your own bead template here. Pass an enriched payload + chosen template tier to file-beads and let it own the `br create` call. This keeps triage and plan-driven filing consistent.
+- **Match template tier to risk** — small obvious work gets Tier 1; default to Tier 2; escalate to Tier 3 for anything novel/external/security/billing. When in doubt, escalate one tier.
+- **Beads must be agent-ready** — a worker agent reading the bead description should be able to start implementing without asking questions. The chosen tier's required sections are the minimum.
 - **Prefer inject over new-bead** — if an existing bead covers 80% of the capture, inject rather than creating a duplicate
 - **Quick-fixes earn their name** — if it takes more than 5 minutes, reclassify as new-bead
 - **One question at a time** — when enriching new-beads, ask the user one question at a time, multiple choice preferred. Don't batch 5 questions into one message.
