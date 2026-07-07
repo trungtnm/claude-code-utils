@@ -12,8 +12,7 @@ First read ALL of the AGENTS.md, CLAUDE.md file and README.md file super careful
      .ccu/CAPTURES.md
      .ccu/PRIME-CACHE.md
      ```
-   If `.ccu/config` exists, read it for the `obsidian_vault:` path. If configured, verify the vault path is accessible and create `{vault}/ccu/` subdirectories (`captures/`, `decisions/`, `evidence/`, `sessions/`) if missing.
-   If `.ccu/` already has legacy files (`SESSION.md`, `CHECKPOINT.md`, `HANDOFF.md`), ignore them — these are deprecated. Check Obsidian vault `ccu/sessions/` for recent handoff notes instead.
+   If `.ccu/` already has legacy files (`SESSION.md`, `CHECKPOINT.md`), ignore them — these are deprecated. Check `.ccu/HANDOFF.md` for a recent handoff instead.
    Report any findings to the user.
 
 1.8. **Load procedural memory** -- If `cm` is installed, check system health and load relevant context:
@@ -95,34 +94,66 @@ First read ALL of the AGENTS.md, CLAUDE.md file and README.md file super careful
 
 3.5. **Write prime cache** -- After synthesis, write or update `.ccu/PRIME-CACHE.md`. Skip this step in cached mode (nothing changed).
 
+   **The cache must be exhaustive.** Its purpose is to fully replace re-reading the source docs and re-exploring the codebase. A cached prime that loads this file should give the agent the SAME depth of understanding as a full prime. Do not summarize — dump everything you learned.
+
    ```markdown
    ---
-   version: 1
    date: "{CURRENT_DATE}"
    head: "{CURRENT_HEAD}"
    timestamp: "{ISO 8601 timestamp}"
    docs_hash: "{DOCS_HASH}"
    ---
 
-   # Cached Prime Synthesis
+   <!-- DO NOT EDIT: this file is managed by /t:prime. Other commands and agents
+        should READ it, not write it. To refresh, run /t:prime (use --fresh to
+        force a full rebuild). -->
 
-   ## Project Overview
-   {full synthesis from Step 3}
+   # Cached Prime — {project name}
 
-   ## Technical Architecture
-   {architecture and key components}
+   ## Project Purpose and Goals
+   {What this project is, what problem it solves, who it's for, how it's installed/used.
+   Include the full context from README — not a one-liner, but the complete "why".}
 
-   ## Conventions and Patterns
-   {important conventions}
+   ## Technical Architecture (Detailed)
+   {Complete architecture description. For each major component type (skills, agents,
+   commands, etc.), list ALL items with their specific purpose and how they interconnect.
+   Include: plugin system mechanics, how files are discovered, invocation patterns,
+   data flow between components. This section should be detailed enough that someone
+   reading it could answer "how does X work?" without reading source files.}
 
-   ## Active Work
-   {active beads, open issues, in-progress work}
+   ## Every Skill, Agent, and Command
+   {List ALL skills with: name, what it does, key triggers, important behaviors.
+   List ALL agents with: name, role, tool access scope, when to use.
+   List ALL commands with: name, purpose, what it reads/writes.
+   This is the reference catalog — comprehensive, not summarized.}
+
+   ## Conventions, Rules, and Patterns
+   {ALL project conventions from CLAUDE.md, AGENTS.md, README.md, and DECISIONS.md.
+   Include: naming conventions, file formats, commit message style, testing requirements,
+   quality gates, architectural decisions (with rationale), anti-patterns to avoid.
+   Each rule should include enough context that an agent can follow it without
+   looking up the source.}
+
+   ## Dependencies and Tooling
+   {External tools the project depends on: br, bv, cm, cass, ubs, dcg — what each
+   does, how to invoke it, common flags. Include graceful degradation: what happens
+   when a tool is missing.}
+
+   ## Session State and Persistence
+   {How the .ccu/ directory works, what goes where, which commands read/write which
+   files (CAPTURES.md, PRIME-CACHE.md, DECISIONS.md, EVIDENCE.md, HANDOFF.md), and
+   which are gitignored vs committed.}
+
+   ## Active Work and Project Status
+   {Open beads, in-progress work, untriaged captures, recent completed beads
+   with commit hashes. Current branch, recent git activity.}
 
    ## Codebase Map
-   {project structure, key files, roles}
+   {Full directory tree of plugins/ with every file and its role. Not just
+   top-level directories — include individual files that matter.}
    ```
 
-   For **incremental prime**: merge the incremental findings into the existing synthesis body — produce a complete, current synthesis, not a growing append log. The cache should always represent the full current understanding.
+   For **incremental prime**: merge the incremental findings into the existing cache body — produce a complete, current document, not a growing append log. The cache should always represent the full current understanding.
 
 4. **Execute follow-up task (if provided)** -- If a follow-up task is given below, begin executing it now. You must have completed the applicable prime steps first — do not skip or shortcut orientation. If no follow-up task is provided, stop here and wait for user instructions.
 
