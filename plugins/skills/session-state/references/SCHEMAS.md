@@ -54,25 +54,30 @@ Exact formats for each artifact file. Commands and skills should follow these fo
 
 ## HANDOFF.md
 
-```markdown
-# Session Handoff
+All .ccu/ artifact writes MUST include the staleness header so consumers can detect outdated content.
 
-## What Was Done
-- {bead-id}: {summary} (commit {hash})
-- {bead-id}: {summary} (commit {hash})
+```markdown
+---
+last_updated: {ISO timestamp, e.g., 2026-03-24T08:00:00Z}
+session_id: {session UUID}
+---
+
+# Session Handoff
 
 ## Decisions Made
 - {decision and why — e.g., "Chose retry over skip because blocked beads get human review"}
-
-## Dead Ends (don't repeat these)
-- {approach tried and why it failed — e.g., "Tried mocking the DB but tests diverged from prod behavior"}
 
 ## Next Action
 {Explicit single recommendation for what the next session should do first.}
 
 ## Open Questions
 - {anything unresolved that needs human input}
+
+## In-Progress Beads
+- {bead-id} — {title}: {current state and what remains}
 ```
+
+**Note:** "What Was Done" and "Dead Ends" sections are no longer included — CASS auto-indexes session history, and CM captures anti-patterns via `cm mark --harmful`.
 
 ## EVIDENCE.md
 
@@ -135,8 +140,36 @@ Simple checklist format. Unchecked = untriaged. Checked = processed.
 ```markdown
 # Captures
 
-- [ ] {YYYY-MM-DD HH:MM} — {idea text}
-- [ ] {YYYY-MM-DD HH:MM} — {idea text}
-- [x] {YYYY-MM-DD HH:MM} — {idea text} (-> bead {id})
-- [x] {YYYY-MM-DD HH:MM} — {idea text} (out-of-scope: {reason})
+- [ ] C{NN} | {YYYY-MM-DD HH:MM} — {idea text}
+- [ ] C{NN} | {YYYY-MM-DD HH:MM} — {idea text} [attachment: .ccu/captures/{filename}]
+- [x] C{NN} | {YYYY-MM-DD HH:MM} — {idea text} (-> bead {id})
+- [x] C{NN} | {YYYY-MM-DD HH:MM} — {idea text} (out-of-scope: {reason})
 ```
+
+## PRIME-CACHE.md
+
+**Exhaustive** knowledge dump from the last full prime. Must contain enough detail that a cached prime gives the same depth of understanding as a full prime — not a summary, but everything learned.
+
+```yaml
+---
+date: "{YYYY-MM-DD}"
+head: "{git HEAD commit SHA}"
+timestamp: "{ISO 8601}"
+docs_hash: "{SHA-256 of project docs}"
+---
+
+<!-- DO NOT EDIT: this file is managed by /t:prime. Other commands and agents
+     should READ it, not write it. To refresh, run /t:prime (use --fresh to
+     force a full rebuild). -->
+```
+
+The body contains these sections (all must be comprehensive, not summarized):
+
+- **Project Purpose and Goals** — full context, not a one-liner
+- **Technical Architecture (Detailed)** — complete architecture, component interactions, data flow
+- **Every Skill, Agent, and Command** — exhaustive catalog with purpose, triggers, behaviors
+- **Conventions, Rules, and Patterns** — all rules with enough context to follow without looking up source
+- **Dependencies and Tooling** — external tools, how to invoke, graceful degradation
+- **Session State and Persistence** — two-layer architecture, what goes where, config
+- **Active Work and Project Status** — open beads, captures, recent git activity
+- **Codebase Map** — full directory tree with every file's role

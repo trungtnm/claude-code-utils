@@ -1,6 +1,6 @@
 The user has confirmed that the current work is complete. Follow these steps:
 
-0.5. **Audit decisions** — If significant work was done this session (beads completed, features implemented), run `/t:audit-decisions today` to capture undocumented decisions. If Obsidian is configured (`.ccu/config` has `obsidian_vault:`), write each new decision as an individual note to `{vault}/ccu/decisions/`.
+0.5. **Audit decisions** — If significant work was done this session (beads completed, features implemented), run `/t:audit-decisions today` to capture undocumented decisions. Append each new decision as a `##` section to `.ccu/DECISIONS.md`.
 
 0.8. **Check for untriaged captures** — If `.ccu/CAPTURES.md` has unchecked items, warn: "There are N untriaged captures in .ccu/CAPTURES.md. Consider running /triage before ending the session."
 

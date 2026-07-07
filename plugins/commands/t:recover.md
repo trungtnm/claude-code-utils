@@ -4,14 +4,10 @@ Recover session context after a crash, timeout, or new session start. Synthesize
 
 1. **Gather state** — Read all available context sources (skip any that don't exist):
 
-   **Obsidian vault** (primary source for handoffs and decisions):
-   - Read `.ccu/config` to get the vault path
-   - If configured, find the most recent handoff note: `ls -t {vault}/ccu/sessions/*-handoff.md 2>/dev/null | head -1`
-   - Read recent decision notes: `ls -t {vault}/ccu/decisions/*.md 2>/dev/null | head -5`
-   - Read recent evidence notes: `ls -t {vault}/ccu/evidence/*.md 2>/dev/null | head -3`
-
-   **Fallback .ccu/ files** (for projects without Obsidian):
-   - `.ccu/HANDOFF.md` — what the last session explicitly left for you (legacy location)
+   **`.ccu/` files** (primary source for handoffs, decisions, and evidence):
+   - `.ccu/HANDOFF.md` — what the last session explicitly left for you
+   - `.ccu/DECISIONS.md` — recent architectural decisions and why
+   - `.ccu/EVIDENCE.md` — what recently completed beads verified
    - `.ccu/CAPTURES.md` — pending ideas
 
    **Git and tools** (always available):
@@ -23,7 +19,7 @@ Recover session context after a crash, timeout, or new session start. Synthesize
    - `cm context "<next action from handoff>" --json --limit 10 2>/dev/null` — procedural memory (if cm available)
 
 1.5. **Reality-check for staleness** — Before trusting handoff content, verify it matches current reality:
-   - Check the handoff note's date from frontmatter or file modification time
+   - Check the handoff note's date from its heading or file modification time
    - If the handoff is >24h old, treat it as **stale** and flag: "Handoff note is N days old — cross-referencing with git..."
    - Cross-reference handoff claims against git state:
      - If handoff says "working on bead X" but `br show X --json 2>/dev/null` shows it's closed → **override**: "Bead X was completed since last handoff"
@@ -37,11 +33,11 @@ Recover session context after a crash, timeout, or new session start. Synthesize
    ## Recovery Briefing
 
    ### Last Session
-   - Source: {Obsidian handoff note | .ccu/HANDOFF.md | git only}
-   - Date: {from handoff frontmatter or "unknown"}
+   - Source: {.ccu/HANDOFF.md | git only}
+   - Date: {from handoff heading or "unknown"}
 
    ### What Was Done
-   - {list from evidence notes, handoff, recent commits}
+   - {list from .ccu/EVIDENCE.md, handoff, recent commits}
 
    ### Decisions Made (from last session)
    - {from handoff — decisions and WHY}
@@ -63,7 +59,7 @@ Recover session context after a crash, timeout, or new session start. Synthesize
 ## Rules
 
 - **Read-only investigation** — do not modify any files or bead states. Just report.
-- **Obsidian first, .ccu/ fallback** — check Obsidian vault for handoff notes first. Fall back to `.ccu/HANDOFF.md` only if Obsidian is not configured or has no notes.
-- **Graceful degradation** — if neither Obsidian nor `.ccu/` exist, use `git log` + `git status` + `br` only. Always produce some briefing.
+- **`.ccu/` first** — check `.ccu/HANDOFF.md` and the other `.ccu/` logs for what the last session left behind.
+- **Graceful degradation** — if `.ccu/` doesn't exist, use `git log` + `git status` + `br` only. Always produce some briefing.
 - **Be specific** — don't say "some work was done." Say exactly which beads, which commits, which files.
 - **Handoff note is the primary source** — if it exists, it was deliberately written by the previous session.
