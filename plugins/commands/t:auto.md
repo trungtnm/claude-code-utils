@@ -1,12 +1,21 @@
 Register with MCP Agent Mail and introduce yourself to the other agents. Be sure to check your agent mail and to promptly respond if needed to any messages; then proceed meticulously with your next assigned beads, working on the tasks systematically and meticulously and tracking your progress via beads and agent mail messages. Don't get stuck in "communication purgatory" where nothing is getting done; be proactive about starting tasks that need to be done, but inform your fellow agents via messages when you do so and mark beads appropriately. When you're not sure what to do next, use the bv tool mentioned in AGENTS.md, CLAUDE.md to prioritize the best beads to work on next; pick the next one that you can usefully work on and get started. Make sure to acknowledge all communication requests from other agents and that you are aware of all active agents and their names. Use /effort max.
 
+**Mode determination** — Before Step 1, decide whether to run in **solo** or **multi-agent** mode:
+- If `$ARGUMENTS` contains `--solo` or `solo` → **solo** (explicit).
+- Otherwise, count ready beads: `br ready --json 2>/dev/null | jq 'length'`. If the count is less than 5 → **solo** (auto: not enough parallel work to justify coordination overhead).
+- Otherwise → **multi-agent**.
+
+Report the chosen mode to the user in one line (e.g., "Running in **solo** mode: 3 ready beads.") before proceeding.
+
+In **solo mode**, skip every step and sub-step marked **[Skip in solo mode]** below: no Agent Mail registration, peer discovery, handshakes, inbox, messaging, or file reservations. You still use beads, `bv`, and `cm`. Never call any `mcp__mcp-agent-mail__*` tool in solo mode.
+
 ## Steps
 
 0. **Load project context** -- Before doing anything else, build situational awareness by reading (skip any that don't exist):
    - `CLAUDE.md` or `AGENTS.md` — project conventions, rules, architecture, coding patterns
    - `README.md` — what the project is, tech stack, how it works
-   - `.ccu/config` — check for `obsidian_vault:` path; if configured, read recent decision and evidence notes from `{vault}/ccu/decisions/` and `{vault}/ccu/evidence/`
-   - Obsidian `{vault}/ccu/sessions/` — most recent handoff note (if Obsidian configured)
+   - `.ccu/DECISIONS.md` and `.ccu/EVIDENCE.md` — recent architectural decisions and completed-bead evidence
+   - `.ccu/HANDOFF.md` — most recent handoff, if the last session paused mid-work
    - `.ccu/CAPTURES.md` — pending ideas
    - `git log --oneline -15` — recent activity and direction
    This context shapes how you implement every bead. Without it, you risk writing code that violates project conventions or duplicates existing work.
@@ -17,7 +26,7 @@ Register with MCP Agent Mail and introduce yourself to the other agents. Be sure
    ```
    If CM returns results, keep the `relevantBullets` and `antiPatterns` in mind throughout the session. Reference rule IDs (e.g., "Following b-8f3a2c...") when a rule influences your decisions. This is how the team's accumulated knowledge flows into your work.
 
-1. **Register and discover peers** -- Follow this sequence to register and establish contacts with all other agents:
+1. **Register and discover peers** **[Skip in solo mode]** -- Follow this sequence to register and establish contacts with all other agents:
 
    a. **Register**: Call `macro_start_session` with `human_key` = absolute path to this repo, `program` = "claude-code", `model` = your model name. Save the returned `agent.name` — this is YOUR identity for the session.
 
@@ -35,7 +44,7 @@ Register with MCP Agent Mail and introduce yourself to the other agents. Be sure
 
    f. **Second discovery pass**: After ~5 seconds, repeat steps (c) and (d) to catch agents that registered after your first pass. This handles the race condition where agents start at slightly different times.
 
-2. **Check inbox** -- Fetch and read all pending messages with `include_bodies` = true. For any pending contact requests, call `respond_contact` with `accept` = true. Acknowledge and respond to any messages that need replies. If you discover new agent names in messages that you haven't handshaked with yet, repeat step 1d for them.
+2. **Check inbox** **[Skip in solo mode]** -- Fetch and read all pending messages with `include_bodies` = true. For any pending contact requests, call `respond_contact` with `accept` = true. Acknowledge and respond to any messages that need replies. If you discover new agent names in messages that you haven't handshaked with yet, repeat step 1d for them.
 
 3. **Assess work** -- Use `bv` (Beads Viewer) to survey the backlog and identify the highest-priority beads you can usefully work on. If no beads exist, check `.ccu/CAPTURES.md` for untriaged items and process them.
 
@@ -51,24 +60,23 @@ Register with MCP Agent Mail and introduce yourself to the other agents. Be sure
    - Either work on the blocker first, or pick a different ready bead
    - If ALL beads are blocked by other agents' in-progress work, **poll and wait** (see step 9)
 
-   **Reserve files before editing.** After claiming the bead, determine which files you will modify (from the bead description, requirements, or codebase investigation). Then reserve them:
+   **Reserve files before editing.** **[Skip in solo mode]** After claiming the bead, determine which files you will modify (from the bead description, requirements, or codebase investigation). Then reserve them:
    ```
    file_reservation_paths(paths=["src/foo.ts", "src/bar.ts", ...], reason="{BEAD_ID}")
    ```
    If the reservation fails (another agent already holds those files), **do not proceed** — pick a different ready bead instead. File reservations are the mechanical safety net that prevents two agents from editing the same file simultaneously.
 
-   Notify fellow agents via agent mail that you are starting work on the claimed bead.
+   **[Skip in solo mode]** Notify fellow agents via agent mail that you are starting work on the claimed bead.
 
-5. **Execute** -- Work through the bead's requirements systematically and meticulously. Track progress with bead comments and status updates. If you discover you need to edit additional files not in your original reservation, reserve them first with `file_reservation_paths` before touching them.
+5. **Execute** -- Work through the bead's requirements systematically and meticulously. Track progress with bead comments and status updates. **[Multi-agent mode]** If you discover you need to edit additional files not in your original reservation, reserve them first with `file_reservation_paths` before touching them.
 
-6. **Communicate** -- Keep fellow agents informed of progress, blockers, and completions via agent mail. Respond promptly to any incoming messages between work steps.
+6. **Communicate** **[Skip in solo mode]** -- Keep fellow agents informed of progress, blockers, and completions via agent mail. Respond promptly to any incoming messages between work steps.
 
-7. **Capture decisions** -- If you made technology, schema, API, or architecture choices during this bead, write each as an individual note to the Obsidian vault (if configured via `.ccu/config`):
-   - Write to `{vault}/ccu/decisions/{ID}-{slugified-title}.md` with YAML frontmatter (id, title, date, tags, project)
-   - If Obsidian is not configured, append to `.ccu/DECISIONS.md` as fallback
+7. **Capture decisions** -- If you made technology, schema, API, or architecture choices during this bead, append each as a new `##` section to `.ccu/DECISIONS.md` (create the file if it doesn't exist):
+   - Include date, context, decision, rationale, and alternatives considered.
    - Don't defer all decision documentation to `/t:audit-decisions` — capture the obvious ones inline while the context is fresh.
 
-   Also write evidence for completed beads to `{vault}/ccu/evidence/{bead-id}-{slugified-title}.md` with commit hash, files changed, and verification results.
+   Also append evidence for completed beads to `.ccu/EVIDENCE.md` (one `##` section per bead) with commit hash, files changed, and verification results.
 
 8. **Record outcome** -- After completing a bead, record the outcome so CM can learn from it (skip if `cm` is not installed):
    ```bash
@@ -83,11 +91,11 @@ Register with MCP Agent Mail and introduce yourself to the other agents. Be sure
 9. **Loop** -- When a bead is complete:
    a. Re-check bead state with `br show <id> --json 2>/dev/null` — if another agent already closed it, skip closing (don't treat "already closed" as an error, just move on)
    b. If still open, close it with `br close <id> --reason "..."`
-   c. Release file reservations (`release_file_reservations()`)
+   c. Release file reservations (`release_file_reservations()`) **[Skip in solo mode]**
    d. Sync beads (`br sync --flush-only 2>/dev/null`)
    e. Return to step 2. Repeat until no actionable work remains.
 
-   **When all remaining beads are blocked** (waiting on other agents), do NOT ask the user whether to poll or wait. Instead, automatically:
+   **When all remaining beads are blocked** (waiting on other agents), do NOT ask the user whether to poll or wait. **In solo mode, skip this poll loop entirely** — there are no other agents to unblock anything. If every remaining bead is blocked by an unmet dependency, stop and report the blocked graph to the user. Otherwise (multi-agent mode), automatically:
    a. Check inbox for messages (other agents may have completed blockers)
    b. Run `br ready --json 2>/dev/null` to check if any beads became unblocked
    c. If still all blocked, wait ~30 seconds and repeat from (a)
