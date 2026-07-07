@@ -30,7 +30,7 @@ Full lifecycle for a new feature from idea to shipped.
 **Sequence:**
 1. **Discuss** — `/t:discuss` for requirements gathering
    - Skip if: `.ccu/REQUIREMENTS.md` already has requirements for this feature
-2. **Plan** — `/planning` to decompose into beads
+2. **Plan** — `/plan-beads` to decompose into beads
    - Skip if: beads already exist for this feature (check `br list`)
 3. **Review beads** — `/review-beads` to optimize before work
    - Skip if: beads have already been reviewed (check bead comments for review notes)
@@ -92,6 +92,8 @@ No bead creation before the fix. No evidence logging. No TDD requirement. No pee
 
 Three-layer quality sweep with issue accumulator: find bugs, catch session mistakes, polish the experience, then fix everything before committing.
 
+**Critical: review window includes committed work.** Recipes like `/t:auto` commit as they go, so by the time `quality-review` runs, the working tree is often clean. The recipe MUST review everything produced during the session — both committed and uncommitted — not just `git diff` against HEAD. Step 0 below computes that window once and feeds it into every subsequent step.
+
 **Issue Accumulator:** Maintain a running markdown checklist of all issues found but NOT fixed across steps. Initialize as empty at recipe start. After each step, append any unfixed issues with their source step and severity:
 ```markdown
 ## Accumulated Unfixed Issues
@@ -101,18 +103,58 @@ Three-layer quality sweep with issue accumulator: find bugs, catch session mista
 ```
 
 **Sequence:**
+
+0. **Compute review window** — Resolve a baseline commit and the file list to review. Run this once before any review step; export `REVIEW_BASE` and `REVIEW_FILES` for the rest of the recipe.
+
+   ```bash
+   # 1. Pick a baseline (most specific wins)
+   if [ -n "$CCU_REVIEW_BASE" ]; then
+     REVIEW_BASE="$CCU_REVIEW_BASE"                                # explicit override
+   elif [ -f .ccu/SESSION.md ] && grep -q '^start_sha:' .ccu/SESSION.md; then
+     REVIEW_BASE=$(awk '/^start_sha:/ {print $2; exit}' .ccu/SESSION.md)
+   elif main_ref=$(git rev-parse --verify --quiet origin/main || git rev-parse --verify --quiet main); then
+     REVIEW_BASE=$(git merge-base "$main_ref" HEAD)                # branch base
+   else
+     REVIEW_BASE=$(git log --since='2 hours ago' --pretty=format:%H | tail -1)
+   fi
+
+   # 2. Files changed in committed range + files dirty in working tree
+   #    --diff-filter=ACMR drops deletions (no point scanning files that no longer exist)
+   COMMITTED=$(git diff --name-only --diff-filter=ACMR "$REVIEW_BASE"...HEAD 2>/dev/null)
+   WORKTREE=$(git diff --name-only --diff-filter=ACMR 2>/dev/null)
+   UNTRACKED=$(git ls-files --others --exclude-standard 2>/dev/null)
+
+   REVIEW_FILES=$(printf '%s\n%s\n%s\n' "$COMMITTED" "$WORKTREE" "$UNTRACKED" \
+     | sort -u | grep -v '^$' | grep -Ev '^(node_modules|dist|build|\.next|target)/' )
+
+   # 3. Comma-joined form for tools that take --files=
+   REVIEW_FILES_CSV=$(printf '%s' "$REVIEW_FILES" | paste -sd, -)
+   ```
+
+   - If `REVIEW_FILES` is empty AND working tree is clean AND there are no commits since `REVIEW_BASE`: report "Nothing produced this session — skipping quality-review" and exit. This is the only legitimate empty-scan path.
+   - Otherwise, proceed. Report: "Reviewing {N} files against baseline {short-sha}."
+
 1. **Peer review** — `/t:peer-review {$ARGUMENTS}` for deep bug/logic/security analysis
-   - Skip if: no code changes exist (clean git status and no session changes)
+   - Pass `REVIEW_FILES` as the explicit scope so peer-review covers committed work, not just dirty files
+   - Skip if: `REVIEW_FILES` is empty
    - After: append any issues found but not fixed to the accumulator
 2. **Fresh eyes** — `/t:fresh-eyes` to re-read session changes with a fresh perspective
-   - Skip if: no files were modified in this session
+   - Pass `REVIEW_FILES` as the explicit scope
+   - Skip if: `REVIEW_FILES` is empty
    - After: append any issues found but not fixed to the accumulator
 3. **Polish** — `/t:polish {$ARGUMENTS}` for UI/UX refinement
-   - Skip if: project has no UI (pure CLI tool, library, or backend-only)
+   - Skip if: project has no UI (pure CLI tool, library, or backend-only) OR `REVIEW_FILES` contains no UI files
    - After: append any issues found but not fixed to the accumulator
-4. **Run UBS** — `ubs --diff --format=toon` as final static analysis gate
-   - Skip if: `ubs` not installed
-   - After: append any findings to the accumulator (exclude false positives)
+4. **Run UBS** — static analysis gate over the full review window, not just `--diff`:
+   ```bash
+   if command -v ubs >/dev/null && [ -n "$REVIEW_FILES_CSV" ]; then
+     ubs --files="$REVIEW_FILES_CSV" --format=toon
+   fi
+   ```
+   - Do **NOT** use `ubs --diff` here — it only sees the working tree, missing all committed work from this session.
+   - Skip if: `ubs` not installed OR `REVIEW_FILES_CSV` is empty.
+   - If ubs reports "nothing to scan" despite `REVIEW_FILES_CSV` being non-empty, that's a bug — surface it to the user rather than silently passing.
+   - After: append any findings to the accumulator (exclude false positives).
 5. **Final fix pass** — Review the full accumulated issues list. If no unfixed issues remain, skip this step.
    - Present the complete accumulator to the user with a summary: "{N} unfixed issues from {steps}."
    - Fix ALL issues that are fixable. Work through them systematically, highest severity first.

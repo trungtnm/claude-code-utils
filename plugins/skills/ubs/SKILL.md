@@ -33,8 +33,23 @@ ubs <changed-files> --fail-on-warning
 ubs file.ts file2.py                    # Specific files (< 1s)
 ubs $(git diff --name-only --cached)    # Staged files
 ubs --staged                            # Same, cleaner syntax
-ubs --diff                              # Working tree vs HEAD
+ubs --diff                              # Working tree vs HEAD (uncommitted only!)
+ubs --files=a.ts,b.py                   # Arbitrary file list
 ```
+
+### ⚠ Post-commit review (post-`/t:auto`, post-orchestrator, etc.)
+
+`--diff` and `--staged` only see *uncommitted* changes. After workflows that commit as they go (`/t:auto`, `/orchestrator`, recipe pipelines), the working tree is clean and `ubs --diff` will report "nothing to scan" even though there's a session's worth of new code to vet.
+
+For that case, compute the changed-file list against a session baseline and pass it explicitly:
+
+```bash
+BASE=$(git merge-base origin/main HEAD)    # or .ccu/SESSION.md start_sha, etc.
+FILES=$(git diff --name-only --diff-filter=ACMR "$BASE"...HEAD | paste -sd, -)
+ubs --files="$FILES" --format=toon
+```
+
+The `/recipe quality-review` skill encodes this pattern in its Step 0; reuse it rather than re-inventing.
 
 ### Full Project Scans
 
