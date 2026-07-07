@@ -1,0 +1,12 @@
+{
+  "eval_name": "eval-1-minimal-project with_skill",
+  "expectations": [
+    {"text": "Project-specific rules", "passed": true, "evidence": "References BullMQ, Express, ioredis, Zod, Vitest, ESLint, supertest by name. Rules are tailored to a small task-queue service with specific guidance on Queue mocking and route testing."},
+    {"text": "Correct language detection", "passed": true, "evidence": "All rules are TypeScript/Node.js specific. No Python rules present."},
+    {"text": "Testing anti-patterns addressed", "passed": true, "evidence": "Section 2 'Anti-patterns to reject' lists: (a) tests that only assert toBeDefined() or not.toBeNull(), (b) tests that compute expected values the same way the code does, (c) snapshot tests on API response bodies, (d) vague test names addressed via naming pattern requirement with good/bad examples. 4 of 5 addressed (missing explicit mention of mocking the function under test, though it mentions 'mocking Zod instead of letting it validate'). Close but slightly different from assertion (e)."},
+    {"text": "Proportional to project size", "passed": true, "evidence": "Minimal project output is 119 lines with 8 sections. Backcom with_skill is 252 lines with 10 sections. The minimal output is roughly half the size, appropriate for a 3-file project."},
+    {"text": "Domain-specific rules", "passed": true, "evidence": "Section 6 covers Redis/queue resilience: ioredis connection error handling and reconnection, graceful shutdown (close Express server, Redis connection, BullMQ queue), Redis URL validation on boot, BullMQ operation latency expectations, and 503 fallback on Redis failure."},
+    {"text": "Placement question asked", "passed": true, "evidence": "Section 'Where should these rules live?' recommends 'A) Create a CLAUDE.md at the project root (recommended -- no existing one, and the project is small enough that a single file covers everything)'."},
+    {"text": "Respects existing conventions", "passed": true, "evidence": "N/A for minimal project -- there is no existing CLAUDE.md to respect. The output correctly notes 'no existing CLAUDE.md or quality conventions' and recommends creating one from scratch."}
+  ]
+}

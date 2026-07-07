@@ -1,0 +1,26 @@
+{
+  "skill_name": "create-project-rules",
+  "evals": [
+    {
+      "id": 0,
+      "prompt": "Create project rules for this project",
+      "expected_output": "Tailored quality ruleset for a TypeScript/Node.js Telegram bot pipeline project with domain-specific safety rules, testing rules that address anti-patterns, and operational resilience rules",
+      "files": [],
+      "working_dir": "/Users/trungtran/code/backcom"
+    },
+    {
+      "id": 1,
+      "prompt": "Set up quality guidelines for this project",
+      "expected_output": "Quality ruleset for a minimal TypeScript/Express/BullMQ task queue project. Should detect Redis, queue patterns, API endpoints. Rules should be proportional to project size — not over-engineered",
+      "files": [],
+      "working_dir": "/tmp/test-minimal-project"
+    },
+    {
+      "id": 2,
+      "prompt": "Define coding standards for this project",
+      "expected_output": "Python-specific coding standards for a FastAPI/SQLAlchemy inventory API. Should reference ruff, mypy, pytest — not TypeScript tools. Should include database rules for SQLAlchemy patterns",
+      "files": [],
+      "working_dir": "/tmp/test-python-fastapi"
+    }
+  ]
+}

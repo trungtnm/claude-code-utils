@@ -1,0 +1,12 @@
+{
+  "eval_name": "eval-2-python-fastapi without_skill",
+  "expectations": [
+    {"text": "Project-specific rules", "passed": true, "evidence": "References Ruff, mypy (strict mode), pytest/pytest-asyncio, SQLAlchemy 2.0, Pydantic v2, FastAPI, Alembic, httpx by name. Includes specific migration examples from legacy to 2.0 style."},
+    {"text": "Correct language detection", "passed": true, "evidence": "All rules are Python-specific (type hints, mypy, Ruff, pytest, SQLAlchemy Mapped[], Pydantic, __future__ annotations). No TypeScript/JavaScript rules present."},
+    {"text": "Testing anti-patterns addressed", "passed": false, "evidence": "Section 10 covers testing but only briefly. It mentions descriptive test names and test independence but does NOT explicitly list anti-patterns. Missing: (a) meaningless assertions like toBeDefined, (b) implementation-mirroring tests, (c) snapshot abuse, (e) mocking the function under test. Only (d) vague test names is partially addressed via naming examples. 1 of 5 addressed; fails the threshold of 3."},
+    {"text": "Proportional to project size", "passed": true, "evidence": "Python without_skill output is 169 lines with 18 sections. This is smaller than Backcom without_skill (343 lines), which is the correct proportional relationship."},
+    {"text": "Domain-specific rules", "passed": false, "evidence": "No dedicated domain-specific section for inventory management. Rules are generic FastAPI/SQLAlchemy best practices. Missing: stock quantity constraints, SKU uniqueness handling, warehouse transfer atomicity, restocking audit trail, concurrent stock update handling. No mention of inventory, warehouses, or stock-level business rules."},
+    {"text": "Placement question asked", "passed": false, "evidence": "No section asks the user where to place the rules. The output is presented as a standalone 'Coding Standards' document without any placement options or questions."},
+    {"text": "Respects existing conventions", "passed": true, "evidence": "N/A for Python FastAPI project -- there is no existing CLAUDE.md to respect."}
+  ]
+}

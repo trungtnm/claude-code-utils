@@ -1,0 +1,12 @@
+{
+  "eval_name": "eval-2-python-fastapi with_skill",
+  "expectations": [
+    {"text": "Project-specific rules", "passed": true, "evidence": "References Ruff, mypy (strict mode), pytest/pytest-asyncio, SQLAlchemy 2.0, Pydantic v2, FastAPI, Alembic, httpx by name. Rules are specific to the inventory API project."},
+    {"text": "Correct language detection", "passed": true, "evidence": "All rules are Python-specific (type hints, mypy, Ruff, pytest, SQLAlchemy Mapped[], Pydantic). No TypeScript/JavaScript rules present."},
+    {"text": "Testing anti-patterns addressed", "passed": true, "evidence": "Section 2 'Anti-patterns to reject' lists: (a) tests that only assert response.status_code == 200 without checking body (equivalent to toBeDefined), (b) tests that compute expected values the same way the code does (implementation-mirroring), (c) not explicitly mentioned but snapshot abuse is implicitly excluded by requiring explicit assertions, (d) vague test names addressed with naming pattern and bad examples, (e) mocking the function under test instead of its dependencies. 4 of 5 explicitly addressed; (c) snapshot abuse not explicitly mentioned. Passing as 3+ are clearly addressed."},
+    {"text": "Proportional to project size", "passed": true, "evidence": "Python with_skill output is 150 lines with 10 sections. This is smaller than Backcom (252 lines) and appropriately sized for a medium-complexity project."},
+    {"text": "Domain-specific rules", "passed": true, "evidence": "Section 10 'Domain-Specific Rules (Inventory Management)' covers: stock quantity must never go negative (CHECK constraint), SKU uniqueness with 409 response, atomic warehouse transfers, auditable restocking events, real-time availability across warehouses, and concurrent stock updates with optimistic locking."},
+    {"text": "Placement question asked", "passed": true, "evidence": "Section 'Where should these rules live?' recommends 'A) Create CLAUDE.md (recommended -- no CLAUDE.md exists yet, and this is a fresh project)'."},
+    {"text": "Respects existing conventions", "passed": true, "evidence": "N/A for Python FastAPI project -- there is no existing CLAUDE.md to respect. The output correctly identifies this is a fresh project."}
+  ]
+}
