@@ -5,6 +5,7 @@ Commit all changed files now in a series of logically connected groupings with d
 - **Read-only first** — Examine all changes (staged, unstaged, untracked) before making any commits. Understand the full picture.
 - **No code edits** — Do not modify, fix, or refactor any source files. If you spot a bug, note it but do not fix it.
 - **Skip ephemeral files** — Do not commit obviously ephemeral files (`.DS_Store`, `*.log`, `node_modules/`, `__pycache__/`, `.env`, editor swap files, etc.). If unsure whether a file is ephemeral, err on the side of skipping it.
+- **No Co-Authored-By** — Do NOT add any `Co-Authored-By` trailer to commit messages. No AI attribution lines.
 - **Logical groupings** — Group related changes into separate commits. One commit per logical unit of work (e.g., a new feature, a refactor, a docs update). Do not lump unrelated changes into a single commit.
 - **Detailed messages** — Each commit message should explain *what* changed and *why*. Use a short summary line (≤72 chars), then a blank line, then a detailed body. Use conventional commit prefixes (`feat:`, `fix:`, `docs:`, `refactor:`, `chore:`, `test:`, `style:`).
 - **Enriched Context footer** — After the body, add a `Context:` section that captures session intelligence for future git archaeology. This compounds over weeks into a searchable decision log. Format:
