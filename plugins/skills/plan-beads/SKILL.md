@@ -1,5 +1,5 @@
 ---
-name: planning
+name: plan-beads
 description: Use when asked to plan a feature, create a roadmap, or design an implementation approach. Triggers on requests for comprehensive plans, feature decomposition, or multi-phase implementation strategies.
 ---
 

@@ -1,4 +1,4 @@
-Guided requirements gathering for a new feature or change. Produces structured artifacts in `.ccu/` that feed directly into `/planning`.
+Guided requirements gathering for a new feature or change. Produces structured artifacts in `.ccu/` that feed directly into `/plan-beads`.
 
 **Topic: `$ARGUMENTS`**
 
@@ -43,7 +43,8 @@ Guided requirements gathering for a new feature or change. Produces structured a
    - Append to `DECISIONS.md`: any decisions made during the discussion (and WHY)
 
 8. **Offer next steps** — Ask:
-   - "Run `/planning` to decompose into beads?"
+   - "Run `/file-beads` to create the bead?" - in case the issue is small and clear
+   - "Run `/plan-beads` to decompose into beads?" - in case the issue is large and should be consider as an Epic
    - "Run `/brainstorming` for deeper design exploration?"
    - "Just start implementing?"
 

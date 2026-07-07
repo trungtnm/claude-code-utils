@@ -26,7 +26,7 @@ Claude Code is powerful out of the box, but teams hit the same gaps repeatedly: 
 
 | Skill | Description |
 |-------|-------------|
-| `/planning` | Feature planning and execution plan generation |
+| `/plan-beads` | Feature planning and execution plan generation |
 | `/brainstorming` | Idea-to-design process, hard-gates implementation |
 | `/test-driven-development` | Write-tests-first methodology |
 | `/ubs` | Ultimate Bug Scanner: 18 detection categories, 8 languages |
@@ -246,7 +246,7 @@ Five tools form a dependency-aware work tracking pipeline:
 
 ```mermaid
 graph LR
-    A["/planning<br/>8-phase pipeline"] --> B["/file-beads<br/>Decompose into beads"]
+    A["/plan-beads<br/>8-phase pipeline"] --> B["/file-beads<br/>Decompose into beads"]
     B --> C["/review-beads<br/>Optimize before work"]
     C --> D["/bv --robot-plan<br/>Graph triage + tracks"]
     D --> E["/orchestrator<br/>Spawn workers"]
@@ -338,7 +338,7 @@ The goal of this plugin is to make each day more productive than the last. Here'
 /recipe new-feature           # Chains: discuss → plan → file-beads → auto → review → done
 
 # Quick feature (you already know what to build)
-/t:discuss add pagination     # Requirements gathering, then jump to planning
+/t:discuss add pagination     # Requirements gathering, then jump to plan-beads
 
 # Bug fix fast path
 /recipe bug-fix TypeError in auth middleware
@@ -408,8 +408,8 @@ Midday:
 
 Afternoon:
   /t:discuss add SSO support    ← Requirements gathering for next feature
-  /planning                     ← Decompose into beads
-  /t:commit                     ← Commit planning artifacts with Context: sections
+  /plan-beads                   ← Decompose into beads
+  /t:commit                     ← Commit plan-beads artifacts with Context: sections
   /t:handoff                    ← Write state for tomorrow's session
 ```
 
@@ -425,7 +425,7 @@ Afternoon:
 /t:peer-review                # Deep code review
 
 # Multi-agent feature execution
-/planning → /file-beads → /review-beads → /orchestrator
+/plan-beads → /file-beads → /review-beads → /orchestrator
 ```
 
 ## Contributing

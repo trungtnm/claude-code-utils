@@ -19,7 +19,7 @@ This skill spawns and monitors parallel worker agents that execute beads autonom
 
 ## Prerequisites
 
-1. **Required**: Run `/skill planning` first to generate `.ccu/artifacts/<dir>/execution-plan.md`
+1. **Required**: Run `/skill plan-beads` first to generate `.ccu/artifacts/<dir>/execution-plan.md`
 2. **Recommended**: Run `/skill review-beads` to validate bead quality before spawning workers
 
 ## Architecture (Mode B: Autonomous)
@@ -29,7 +29,7 @@ This skill spawns and monitors parallel worker agents that execute beads autonom
 │                              ORCHESTRATOR                                   │
 │                              (This Agent)                                   │
 ├─────────────────────────────────────────────────────────────────────────────┤
-│  1. Read execution-plan.md (from planning skill)                            │
+│  1. Read execution-plan.md (from plan-beads skill)                          │
 │  2. Initialize Agent Mail                                                   │
 │  3. Spawn worker subagents via Task()                                       │
 │  4. Monitor progress via Agent Mail                                         │
@@ -73,7 +73,7 @@ This skill spawns and monitors parallel worker agents that execute beads autonom
 
 ## Phase 1: Read Execution Plan
 
-The planning skill outputs `.ccu/artifacts/<dir>/execution-plan.md` with:
+The [[plan-beads]] skill outputs `.ccu/artifacts/<dir>/execution-plan.md` with:
 
 - Track assignments (agent name, beads, file scope)
 - Cross-track dependencies
