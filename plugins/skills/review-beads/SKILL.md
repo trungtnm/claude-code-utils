@@ -30,6 +30,7 @@ For EACH issue, verify:
 
 ### Clarity
 
+- [ ] Written in English — title and description (quoted user-facing product copy is the only exception; rewrite any bead filed in another language)
 - [ ] Title is action-oriented and specific
 - [ ] Description is clear and unambiguous
 - [ ] A developer unfamiliar with the codebase could understand the task
@@ -41,6 +42,15 @@ For EACH issue, verify:
 - [ ] Technical implementation hints are provided where helpful
 - [ ] Relevant file paths or modules are mentioned
 - [ ] Edge cases and error handling are considered
+
+### Contracts (see [[file-beads]] Structured Blocks)
+
+- [ ] `## Files` block exists with exact Create/Modify/Test paths — no prose hints
+- [ ] `## Interfaces` block exists on every bead that has dependents or cross-bead consumers
+- [ ] **Interface consistency:** every `Consumes` matches — verbatim, names and types — a `Produces` on an upstream bead or an existing symbol named in Technical notes (`rateLimit()` in one bead but `rateLimiter()` in its consumer is a plan bug; fix it now, not at integration)
+- [ ] Every acceptance criterion names its verify command/test and expected result
+- [ ] No "No Placeholders" failure phrases: "handle edge cases", "add appropriate error handling", "TBD", "similar to bead X"
+- [ ] Files scopes across beads that can run in parallel are disjoint — overlapping Files sets mean the beads must be sequenced (add a dependency) or merged
 
 ### Dependencies
 
@@ -82,7 +92,7 @@ Watch for and correct:
 1. **Vague titles**: "Fix bug" → "Fix null pointer in UserService.getProfile when user not found"
 2. **Missing context**: Add relevant file paths, function names, or module references
 3. **Implicit knowledge**: Make assumptions explicit
-4. **Missing acceptance criteria**: Add "Done when..." statements
+4. **Missing or vague acceptance criteria**: Each criterion must name its verify command/test and expected result — "verify: `npm test x -- -t \"...\"` → PASS"
 5. **Over-coupling**: Break dependencies that aren't strictly necessary
 6. **Under-specified**: Add technical notes for complex tasks
 7. **Duplicate work**: Merge or link related issues
@@ -91,6 +101,7 @@ Watch for and correct:
 10. **Typos and grammar**: Fix for professionalism
 11. **Missing "why"**: Add project context explaining how this serves overarching goals, and reasoning explaining why this approach was chosen over alternatives
 12. **Locally optimal, globally suboptimal**: Individual beads may look fine in isolation but the overall decomposition doesn't serve users well — restructure from the user's perspective, not the developer's
+13. **Interface drift**: A bead references a function/type/endpoint under a different name than the bead that produces it — align both to the producer's `Produces` signature
 
 ## Step 4: Update Issues
 
@@ -146,7 +157,15 @@ Check:
 - Critical path is clear
 - Parallelization opportunities are preserved
 
-## Step 6: Final Quality Gate
+## Step 6: Spec Coverage Check
+
+Verify the beads cover the plan, not just that each bead is individually good. Open the source design/plan doc (check `.ccu/artifacts/<dir>/` — design.md, approach.md, or the doc named in the epic) and walk it requirement by requirement:
+
+- For **each requirement**, point to the bead that implements it. A requirement with no bead is a plan gap — file the missing bead now (delegate to [[file-beads]]).
+- For **each bead**, point to the requirement it serves. A bead serving no requirement is scope creep — challenge it.
+- Confirm the **epic's `## Global Constraints`** section matches the design doc verbatim (version floors, naming/copy rules, platform requirements). Child beads inherit these; if the epic is missing them, add them.
+
+## Step 7: Final Quality Gate
 
 Before completing, ensure:
 
@@ -154,7 +173,7 @@ Before completing, ensure:
 2. **Traceability**: Issues link to epics, epics link to the plan
 3. **Testability**: Each issue has clear "done" criteria
 4. **Parallelism**: Multiple issues can be worked simultaneously
-5. **Completeness**: No gaps in the plan coverage
+5. **Completeness**: Spec coverage check (Step 6) passed — every requirement has a bead
 
 ## Output Format
 

@@ -77,6 +77,8 @@ Read the capture text. Briefly investigate the codebase for context — check th
 
 The bead description must be self-contained — a worker agent with zero prior context should be able to read it and start implementing without asking questions.
 
+**Write the bead in English, even when the capture is in Vietnamese** (or any other language) — translate the capture's intent when filing; only literal user-facing copy quoted as a deliverable keeps its original language (with full diacritics). See the language rule in [[file-beads]].
+
 **inject**: Add enriched context (not just the raw capture text) to existing bead:
 ```bash
 br comments add --actor "$ACTOR" <existing-bead-id> --message "From capture: {text}. Investigation: {what you found in the codebase}. Suggestion: {recommended approach}."
