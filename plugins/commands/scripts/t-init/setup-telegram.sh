@@ -1,14 +1,14 @@
 #!/usr/bin/env bash
 # setup-telegram.sh — configure Telegram notifications for Claude Code.
 #
-# Sends you a Telegram message whenever Claude Code needs you, tagged with the
-# working directory:
-#   • Notification event                      → permission prompt / idle waiting
-#   • PreToolUse matcher AskUserQuestion       → the exact question + its options,
-#                                                sent the moment Claude asks
+# Sends you a Telegram message the moment Claude asks you something via the
+# AskUserQuestion tool, tagged with the working directory:
+#   • PreToolUse matcher AskUserQuestion → the exact question + its options
 #
 # The AskUserQuestion payload carries `tool_input.questions[]`, so the message
-# includes the real question text and every option label/description.
+# includes the real question text and every option label/description. (The
+# Notification event — permission prompts / idle waiting — is intentionally not
+# wired up.)
 #
 # The formatting + send logic lives in the sibling script `telegram-notify.sh`,
 # which --apply installs to ~/.claude/ccu-telegram-notify.sh; the settings hooks
@@ -177,24 +177,22 @@ if [ "$MODE" = "apply" ]; then
       --arg chatid "$CHATID" \
       --arg cmd    "$HOOK_CMD" \
       --arg marker "$MARKER" '
-    { hooks: [ { type: "command", command: $cmd, async: true } ] } as $ng
-    | { matcher: "AskUserQuestion",
-        hooks: [ { type: "command", command: $cmd, async: true } ] } as $ag
+    { matcher: "AskUserQuestion",
+      hooks: [ { type: "command", command: $cmd, async: true } ] } as $ag
     | .env = ((.env // {}) + { TELEGRAM_BOT_TOKEN: $token, TELEGRAM_CHAT_ID: $chatid })
     | .hooks = (.hooks // {})
-    # Remove OUR marked groups from EVERY event (also migrates away any old
-    # PostToolUse hook), keeping all other hooks intact.
+    # Remove OUR marked groups from EVERY event (also migrates away the old
+    # Notification hook / any earlier event choice), keeping other hooks intact.
     | .hooks = (.hooks | with_entries(.value |= map(select(
         [(.hooks // [])[].command // ""] | any(index($marker)) | not
       ))))
     # Drop events left with no hooks.
     | .hooks = (.hooks | with_entries(select(.value | length > 0)))
-    # Add fresh hooks: Notification (permission/idle) + PreToolUse:AskUserQuestion.
-    | .hooks.Notification = ((.hooks.Notification // []) + [$ng])
-    | .hooks.PreToolUse   = ((.hooks.PreToolUse   // []) + [$ag])
+    # Only the PreToolUse:AskUserQuestion hook is written.
+    | .hooks.PreToolUse = ((.hooks.PreToolUse // []) + [$ag])
   ' "$FILE" > "$tmp"; then
     mv "$tmp" "$FILE"
-    echo "configured: $FILE (Notification + PreToolUse:AskUserQuestion)"
+    echo "configured: $FILE (PreToolUse:AskUserQuestion)"
   else
     rm -f "$tmp"
     echo "error: failed to update $FILE" >&2

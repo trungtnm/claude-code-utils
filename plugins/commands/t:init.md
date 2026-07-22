@@ -76,9 +76,8 @@ Check and set up the prerequisite tools and project state required by claude-cod
 
    The script is idempotent — passing `--ccu` when `.ccu/` already exists prints `already-exists: .ccu/` and moves on. Display the script's output to the user.
 
-9. **Offer Telegram notifications** — Skip this step entirely if `--check` or `--no-telegram` is in `$ARGUMENTS`. This is optional and never blocking. It sets up hooks that message you on Telegram whenever Claude Code needs you, each message tagged with the working directory (`.cwd`):
-   - **`Notification` event** — a permission prompt or Claude idle-waiting for your input. This is the real-time "come answer me" ping.
-   - **`PreToolUse` matcher `AskUserQuestion`** — sends the **exact question and every option** (label — description), pulled from `tool_input.questions[]`, **the moment Claude asks** (before you answer), so you can read what's being asked remotely. (`Elicitation` is intentionally not used — it does not fire for `AskUserQuestion`; `PostToolUse` would arrive only after you already answered.)
+9. **Offer Telegram notifications** — Skip this step entirely if `--check` or `--no-telegram` is in `$ARGUMENTS`. This is optional and never blocking. It sets up a single hook that messages you on Telegram **the moment Claude asks you something via `AskUserQuestion`**, tagged with the working directory (`.cwd`):
+   - **`PreToolUse` matcher `AskUserQuestion`** — sends the **exact question and every option** (label — description), pulled from `tool_input.questions[]`, at ask-time (before you answer), so you can read what's being asked remotely. (`Elicitation` is not used — it does not fire for `AskUserQuestion`; `PostToolUse` would arrive only after you already answered; the `Notification` event — permission prompts / idle waiting — is intentionally **not** wired up.)
 
    a. **Detect existing config** — Run the checker for both scopes and read the first tab-separated field:
 
