@@ -26,6 +26,7 @@ Recover session context after a crash, timeout, or new session start. Synthesize
      - If handoff says "next action: Y" but git log shows Y was done → **override**: "Recommended action already completed"
    - When handoff is stale, **prefer git log + br status as ground truth**
    - Note staleness prominently in the briefing
+   - **Never repeat a bead comment's claim about PR/branch/merge state as fact.** Bead comments are point-in-time notes and go stale the moment the branch moves. If a comment says a PR is open/merged/closed, confirm against git/GitHub before reporting it — `gh pr view <n> --json state,mergedAt` (or `gh pr list --head <branch>`), `git branch -a`, `git log --oneline <branch>`. If `gh` is unavailable or you cannot confirm, say the state is **unverified** rather than asserting it.
 
 2. **Synthesize briefing** — Present a structured recovery briefing:
 
@@ -63,3 +64,4 @@ Recover session context after a crash, timeout, or new session start. Synthesize
 - **Graceful degradation** — if `.ccu/` doesn't exist, use `git log` + `git status` + `br` only. Always produce some briefing.
 - **Be specific** — don't say "some work was done." Say exactly which beads, which commits, which files.
 - **Handoff note is the primary source** — if it exists, it was deliberately written by the previous session.
+- **Git/GitHub is ground truth for PR, branch, and merge state — not bead comments.** Comments record what was true when written; verify with `gh`/`git` before claiming a PR is open or merged, and mark it unverified if you can't confirm.
