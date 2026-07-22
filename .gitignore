@@ -27,3 +27,6 @@ skills/shadcn-ui
 # Temporary files
 *.tmp
 *.bak
+
+# bv (beads viewer) local config and caches
+.bv/
