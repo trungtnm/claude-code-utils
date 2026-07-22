@@ -37,10 +37,8 @@ captures_md=0;   [ -f .ccu/CAPTURES.md ]   && captures_md=1
 beads_dir=0;     [ -d .beads ]             && beads_dir=1
 
 gi_captures=0
-gi_prime=0
 if [ -f .gitignore ]; then
   grep -Fxq ".ccu/CAPTURES.md"     .gitignore && gi_captures=1
-  grep -Fxq ".ccu/PRIME-CACHE.md"  .gitignore && gi_prime=1
 fi
 
 emit() {
@@ -72,7 +70,6 @@ fi
 emit "ccu_dir"               "$(bool "$ccu_dir")"            ".ccu/"
 emit "captures_md"           "$(bool "$captures_md")"        ".ccu/CAPTURES.md"
 emit "gitignore_captures"    "$(bool "$gi_captures")"        ".gitignore: CAPTURES.md"
-emit "gitignore_prime_cache" "$(bool "$gi_prime")"           ".gitignore: PRIME-CACHE.md"
 emit "beads_dir"             "$(bool "$beads_dir")"          ".beads/"
 
 exit 0

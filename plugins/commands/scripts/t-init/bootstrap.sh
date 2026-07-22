@@ -63,7 +63,7 @@ fi
 # --- .gitignore entries ---
 if [ "$DO_GITIGNORE" = "1" ]; then
   [ -f .gitignore ] || { : > .gitignore; echo "created: .gitignore"; }
-  for line in ".ccu/CAPTURES.md" ".ccu/PRIME-CACHE.md"; do
+  for line in ".ccu/CAPTURES.md" ".ccu/artifacts/" ".ccu/brainstorm/"; do
     if grep -Fxq "$line" .gitignore; then
       echo "already-present: .gitignore <- $line"
     else
