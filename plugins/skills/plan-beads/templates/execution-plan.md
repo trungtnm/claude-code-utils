@@ -3,51 +3,42 @@
 Epic: <epic-id>
 Generated: <date>
 
-## Tracks
+> The orchestrator dispatches **one worker per ready bead** (`br ready` + `bv`), capped at 3
+> concurrent workers. This document is the map — the live graph is the schedule.
 
-| Track | Agent       | Beads (in order)               | File Scope        |
-| ----- | ----------- | ------------------------------ | ----------------- |
-| 1     | BlueLake    | {id-1} → {id-2} → {id-3}      | `packages/sdk/**` |
-| 2     | GreenCastle | {id-4} → {id-5}               | `packages/cli/**` |
-| 3     | RedStone    | {id-6} → {id-7} → {id-8}      | `apps/server/**`  |
+## Beads
 
-## Track Details
+| Bead    | Title                    | Files (reservation list)         | Depends on      | Risk |
+| ------- | ------------------------ | -------------------------------- | --------------- | ---- |
+| {id-1}  | <title>                  | `src/db/migrations/*.sql`        | —               | LOW  |
+| {id-2}  | <title>                  | `apps/server/routes/users.ts`    | {id-1}          | MED  |
+| {id-3}  | <title>                  | `packages/sdk/client.ts`         | {id-2}          | LOW  |
+| {id-4}  | <title>                  | `apps/web/pages/users.tsx`       | {id-2}          | HIGH |
 
-### Track 1: BlueLake - <track-description>
+Each bead's `## Files` block is the worker's Agent Mail reservation list — the complete touch
+list. Beads with no dependency path between them MUST have disjoint Files sets.
 
-**File scope**: `packages/sdk/**`
-**Beads**:
+## Entry Points (ready at start)
 
-1. `{id-1}`: <title> - <brief description>
-2. `{id-2}`: <title> - <brief description>
-3. `{id-3}`: <title> - <brief description>
+Per `br ready --json` at planning time:
 
-### Track 2: GreenCastle - <track-description>
+- {id-1}: <title> — no blockers, dispatch immediately
 
-**File scope**: `packages/cli/**`
-**Beads**:
+## Parallel Waves (from bv --robot-plan)
 
-1. `{id-4}`: <title> - <brief description>
-2. `{id-5}`: <title> - <brief description>
+- Wave 1: {id-1}
+- Wave 2: {id-2}
+- Wave 3: {id-3}, {id-4} (disjoint files — safe to run concurrently)
 
-### Track 3: RedStone - <track-description>
+## Sequencing Caveats
 
-**File scope**: `apps/server/**`
-**Beads**:
-
-1. `{id-6}`: <title> - <brief description>
-2. `{id-7}`: <title> - <brief description>
-3. `{id-8}`: <title> - <brief description>
-
-## Cross-Track Dependencies
-
-- Track 1 (frontend) blocked by {id-6} (Track 3/backend API endpoint)
-- Track 2 can start after {id-2} (Track 1) completes
-- Track 3 (backend) has no blockers - can start immediately
+- <anything the graph can't express: e.g. "{id-3} and {id-4} both read the generated API types —
+  regenerate before dispatching either", or "run DB migrations locally before wave 2">
+- (Remove this section if none.)
 
 ## High-Risk Components
 
 Beads carrying `⚠ HIGH RISK` annotations from Phase 2 — workers should investigate before coding:
 
-- {id-N} ({Track}): <reason — what is novel or external>
+- {id-4}: <reason — what is novel or external>
 - (Remove this section if no HIGH-risk items.)

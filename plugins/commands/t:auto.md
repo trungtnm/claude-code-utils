@@ -1,17 +1,30 @@
 Register with MCP Agent Mail and introduce yourself to the other agents. Be sure to check your agent mail and to promptly respond if needed to any messages; then proceed meticulously with your next assigned beads, working on the tasks systematically and meticulously and tracking your progress via beads and agent mail messages. Don't get stuck in "communication purgatory" where nothing is getting done; be proactive about starting tasks that need to be done, but inform your fellow agents via messages when you do so and mark beads appropriately. When you're not sure what to do next, use the bv tool mentioned in AGENTS.md, CLAUDE.md to prioritize the best beads to work on next; pick the next one that you can usefully work on and get started. Make sure to acknowledge all communication requests from other agents and that you are aware of all active agents and their names. Use /effort max.
 
-**Mode determination** — Before Step 1, decide whether to run in **solo** or **multi-agent** mode:
+**Mode determination** — after Step 0 (you need the mail project key first), decide **solo** vs **multi-agent**:
 - If `$ARGUMENTS` contains `--solo` or `solo` → **solo** (explicit).
-- Otherwise, count ready beads: `br ready --json 2>/dev/null | jq 'length'`. If the count is less than 5 → **solo** (auto: not enough parallel work to justify coordination overhead).
+- **Peer check first (do NOT skip):** are other agents already active on this repo? A concurrent Orchestrator epic or another `/t:auto` may be holding file reservations you must respect. Check via the Agent Mail API against the literal repo root (see Step 1c). **If any peer is active → run multi-agent** regardless of bead count — going solo would skip reservations and let you clobber their work.
+- Otherwise, count ready beads: `br ready --json 2>/dev/null | jq 'length'`. If less than 5 **and no peers are active** → **solo** (not enough parallel work to justify coordination overhead).
 - Otherwise → **multi-agent**.
 
-Report the chosen mode to the user in one line (e.g., "Running in **solo** mode: 3 ready beads.") before proceeding.
+Report the chosen mode to the user in one line (e.g., "Running in **solo** mode: 3 ready beads, no active peers.") before proceeding.
 
-In **solo mode**, skip every step and sub-step marked **[Skip in solo mode]** below: no Agent Mail registration, peer discovery, handshakes, inbox, messaging, or file reservations. You still use beads, `bv`, and `cm`. Never call any `mcp__mcp-agent-mail__*` tool in solo mode.
+In **solo mode**, skip every step and sub-step marked **[Skip in solo mode]** below: no peer handshakes, inbox loop, messaging, or file reservations. You still use beads, `bv`, and `cm`. The **one exception** is the mode-determination peer check itself: it needs a single Agent Mail registration + `list_contacts` to confirm no peers are active. That check is what *lets* you choose solo safely — run it, and if it comes back empty (and beads < 5), proceed solo and make no further `mcp__mcp-agent-mail__*` calls.
 
 ## Steps
 
-0. **Load project context** -- Before doing anything else, build situational awareness by reading (skip any that don't exist):
+0. **Resolve the mail project key** -- You work directly in the user's tree, on the current branch. The only coordination anchor you need is the Agent Mail project key — the **literal repo root**:
+
+   ```bash
+   git rev-parse --show-toplevel    # e.g. /Users/you/code/myrepo — this is the Agent Mail project key
+   git rev-parse --short HEAD       # note the baseline commit before you start
+   git status --porcelain           # if the tree is dirty, tell the user before you begin
+   ```
+
+   **Two rules that make coordination safe, and break everything if ignored:**
+   - **Agent Mail is keyed to the repo root** — and MCP calls don't expand shell vars, so paste the *literal* path (echo it first). Registering under a literal `$VAR` drops you into a private mailbox where you see no other agent's reservations and silently clobber their work.
+   - **With no worktree, file reservations are the ONLY thing between you and another agent editing the same file.** In multi-agent mode, never touch a file you haven't reserved.
+
+0.1. **Load project context** -- Before doing anything else, build situational awareness by reading (skip any that don't exist):
    - `CLAUDE.md` or `AGENTS.md` — project conventions, rules, architecture, coding patterns
    - `README.md` — what the project is, tech stack, how it works
    - `.ccu/DECISIONS.md` and `.ccu/EVIDENCE.md` — recent architectural decisions and completed-bead evidence
@@ -20,7 +33,7 @@ In **solo mode**, skip every step and sub-step marked **[Skip in solo mode]** be
    - `git log --oneline -15` — recent activity and direction
    This context shapes how you implement every bead. Without it, you risk writing code that violates project conventions or duplicates existing work.
 
-0.5. **Load procedural memory** -- Query CM for relevant rules and anti-patterns (skip if `cm` is not installed):
+0.2. **Load procedural memory** -- Query CM for relevant rules and anti-patterns (skip if `cm` is not installed):
    ```bash
    cm context "general development" --json --limit 10 2>/dev/null
    ```
@@ -28,15 +41,11 @@ In **solo mode**, skip every step and sub-step marked **[Skip in solo mode]** be
 
 1. **Register and discover peers** **[Skip in solo mode]** -- Follow this sequence to register and establish contacts with all other agents:
 
-   a. **Register**: Call `macro_start_session` with `human_key` = absolute path to this repo, `program` = "claude-code", `model` = your model name. Save the returned `agent.name` — this is YOUR identity for the session.
+   a. **Register**: First `git rev-parse --show-toplevel` to read the literal repo-root path (MCP calls are not shell — `$VAR` will NOT expand inside them). Call `macro_start_session` with `human_key` = that **literal** path, `program` = "claude-code", `model` = your model name. Save the returned `agent.name` — this is YOUR identity for the session.
 
    b. **Open contact policy**: Call `set_contact_policy` with your agent name and `policy` = "open". This ensures any peer's contact request is auto-accepted without your intervention.
 
-   c. **Discover peers**: The Agent Mail archive stores agent directories on disk. Run:
-      ```bash
-      ls ~/.mcp_agent_mail_git_mailbox_repo/projects/$(echo "$PWD" | tr '/' '-' | sed 's/^-//' | tr '[:upper:]' '[:lower:]')/agents/ 2>/dev/null
-      ```
-      This returns one directory name per registered agent. Filter out your own name to get the peer list.
+   c. **Discover peers via the API** (not the filesystem): call `list_contacts` (with your registered identity) to enumerate agents active on this project key. Filter out your own name to get the peer list. Peers may include workers from a running Orchestrator epic — their file reservations are live and you must respect them. (Use the API, never hand-derive the server's on-disk directory name — any slug mismatch would silently report "no peers" and leave you blind.)
 
    d. **Handshake with each peer**: For every discovered peer, call `macro_contact_handshake` with `requester` = your name, `target` = peer name, `auto_accept` = true. This establishes bidirectional contact in one call.
 
@@ -64,11 +73,16 @@ In **solo mode**, skip every step and sub-step marked **[Skip in solo mode]** be
    ```
    file_reservation_paths(paths=["src/foo.ts", "src/bar.ts", ...], reason="{BEAD_ID}")
    ```
-   If the reservation fails (another agent already holds those files), **do not proceed** — pick a different ready bead instead. File reservations are the mechanical safety net that prevents two agents from editing the same file simultaneously.
+   If the reservation fails (another agent already holds those files), **do not proceed** — pick a different ready bead instead. With no worktree isolation, file reservations are the only mechanical safety net that prevents two agents from editing the same file simultaneously.
 
    **[Skip in solo mode]** Notify fellow agents via agent mail that you are starting work on the claimed bead.
 
 5. **Execute** -- Work through the bead's requirements systematically and meticulously. Track progress with bead comments and status updates. **[Multi-agent mode]** If you discover you need to edit additional files not in your original reservation, reserve them first with `file_reservation_paths` before touching them.
+
+   **Commit discipline (multi-agent mode):** other agents may be staging and committing in this same tree concurrently. NEVER `git add -A` or `git add .` — stage your named files only, and commit with a pathspec so nothing else is swept into your commit:
+   ```bash
+   git add <your files> && git commit -m "<type>(<scope>): <description> [<bead-id>]" -- <your files>
+   ```
 
 6. **Communicate** **[Skip in solo mode]** -- Keep fellow agents informed of progress, blockers, and completions via agent mail. Respond promptly to any incoming messages between work steps.
 
@@ -102,7 +116,27 @@ In **solo mode**, skip every step and sub-step marked **[Skip in solo mode]** be
    d. Continue this poll loop until a bead becomes ready, then immediately claim and start it
    e. **Only stop the loop when ALL beads are `done`** (no open, in_progress, or blocked beads remain)
 
-   Never ask "Want me to keep polling?" or "Should I wait?" — you are autonomous. Just do it.
+   **Liveness guard (do NOT poll forever on a dead peer).** A bead stuck `in_progress`, held by an
+   agent that has crashed, will never flip — and nothing times out on its own. Track how long you
+   have been blocked with no forward motion (no new mail, no new commits, no `br ready` change).
+   After a bounded budget (~10 minutes, or ~20 idle poll cycles), **stop and escalate to the user**:
+   report which bead is stuck, who holds it, and that the holder shows no recent activity — offer
+   to force-release its reservations (`force_release_file_reservation`) and reclaim the bead, or
+   wait longer. This single case is the allowed exception to "never ask": you are not asking
+   permission to work, you are reporting a stall you cannot resolve autonomously.
+
+   Otherwise never ask "Want me to keep polling?" or "Should I wait?" — you are autonomous. Just do it.
+
+10. **Wrap up the session** -- When no actionable work remains:
+
+    a. Release every file reservation you still hold: `release_file_reservations()` **[Skip in solo mode]** — a reservation you never release blocks the next session.
+    b. **Commit bead state**:
+       ```bash
+       br sync --flush-only            # export shared DB → .beads/issues.jsonl (do NOT hide errors here — a failed flush must not be committed silently)
+       git add .beads/ && git commit -m "chore(beads): sync session state" -- .beads/   # skip if nothing changed
+       ```
+    c. Confirm nothing you worked on is left uncommitted: `git status --porcelain` — every completed bead should already have its own commit from step 5.
+    d. Report the session summary to the user: beads completed (per-bead ✓/✗ with commit hashes), beads left open/blocked, and the commit range (`<baseline>..HEAD`). Your commits are already on the user's current branch — whether to push is their call; do not push without being asked.
 
 ## Rules
 
@@ -111,6 +145,8 @@ In **solo mode**, skip every step and sub-step marked **[Skip in solo mode]** be
 - **Stay responsive** -- Check inbox between tasks. Acknowledge all contact requests and messages promptly.
 - **Track everything** -- Every task you work on must have a bead. Update status and add comments as you go.
 - **Use bv for prioritization** -- When uncertain what to do next, run bv to find the highest-value ready beads.
-- **Never bypass blocked beads** -- If a bead is blocked, it is blocked for a reason (unmet dependency). Working "ahead" on blocked beads creates merge conflicts, wasted effort, and dependency violations. Work on the blocker or pick something else.
-- **Always reserve files before editing** -- Call `file_reservation_paths` after claiming a bead with the files you plan to edit. If reservation fails (another agent holds those files), pick a different bead. Reserve additional files as needed during execution. Release with `release_file_reservations()` when the bead is done. This is the mechanical safety net that prevents two agents from clobbering each other's work.
+- **Never bypass blocked beads** -- If a bead is blocked, it is blocked for a reason (unmet dependency). Working "ahead" on blocked beads creates conflicts, wasted effort, and dependency violations. Work on the blocker or pick something else.
+- **Always reserve files before editing** -- Call `file_reservation_paths` after claiming a bead with the files you plan to edit. If reservation fails (another agent holds those files), pick a different bead. Reserve additional files as needed during execution. Release with `release_file_reservations()` when the bead is done. With no worktree isolation, this is the ONLY mechanical safety net that prevents two agents from clobbering each other's work.
+- **Coordinate on the repo root** -- Every Agent Mail call uses the **literal** repo-root path (`git rev-parse --show-toplevel`, echoed — never a raw `$VAR`). Mail keyed to any other path sees no peers and holds no useful locks.
+- **Commit per bead, named paths only** -- One commit per bead with the bead id in the message; stage named files and commit with a pathspec (never `git add -A`) so a concurrent agent's staged files are never swept into your commit.
 - **Use /effort max** -- Apply maximum effort to all work.

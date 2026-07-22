@@ -20,18 +20,18 @@ Generate quality plans through systematic discovery, synthesis, and decompositio
 ## Pipeline Overview
 
 ```
-USER REQUEST → Discovery → Synthesis → Decomposition → Bead Review → Validation → Track Planning → Artifact Check → Ready Plan
+USER REQUEST → Discovery → Synthesis → Decomposition → Bead Review → Validation → Execution Planning → Artifact Check → Ready Plan
 ```
 
-| Phase             | Tool                                     | Output                              |
-| ----------------- | ---------------------------------------- | ----------------------------------- |
-| 1. Discovery      | Parallel Task(Explore), gkg              | Discovery Report                    |
-| 2. Synthesis      | Task(Oracle)                             | Approach + Risk Map                 |
-| 3. Decomposition  | file-beads skill                         | .beads/\*.md files                  |
-| 4. Bead Review    | review-beads skill                       | Optimized, self-documented beads    |
-| 5. Validation     | bv + bv --robot-triage + Task(Oracle)    | Validated dependency graph          |
-| 6. Track Planning | bv --robot-plan                          | Execution plan with parallel tracks |
-| 7. Artifact Check | Verify all files exist                   | Confirmed complete plan             |
+| Phase                 | Tool                                     | Output                              |
+| --------------------- | ---------------------------------------- | ----------------------------------- |
+| 1. Discovery          | Parallel Task(Explore), gkg              | Discovery Report                    |
+| 2. Synthesis          | Task(Oracle)                             | Approach + Risk Map                 |
+| 3. Decomposition      | file-beads skill                         | .beads/\*.md files                  |
+| 4. Bead Review        | review-beads skill                       | Optimized, self-documented beads    |
+| 5. Validation         | bv + bv --robot-triage + Task(Oracle)    | Validated dependency graph          |
+| 6. Execution Planning | bv --robot-plan + br ready               | Bead-level execution plan           |
+| 7. Artifact Check     | Verify all files exist                   | Confirmed complete plan             |
 
 ## Artifact Naming Convention
 
@@ -58,6 +58,14 @@ All planning artifacts live under `.ccu/artifacts/` in a per-feature subdirector
 
 `.ccu/artifacts/` is gitignored — these are local working files, not part of the project's permanent record. Durable context belongs in commit messages, `.ccu/DECISIONS.md`, and bead descriptions.
 
+**Browsable index:** after writing or updating any doc in the artifacts directory, regenerate its HTML viewer so the plan reads as one switchable page (discovery → approach → execution-plan) with live Mermaid and TOCs:
+
+```bash
+python3 "${CLAUDE_PLUGIN_ROOT}/skills/markdown-html-viewer/scripts/md2html.py" .ccu/artifacts/<dir>/
+```
+
+Directory + default fetch mode → one `index.html` with a document switcher, each `.md` staying a live source. Do **not** ask the user how to build it — this automated case is the documented exception. See the "Artifacts HTML index" convention in [[session-state]].
+
 ## Completion Gate (MANDATORY)
 
 **You are NOT done until ALL of these files exist:**
@@ -73,7 +81,7 @@ All planning artifacts live under `.ccu/artifacts/` in a per-feature subdirector
 ## Red Flags - You Are About to Skip Steps
 
 - "Beads are filed, so the plan is done" → Beads without an execution plan force the orchestrator to re-analyze everything. File the execution plan.
-- "The orchestrator can figure out tracks" → No. Track planning is YOUR job. The orchestrator consumes execution-plan.md, it doesn't create it.
+- "The orchestrator can figure out the schedule" → It dispatches from `br ready` at runtime, but the execution plan (per-bead file scopes, risks, sequencing caveats) is YOUR job. The orchestrator consumes execution-plan.md, it doesn't create it.
 - "I'll come back to the execution plan later" → You won't. Do it now.
 - "Discovery is obvious, I'll skip to synthesis" → Discovery catches patterns you'd miss. Run the parallel explorers.
 - "Beads look fine, I'll skip review" → Plan space is cheap. Spending 2 minutes reviewing beads saves hours of worker confusion. Run Phase 4.
@@ -159,10 +167,11 @@ mv .ccu/artifacts/<date>-draft-<slug> .ccu/artifacts/<date>-<epic-id>-<slug>
 
 Each bead MUST include:
 
+- **English throughout** — beads are always written in English, whatever language the planning conversation used (see the language rule in [[file-beads]]; quoted user-facing product copy is the only exception)
 - **Risk annotation** for HIGH-risk items: `⚠ HIGH RISK: <one-line reason>` near the top of the description, with explicit "investigate before coding" guidance
 - **Reference to discovery/approach docs** for context lineage: `See .ccu/artifacts/<dir>/approach.md` so workers can drill into tradeoffs if needed
 - **Clear acceptance criteria**
-- **File scope** for track assignment
+- **File scope** (`## Files` block) — each worker reserves exactly these paths via Agent Mail before editing
 
 ### Example Bead with Risk Annotation
 
@@ -252,7 +261,7 @@ bv --robot-triage --graph-root <epic-id> 2>/dev/null | jq '.quick_ref'  # Triage
 
 ### Plan Health Check
 
-Verify the plan is structurally sound before proceeding to track planning:
+Verify the plan is structurally sound before proceeding to execution planning:
 
 ```bash
 br ready --json      # Confirm entry points exist (some issues are unblocked)
@@ -290,51 +299,48 @@ Task(
 )
 ```
 
-## Phase 6: Track Planning (REQUIRED — orchestrator cannot run without this)
+## Phase 6: Execution Planning (REQUIRED — orchestrator cannot run without this)
 
-**Without `execution-plan.md`, the orchestrator has no tracks to assign. Your planning work is wasted until this file is written.**
+**Without `execution-plan.md`, the orchestrator has no map of the epic. Your planning work is wasted until this file is written.**
 
-### Step 1: Get Parallel Tracks
+There are no tracks and no pre-assigned agents: the orchestrator spawns **one worker per bead**, dispatching whatever `br ready` returns and letting `bv` rank it. Your job here is to write down what the graph alone can't tell a dispatcher — per-bead file scopes, risks, and sequencing caveats.
+
+### Step 1: Snapshot the Dependency Graph
 
 ```bash
-bv --robot-plan 2>/dev/null | jq '.plan.tracks'
+bv --robot-plan 2>/dev/null | jq '.'          # parallel waves the graph allows
+br ready --json                               # entry points — beads dispatchable on day one
 ```
 
-### Step 2: Assign File Scopes
+### Step 2: Confirm Per-Bead File Scopes
 
-For each track, determine the file scope based on beads in that track:
+Every bead's `## Files` block (from [[file-beads]]) is the worker's reservation list:
 
 ```bash
-# For each bead, check which files it touches
-br show <bead-id>  # Look at description for file hints
+# For each bead, confirm the ## Files block is complete
+br show <bead-id>
 ```
 
 **Rules:**
 
-- File scopes must NOT overlap between tracks
-- Use glob patterns: `packages/sdk/**`, `apps/server/**`
-- If overlap unavoidable, merge into single track
-- **Backend tracks before frontend tracks**: If frontend beads consume APIs from backend beads, backend must complete first (add cross-track deps)
+- **Beads that can run in parallel** (no dependency path between them) **must have disjoint `## Files` sets** — overlapping files would make the second worker's Agent Mail reservation fail on arrival
+- If two independent beads must touch the same file, add an explicit dependency (`br dep add`) so they are sequenced — never leave the collision for the reservation to catch
+- **Backend before frontend**: if a frontend bead consumes an API from a backend bead, the dependency must exist in the graph
 
-### Step 3: Generate Agent Names
+### Step 3: Create Execution Plan
 
-Assign unique adjective+noun names to each track:
+Save to `.ccu/artifacts/<dir>/execution-plan.md` using the template at `templates/execution-plan.md` — a bead-level table (id, files, depends-on, risk), the entry points, and any sequencing caveats.
 
-- BlueLake, GreenCastle, RedStone, PurpleBear, etc.
-- Names are memorable identifiers, NOT role descriptions
-
-### Step 4: Create Execution Plan
-
-Save to `.ccu/artifacts/<dir>/execution-plan.md` using the template at `templates/execution-plan.md`.
-
-### Step 5: Validate Tracks
+### Step 4: Validate the Graph
 
 ```bash
 # No cycles in the graph
 bv --robot-insights 2>/dev/null | jq '.Cycles'
 
-# All beads assigned to tracks
-bv --robot-plan 2>/dev/null | jq '.plan.unassigned'
+# Entry points exist
+br ready --json | jq 'length'   # must be > 0
+
+# No two parallel-eligible beads share files (manual check against the plan table)
 ```
 
 ## Phase 7: Artifact Verification (MANDATORY — final step)
@@ -347,10 +353,14 @@ ls .ccu/artifacts/<dir>/discovery.md
 ls .ccu/artifacts/<dir>/approach.md
 ls .ccu/artifacts/<dir>/execution-plan.md
 ls .beads/*.md
+
+# Generate the browsable HTML index (switcher, fetch mode) as the final artifact
+python3 "${CLAUDE_PLUGIN_ROOT}/skills/markdown-html-viewer/scripts/md2html.py" .ccu/artifacts/<dir>/
+ls .ccu/artifacts/<dir>/index.html
 ```
 
 **If ANY file is missing, go back to the relevant phase and create it.**
-**Do NOT report plan completion with missing artifacts.**
+**Do NOT report plan completion with missing artifacts.** Point the user at `.ccu/artifacts/<dir>/index.html` — open it via `open_in_dev_browser.sh` (fetch pages don't double-click open).
 
 ## Quick Reference
 
@@ -374,6 +384,7 @@ ls .beads/*.md
 - **Missing risk annotations in beads** → Workers don't know to investigate before coding
 - **No bv validation** → Broken dependency graph
 - **Frontend before backend** → Frontend tasks calling APIs must be blocked by the backend tasks that implement those APIs
-- **Parallel tracks with API coupling** → If Track A (frontend) consumes Track B (backend) APIs, add cross-track dependencies
+- **Parallel beads with API coupling** → If bead A (frontend) consumes bead B's (backend) APIs, add the dependency
+- **Parallel beads sharing files** → Overlapping `## Files` on independent beads means a guaranteed reservation conflict; sequence them with `br dep add`
 - **Stopping after beads are filed** → execution-plan.md is required for orchestrator
 - **Forgetting to rename `<date>-draft-<slug>/`** → Phase 3 must rename to use the real epic ID
