@@ -24,6 +24,11 @@ skills/shadcn-ui
 .ccu/PRIME-CACHE.md
 .ccu/artifacts/
 
+# hdr-orchestrator runtime state (ledger, delegation dirs, worktree exception)
+.ccu/hdr/
+.ccu/delegations/
+.worktrees/
+
 # Temporary files
 *.tmp
 *.bak

@@ -112,6 +112,7 @@ Beads & workflow:
 | `/bv` | Beads Viewer: graph-aware triage (PageRank, critical path, cycles) |
 | `/triage` | Classify captures into quick-fixes, beads, or deferrals |
 | `/orchestrator` | Multi-agent bead execution: dispatch, monitor, verify |
+| `/hdr-orchestrator` | Delegate tasks to peer Claude Code sessions in Herdr panes: thin briefs, admission control, evidence-based verification |
 | `/recipe` | Pre-built command chains (new-feature, bug-fix, quality-review) |
 | `/session-state` | `.ccu/` directory: evidence, decisions, handoffs, crash recovery |
 
