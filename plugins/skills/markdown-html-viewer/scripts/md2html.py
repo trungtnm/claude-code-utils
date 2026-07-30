@@ -86,41 +86,59 @@ TEMPLATE = r"""<!DOCTYPE html>
 </script>
 <style>
   :root{
-    --primary:#0B4F8A; --primary-d:#083A66; --accent:#0E9F8A;
-    --bg:#F4F6FA; --text:#1A2433; --muted:#6B7A90; --line:#E3E8F0;
-    --card:#fff; --code-bg:#F6F8FB; --code-text:#243049; --quote-bg:#EEF4FB;
-    --th-bg:#F0F4FA; --stripe:#FAFBFD; --link:#2563EB;
-    --header-bg:#083A66; --header-text:#fff; --h1:#083A66; --h2:#0B4F8A; --h3:#083A66;
-    --help-bg:#FBF0DC; --help-line:#EBD9B4; --help-text:#7C5A14; --btn-border:rgba(255,255,255,.22);
+    /* "The Warm Reference Desk" — terracotta on warm paper. Palette from DESIGN.md.
+       One accent (terracotta); green/amber/red are STATUS colors only; no cold blue. */
+    --primary:#b0512f; --primary-d:#8a3f24; --primary-soft:#fff0e8; --accent:#b0512f;
+    --bg:#fbfaf9; --text:#1c1a19; --muted:#6f645e; --line:#e9e3df;
+    --card:#ffffff; --code-bg:#211d1b; --code-text:#ece7e3; --code-faint:#9b908a; --quote-bg:#f5efeb;
+    --inline-bg:#f3ede9; --inline-ink:#7a3a22;
+    --th-bg:#f7f2ef; --stripe:#faf7f5; --link:#b0512f;
+    --header-bg:#ffffff; --header-text:#1c1a19; --header-sub:#6f645e; --h1:#1c1a19; --h2:#1c1a19; --h3:#1c1a19;
+    --success:#2f7d57; --warning:#9a6312; --danger:#b23a2e;
+    --help-bg:#fdeee2; --help-line:#f0d8be; --help-text:#9a6312; --btn-border:#e4ddd8;
+    --content-max:812px;
   }
   [data-theme="dark"]{
-    --primary:#5BA3E0; --primary-d:#9CC4EA; --accent:#2DD4BF;
-    --bg:#0F1419; --text:#DCE3EC; --muted:#8696AC; --line:#27313F;
-    --card:#161D26; --code-bg:#1B2330; --code-text:#CDD6E4; --quote-bg:#15202E;
-    --th-bg:#1E2735; --stripe:#1A2330; --link:#7FB0F0;
-    --header-bg:#0A1622; --header-text:#E8EEF6; --h1:#9CC4EA; --h2:#6BB0EF; --h3:#9CC4EA;
-    --help-bg:#2A2310; --help-line:#4A3D17; --help-text:#E3C77A; --btn-border:rgba(255,255,255,.16);
+    /* Warm-dark counterpart. DESIGN.md is light-only, so this is an on-brand extrapolation:
+       espresso surfaces + a brighter terracotta that clears contrast on dark ground. */
+    --primary:#d4775a; --primary-d:#e0917a; --primary-soft:#2e211b; --accent:#d4775a;
+    --bg:#1a1613; --text:#ece7e3; --muted:#a39a92; --line:#322b25;
+    --card:#211d1b; --code-bg:#14100e; --code-text:#ece7e3; --code-faint:#9b908a; --quote-bg:#221c18;
+    --inline-bg:#2a221d; --inline-ink:#e6a488;
+    --th-bg:#262019; --stripe:#1e1a16; --link:#e08a6c;
+    --header-bg:#14100e; --header-text:#ece7e3; --header-sub:#a39a92; --h1:#ece7e3; --h2:#ece7e3; --h3:#ece7e3;
+    --success:#6fca9c; --warning:#d9a441; --danger:#e0776b;
+    --help-bg:#2a1f12; --help-line:#4a3a1e; --help-text:#d9a441; --btn-border:rgba(255,255,255,.14);
   }
   *{box-sizing:border-box}
   html{scroll-behavior:smooth}
-  body{margin:0;background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,-apple-system,Roboto,Arial,sans-serif;font-size:15px;line-height:1.65;transition:background .2s,color .2s}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;font-size:16px;line-height:1.65;transition:background .2s,color .2s}
   .skip{position:absolute;left:-999px;top:0;z-index:100;background:var(--accent);color:#fff;padding:10px 16px;border-radius:0 0 8px 0;text-decoration:none;font-size:13px;font-weight:600}
   .skip:focus{left:0}
-  #progress{position:fixed;top:0;left:0;height:3px;width:0;background:linear-gradient(90deg,var(--accent),var(--primary));z-index:60;transition:width .08s linear}
-  .brand{position:sticky;top:0;z-index:30;background:var(--header-bg);color:var(--header-text);display:flex;align-items:center;gap:12px;padding:11px 22px;box-shadow:0 2px 10px rgba(8,58,102,.25)}
-  .brand .mark{width:32px;height:32px;border-radius:8px;background:linear-gradient(135deg,#15B8A0,#0B4F8A);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;flex-shrink:0}
+  #progress{position:fixed;top:0;left:0;height:3px;width:0;background:linear-gradient(90deg,var(--primary),var(--primary-d));z-index:60;transition:width .08s linear}
+  /* Flat-Desk Rule: header carried by a hairline bottom border, not a drop shadow. */
+  .brand{position:sticky;top:0;z-index:30;background:var(--header-bg);color:var(--header-text);display:flex;align-items:center;gap:12px;padding:11px 22px;border-bottom:1px solid var(--line)}
+  .brand .mark{width:32px;height:32px;border-radius:8px;background:linear-gradient(135deg,#d4775a,#b0512f);color:#fff;box-shadow:inset 0 0 0 1px rgba(0,0,0,.06);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;flex-shrink:0}
   .brand b{font-size:15px}
-  .brand small{display:block;font-size:11px;color:#9FB6CC;font-weight:400}
+  .brand small{display:block;font-size:11px;color:var(--header-sub);font-weight:400}
   .brand .sp{flex:1}
-  .brand .badge{background:#B7791F;color:#fff;font-size:10.5px;padding:3px 10px;border-radius:20px;font-weight:700;white-space:nowrap}
-  .brand .readtime{color:#9FB6CC;font-size:11.5px;white-space:nowrap}
-  .brand a{color:#C9D8E8;text-decoration:none;font-size:12.5px;padding:6px 12px;border:1px solid var(--btn-border);border-radius:7px;margin-left:8px}
-  .brand a:hover{background:rgba(255,255,255,.1)}
-  .docpicker{background:rgba(255,255,255,.10);color:var(--header-text);border:1px solid var(--btn-border);border-radius:7px;font-size:12.5px;padding:5px 9px;max-width:280px;font-family:inherit;cursor:pointer}
-  .docpicker:hover{background:rgba(255,255,255,.16)}
-  .docpicker option{color:#1A2433;background:#fff}
+  /* Eyebrow-pill treatment: terracotta text on Petal Wash, not a solid fill. */
+  .brand .badge{background:var(--primary-soft);color:var(--primary);font-size:10.5px;padding:3px 10px;border-radius:100px;font-weight:700;letter-spacing:.03em;white-space:nowrap}
+  .brand .readtime{color:var(--header-sub);font-size:11.5px;white-space:nowrap}
+  .brand a{color:var(--muted);text-decoration:none;font-size:12.5px;padding:6px 12px;border:1px solid var(--btn-border);border-radius:7px;margin-left:8px}
+  .brand a:hover{background:var(--primary-soft);color:var(--primary)}
+  /* Native chrome stripped for a custom warm-gray chevron + terracotta focus ring
+     (the browser default is a cold blue outline — off-brand). */
+  .docpicker{appearance:none;-webkit-appearance:none;-moz-appearance:none;
+    background:var(--card) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239b908a' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E") no-repeat right 9px center;
+    background-size:11px;color:var(--header-text);border:1px solid var(--btn-border);border-radius:7px;
+    font-size:12.5px;line-height:1.2;padding:6px 28px 6px 11px;max-width:300px;
+    text-overflow:ellipsis;font-family:inherit;font-weight:500;cursor:pointer;transition:border-color .14s,box-shadow .14s,background-color .14s}
+  .docpicker:hover{background-color:var(--primary-soft);border-color:var(--primary)}
+  .docpicker:focus,.docpicker:focus-visible{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-soft)}
+  .docpicker option{color:#1c1a19;background:#fff;font-weight:400}
   .icon-btn{display:inline-flex;align-items:center;justify-content:center;background:transparent;color:var(--header-text);border:1px solid var(--btn-border);border-radius:7px;width:34px;height:32px;margin-left:8px;cursor:pointer;padding:0}
-  .icon-btn:hover{background:rgba(255,255,255,.1)}
+  .icon-btn:hover{background:var(--primary-soft);color:var(--primary)}
   .tocbtn{display:none}
   .helpbox{display:none;padding:13px 22px;background:var(--help-bg);border-bottom:1px solid var(--help-line);color:var(--help-text);font-size:13px;line-height:1.6}
   .helpbox code{background:var(--card);border:1px solid var(--help-line);border-radius:5px;padding:2px 7px;font-family:Consolas,monospace;color:var(--primary-d);font-weight:600}
@@ -135,12 +153,16 @@ TEMPLATE = r"""<!DOCTYPE html>
   .toc a.lvl3{padding-left:30px;font-size:12px;color:var(--muted)}
   .toc a.active{border-left-color:var(--accent);background:color-mix(in srgb,var(--accent) 16%,var(--card));color:var(--primary-d);font-weight:600;opacity:1}
   .backdrop{display:none}
-  .content{flex:1;min-width:0;background:var(--card);margin:18px 22px 60px;padding:36px 48px;border:1px solid var(--line);border-radius:12px;box-shadow:0 1px 3px rgba(10,30,60,.04)}
-  .content h1{font-size:25px;color:var(--h1);border-bottom:2px solid var(--line);padding-bottom:10px;margin:34px 0 14px}
+  /* Flat-Desk Rule: 1px border + tonal step, no drop shadow. Prose capped near 74ch;
+     wide tables/code overflow-scroll inside their own box (DESIGN §3 reading column). */
+  .content{flex:1;min-width:0;max-width:var(--content-max);background:var(--card);margin:18px auto 60px;padding:40px 48px;border:1px solid var(--line);border-radius:12px}
+  .content h1{font-size:clamp(28px,4vw,38px);font-weight:700;letter-spacing:-.02em;line-height:1.12;text-wrap:balance;color:var(--h1);margin:34px 0 16px}
   .content h1:first-child{margin-top:0}
-  .content h2{font-size:20px;color:var(--h2);margin:30px 0 12px}
-  .content h3{font-size:16.5px;color:var(--h3);margin:22px 0 9px}
-  .content h4{font-size:14.5px;color:var(--text);margin:18px 0 8px}
+  /* Section rhythm comes from the h2 top-rule, per DESIGN's Single-Eyebrow Rule. */
+  .content h2{font-size:25px;font-weight:700;letter-spacing:-.015em;line-height:1.2;color:var(--h2);border-top:1px solid var(--line);padding-top:30px;margin:44px 0 14px}
+  .content h1 + h2{border-top:none;padding-top:0;margin-top:22px}
+  .content h3{font-size:18px;font-weight:650;letter-spacing:-.01em;color:var(--h3);margin:24px 0 9px}
+  .content h4{font-size:15px;font-weight:650;color:var(--text);margin:18px 0 8px}
   .content h1,.content h2,.content h3{scroll-margin-top:70px}
   .content p{margin:10px 0}
   .content a{color:var(--link);text-decoration:none}
@@ -150,31 +172,53 @@ TEMPLATE = r"""<!DOCTYPE html>
   .content a.secref:hover{text-decoration:none;border-bottom-style:solid;background:color-mix(in srgb,var(--accent) 12%,transparent);border-radius:3px}
   .content ul,.content ol{margin:10px 0;padding-left:24px}
   .content li{margin:4px 0}
-  .content code{background:var(--code-bg);border:1px solid var(--line);border-radius:5px;padding:1px 6px;font-family:'SF Mono',Consolas,Monaco,monospace;font-size:12.8px;color:var(--primary-d)}
-  .content pre{position:relative;background:var(--code-bg);border:1px solid var(--line);border-radius:10px;padding:14px 16px;overflow-x:auto;margin:14px 0}
-  .content pre code{background:none;border:none;padding:0;color:var(--code-text);font-size:12.6px;line-height:1.55;display:block;white-space:pre}
-  .content pre.mermaid{background:var(--card);text-align:center;border-style:dashed;overflow-x:auto}
+  /* Mono-For-Machines Rule: inline literals get a warm tint, not the accent color. */
+  .content code{background:var(--inline-bg);border:1px solid var(--line);border-radius:5px;padding:1px 6px;font-family:'SF Mono','JetBrains Mono',ui-monospace,Menlo,Consolas,monospace;font-size:13.2px;color:var(--inline-ink)}
+  /* Code blocks live on the Espresso surface in BOTH themes (DESIGN §5). The top band
+     holds a Warm-Clay language label (left) and the copy button (right). */
+  .content pre{position:relative;background:var(--code-bg);border:1px solid var(--line);border-radius:12px;padding:26px 16px 14px;overflow-x:auto;margin:16px 0}
+  .content pre code{background:none;border:none;padding:0;color:var(--code-text);font-family:'SF Mono','JetBrains Mono',ui-monospace,Menlo,Consolas,monospace;font-size:13.5px;line-height:1.6;display:block;white-space:pre}
+  .code-label{position:absolute;top:7px;left:14px;font-family:'SF Mono',ui-monospace,Menlo,monospace;font-size:10.5px;font-weight:700;letter-spacing:.04em;color:var(--code-faint);text-transform:lowercase;pointer-events:none}
+  .content pre.mermaid{background:var(--card);text-align:center;border-style:dashed;padding:18px 16px;overflow-x:auto}
   .content pre.mermaid svg{max-width:none;height:auto}
+  /* On-brand Mermaid restyle — shape & type, layered over the palette in mermaidThemeVars().
+     Uses the page theme vars, so it tracks light/dark automatically. */
+  .content pre.mermaid svg{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif}
+  .content pre.mermaid .node rect,.content pre.mermaid .node polygon,.content pre.mermaid .node circle,.content pre.mermaid .node path{stroke-width:1.5px;rx:9px;ry:9px}
+  .content pre.mermaid .cluster rect{rx:12px;ry:12px}
+  .content pre.mermaid .nodeLabel,.content pre.mermaid .edgeLabel,.content pre.mermaid .messageText,.content pre.mermaid .loopText,.content pre.mermaid .noteText{font-weight:500}
+  .content pre.mermaid .edgePath .path,.content pre.mermaid .flowchart-link{stroke-width:1.5px}
+  /* Sequence: rounded actor cards; dashed return arrows (-->>) go terracotta, echoing
+     DESIGN's "solid = request you send, dashed accent = response returned" language. */
+  .content pre.mermaid .actor{rx:10px;ry:10px;stroke-width:1.5px}
+  .content pre.mermaid text.actor>tspan{font-weight:600}
+  .content pre.mermaid .messageLine0,.content pre.mermaid .messageLine1{stroke-width:1.5px}
+  .content pre.mermaid .messageLine1{stroke:var(--primary) !important}
+  .content pre.mermaid .note{rx:8px;ry:8px}
   /* Safety net: keep subgraph/cluster titles legible if mermaid drops its own label color */
   .content pre.mermaid .cluster-label .nodeLabel,.content pre.mermaid .cluster .nodeLabel{fill:var(--text);color:var(--text)}
-  .copy-btn{position:absolute;top:8px;right:8px;background:var(--card);color:var(--muted);border:1px solid var(--line);border-radius:6px;font-size:11px;padding:3px 9px;cursor:pointer;opacity:0;transition:opacity .15s;font-family:inherit}
+  /* Ghost control on the dark code surface: translucent white, brightens on hover. */
+  .copy-btn{position:absolute;top:6px;right:8px;background:rgba(255,255,255,.08);color:var(--code-faint);border:1px solid rgba(255,255,255,.14);border-radius:7px;font-size:11px;padding:3px 9px;cursor:pointer;opacity:0;transition:opacity .15s,color .14s,background .14s;font-family:inherit}
   .content pre:hover .copy-btn,.copy-btn:focus{opacity:1}
-  .copy-btn:hover{color:var(--primary);border-color:var(--primary)}
-  .content table{border-collapse:collapse;width:100%;margin:16px 0;font-size:13.2px;display:block;overflow-x:auto}
-  .content th{background:var(--th-bg);color:var(--primary-d);text-align:left;padding:9px 12px;border:1px solid var(--line);font-weight:700;white-space:nowrap}
+  .copy-btn:hover{color:#fff;background:rgba(255,255,255,.16)}
+  /* Framed table: 1px border + 12px radius container, scrolls wide inside its own box. */
+  .content table{border-collapse:collapse;width:100%;margin:16px 0;font-size:13.5px;display:block;overflow-x:auto;border:1px solid var(--line);border-radius:12px}
+  .content th{background:var(--th-bg);color:var(--muted);text-align:left;padding:9px 12px;border:1px solid var(--line);font-weight:650;white-space:nowrap}
   .content td{padding:9px 12px;border:1px solid var(--line);vertical-align:top}
   .content tr:nth-child(even) td{background:var(--stripe)}
-  .content blockquote{margin:14px 0;padding:12px 18px;background:var(--quote-bg);border-left:4px solid var(--accent);border-radius:0 8px 8px 0;color:var(--text)}
+  /* Callouts & quotes: full 1px border + tint, never a border-left stripe (DESIGN Don'ts). */
+  .content blockquote{margin:16px 0;padding:12px 18px;background:var(--quote-bg);border:1px solid var(--line);border-radius:10px;color:var(--text)}
   .content blockquote p{margin:6px 0}
   /* GitHub-style callouts (a blockquote tagged [!NOTE] etc.) */
-  .callout{margin:16px 0;padding:12px 16px 12px 18px;border-left:4px solid var(--c);border-radius:0 8px 8px 0;background:color-mix(in srgb,var(--c) 9%,var(--card));color:var(--text)}
+  .callout{margin:16px 0;padding:14px 16px;border:1px solid color-mix(in srgb,var(--c) 32%,var(--line));border-radius:12px;background:color-mix(in srgb,var(--c) 9%,var(--card));color:var(--text)}
   .callout p{margin:6px 0}.callout p:last-child{margin-bottom:0}
   .callout-title{display:flex;align-items:center;gap:8px;font-weight:700;color:var(--c);margin-bottom:6px;font-size:13.5px}
   .callout-title svg{flex-shrink:0}
-  .callout-note{--c:#2563EB}.callout-tip{--c:#0E9F8A}.callout-important{--c:#8B5CF6}.callout-warning{--c:#B7791F}.callout-caution{--c:#DC2626}
-  [data-theme="dark"] .callout-note{--c:#60A5FA}[data-theme="dark"] .callout-tip{--c:#2DD4BF}[data-theme="dark"] .callout-important{--c:#A78BFA}[data-theme="dark"] .callout-warning{--c:#E0A82E}[data-theme="dark"] .callout-caution{--c:#F87171}
+  /* NOTE = neutral; TIP/WARNING/CAUTION = status green/amber/red; IMPORTANT = the accent (key). */
+  .callout-note{--c:#6f645e}.callout-tip{--c:#2f7d57}.callout-important{--c:#b0512f}.callout-warning{--c:#9a6312}.callout-caution{--c:#b23a2e}
+  [data-theme="dark"] .callout-note{--c:#a39a92}[data-theme="dark"] .callout-tip{--c:#6fca9c}[data-theme="dark"] .callout-important{--c:#d4775a}[data-theme="dark"] .callout-warning{--c:#d9a441}[data-theme="dark"] .callout-caution{--c:#e0776b}
   .content hr{border:none;border-top:1px solid var(--line);margin:28px 0}
-  .content img{max-width:100%;height:auto;display:block;margin:18px auto;border:1px solid var(--line);border-radius:8px;box-shadow:0 1px 3px rgba(10,30,60,.05)}
+  .content img{max-width:100%;height:auto;display:block;margin:18px auto;border:1px solid var(--line);border-radius:8px}
   .anchor{margin-left:8px;color:var(--muted);text-decoration:none;opacity:0;font-weight:400;font-size:.8em}
   .content h1:hover .anchor,.content h2:hover .anchor,.content h3:hover .anchor{opacity:.6}
   .anchor:hover{opacity:1 !important;color:var(--accent)}
@@ -246,28 +290,35 @@ __MD_SCRIPT__
       var dark = document.documentElement.getAttribute('data-theme') === 'dark';
       return dark ? {
         darkMode:true,
-        background:'#161e29', primaryColor:'#243447', secondaryColor:'#2a3a4d', tertiaryColor:'#1f2c3d',
-        primaryBorderColor:'#3d5775', secondaryBorderColor:'#3d5775', tertiaryBorderColor:'#3d5775',
-        primaryTextColor:'#e8eef5', secondaryTextColor:'#e8eef5', tertiaryTextColor:'#e8eef5',
-        textColor:'#e8eef5', nodeTextColor:'#e8eef5', titleColor:'#e8eef5',
-        mainBkg:'#243447', lineColor:'#8aa0b8', edgeLabelBackground:'#161e29',
-        clusterBkg:'#1f2c3d', clusterBorder:'#3d5775', labelBoxBkgColor:'#243447', labelTextColor:'#e8eef5'
+        background:'#1a1613', primaryColor:'#2e2420', secondaryColor:'#26201b', tertiaryColor:'#211d1b',
+        primaryBorderColor:'#d4775a', secondaryBorderColor:'#6b5b52', tertiaryBorderColor:'#322b25',
+        primaryTextColor:'#ece7e3', secondaryTextColor:'#ece7e3', tertiaryTextColor:'#ece7e3',
+        textColor:'#ece7e3', nodeTextColor:'#ece7e3', titleColor:'#ece7e3',
+        mainBkg:'#2e2420', lineColor:'#a39a92', edgeLabelBackground:'#1a1613',
+        clusterBkg:'#211d1b', clusterBorder:'#322b25', labelBoxBkgColor:'#2e2420', labelTextColor:'#ece7e3'
       } : {
         darkMode:false,
-        background:'#ffffff', primaryColor:'#eef3f8', secondaryColor:'#f4f7fa', tertiaryColor:'#ffffff',
-        primaryBorderColor:'#9fb6cc', secondaryBorderColor:'#c2d2e0', tertiaryBorderColor:'#cdd9e5',
-        primaryTextColor:'#1a2433', secondaryTextColor:'#1a2433', tertiaryTextColor:'#1a2433',
-        textColor:'#1a2433', nodeTextColor:'#1a2433', titleColor:'#1a2433',
-        mainBkg:'#eef3f8', lineColor:'#5a6b7d', edgeLabelBackground:'#ffffff',
-        clusterBkg:'#f7f9fb', clusterBorder:'#cdd9e5', labelBoxBkgColor:'#eef3f8', labelTextColor:'#1a2433'
+        background:'#ffffff', primaryColor:'#fff0e8', secondaryColor:'#faf7f5', tertiaryColor:'#ffffff',
+        primaryBorderColor:'#d4775a', secondaryBorderColor:'#e0b9a8', tertiaryBorderColor:'#e9e3df',
+        primaryTextColor:'#1c1a19', secondaryTextColor:'#1c1a19', tertiaryTextColor:'#1c1a19',
+        textColor:'#1c1a19', nodeTextColor:'#1c1a19', titleColor:'#1c1a19',
+        mainBkg:'#fff0e8', lineColor:'#8a7d76', edgeLabelBackground:'#ffffff',
+        clusterBkg:'#faf7f5', clusterBorder:'#e9e3df', labelBoxBkgColor:'#fff0e8', labelTextColor:'#1c1a19'
       };
     }
     function runMermaid(){
       document.querySelectorAll('.content .mermaid').forEach(function(m){
         if (m.dataset.src){ m.removeAttribute('data-processed'); m.innerHTML = m.dataset.src; }
       });
+      var SANS = "-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif";
       try {
-        mermaid.initialize({ startOnLoad:false, theme:'base', themeVariables:mermaidThemeVars(), securityLevel:'loose', flowchart:{useMaxWidth:false}, sequence:{useMaxWidth:false} });
+        mermaid.initialize({
+          startOnLoad:false, theme:'base', themeVariables:mermaidThemeVars(), securityLevel:'loose',
+          fontFamily:SANS,
+          flowchart:{ useMaxWidth:false, htmlLabels:true, curve:'basis', padding:16, nodeSpacing:54, rankSpacing:56 },
+          sequence:{ useMaxWidth:false, mirrorActors:false, actorMargin:64, boxMargin:12,
+                     actorFontFamily:SANS, noteFontFamily:SANS, messageFontFamily:SANS }
+        });
         mermaid.run({ querySelector:'.content .mermaid' });
       } catch(e){ console.warn('mermaid', e); }
     }
@@ -304,8 +355,15 @@ __MD_SCRIPT__
         bq.insertBefore(title, bq.firstChild);
       });
 
-      // Copy buttons on real code blocks (not mermaid)
+      // Copy buttons + Warm-Clay language label on real code blocks (not mermaid)
       content.querySelectorAll('pre:not(.mermaid)').forEach(function(pre){
+        var code = pre.querySelector('code');
+        var m = code && code.className.match(/language-([\w.+#-]+)/);
+        if (m){
+          var lab = document.createElement('span');
+          lab.className = 'code-label'; lab.textContent = m[1];
+          pre.appendChild(lab);
+        }
         var btn = document.createElement('button');
         btn.className = 'copy-btn'; btn.type = 'button'; btn.textContent = LANG.copy;
         btn.addEventListener('click', function(){
