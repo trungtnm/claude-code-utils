@@ -10,6 +10,7 @@ This skill turns the current session into the **coordinator** for this repo. Pee
 **Hard rules (never weaken):**
 
 - The coordinator **never edits code**. It writes briefs, spawns peers, monitors, verifies, reports.
+- This session **never loads or runs the `orchestrator` skill** — `/hdr-orchestrator` IS the orchestrator here. Epic-sized work is delegated to a *peer pane* whose brief says to run `/orchestrator` (see the boundary section); invoking it in this session would collapse the two-level structure and put wave dispatch inside the coordinator.
 - Peers get **zero coordination tooling** — no MCP handshake, no Agent Mail, no registration. A peer is a plain `claude` session with a file to read.
 - **No locks.** Exclusion = admission control before dispatch (disjoint `## Files` scopes) + post-hoc scope and foreign-edit checks at verification. **One coordinator per repo at a time**, and no other agent workflows run alongside it in this repo.
 - The **bead is the task authority**. A brief that restates bead content is a bug.
@@ -175,6 +176,7 @@ bead status  >  RESULT.md  >  git log  >  LEDGER.md  >  herdr agent list
 ## Red Flags — STOP
 
 - **The coordinator editing code** → never; write a brief and delegate, or tell the user it's out of role
+- **Loading the `orchestrator` skill in this session** → never; you ARE the orchestrator. Epic work goes to a peer pane whose brief runs `/orchestrator` — the skill executes in the peer's session, not here
 - **A brief restating bead content** (`## Files`, acceptance criteria, narrative) in a bead repo → bug; delete and fix the bead
 - **Dispatching overlapping `## Files` scopes concurrently** → queue the second; admission control IS the lock
 - **More than 3 concurrent peers** → shared tree + build/test env starts thrashing
