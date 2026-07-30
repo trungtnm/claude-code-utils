@@ -9,8 +9,7 @@ This skill turns the current session into the **coordinator** for this repo. Pee
 
 **Hard rules (never weaken):**
 
-- The coordinator **never edits code**. It writes briefs, spawns peers, monitors, verifies, reports.
-- This session **never loads or runs the `orchestrator` skill** — `/hdr-orchestrator` IS the orchestrator here. Epic-sized work is delegated to a *peer pane* whose brief says to run `/orchestrator` (see the boundary section); invoking it in this session would collapse the two-level structure and put wave dispatch inside the coordinator.
+- The coordinator **never edits code**. It writes briefs, spawns peers, monitors, verifies, reports. This skill owns the whole coordination loop — ad-hoc tasks, parallel batches, and full epics alike; it never hands coordination off to another skill.
 - Peers get **zero coordination tooling** — no MCP handshake, no Agent Mail, no registration. A peer is a plain `claude` session with a file to read.
 - **No locks.** Exclusion = admission control before dispatch (disjoint `## Files` scopes) + post-hoc scope and foreign-edit checks at verification. **One coordinator per repo at a time**, and no other agent workflows run alongside it in this repo.
 - The **bead is the task authority**. A brief that restates bead content is a bug.
@@ -73,7 +72,7 @@ One delegation = **brief → spawn → result**.
 **2. Admission check (the exclusion mechanism — before any tokens are spent):**
 
 - Dispatch only if the bead's `## Files` scope is **disjoint from every running delegation's scope**. Overlap → ledger `queued`; dispatch when the blocker reaches `verified`.
-- **Concurrency cap: 3 peers** (one number across the fleet, same as `/orchestrator`).
+- **Concurrency cap: 3 peers** — beyond that, the shared tree and build/test environment start thrashing.
 - Peers treat their `## Files` block as a hard edit boundary (brief rule), verified post-hoc by the scope check.
 
 **3. Spawn** — atomic spawn+name+cwd, no detection race:
@@ -87,7 +86,7 @@ The bootstrap prompt is that one sentence — everything else lives in the brief
 
 **4. Result.** The peer's final act is writing `RESULT.md` per [templates/result.md](templates/result.md) — status, commit SHAs, gates run with outcomes, deviations, out-of-scope failures observed, follow-ups — then `br close <bead> --reason "<one line> — see RESULT.md"`.
 
-**Epic-sized work:** don't reimplement wave dispatch — spawn **one peer whose brief is "run `/orchestrator` for epic X"**. That produces the two-level structure (user ↔ hdr-orchestrator ↔ orchestrating peer ↔ workers). `/hdr-orchestrator` = ad-hoc delegation and small parallel batches; `/orchestrator` = planned epics with a bead graph. They compose; they never run side-by-side as independent workflows in one repo.
+**Epic-sized work (a bead graph, not one bead):** the coordinator runs the epic itself with the same loop — one delegation per bead, **dispatch driven by the dependency graph**. `br ready` (filtered to the epic) lists what can run now; `bv --robot-priority` ranks it. Each ready bead goes through the normal admission check and spawns as its own delegation; when one reaches `verified`, re-run `br ready` — closing a bead typically unblocks others — and dispatch the newly ready beads. The cap of 3 and disjoint-scope rule apply unchanged; two ready beads with overlapping `## Files` queue in graph order.
 
 ## Monitoring
 
@@ -176,7 +175,7 @@ bead status  >  RESULT.md  >  git log  >  LEDGER.md  >  herdr agent list
 ## Red Flags — STOP
 
 - **The coordinator editing code** → never; write a brief and delegate, or tell the user it's out of role
-- **Loading the `orchestrator` skill in this session** → never; you ARE the orchestrator. Epic work goes to a peer pane whose brief runs `/orchestrator` — the skill executes in the peer's session, not here
+- **Handing coordination off to another skill or agent workflow** → never; this skill owns dispatch, monitoring, and verification end to end — epics included (dispatch per ready bead, graph-driven)
 - **A brief restating bead content** (`## Files`, acceptance criteria, narrative) in a bead repo → bug; delete and fix the bead
 - **Dispatching overlapping `## Files` scopes concurrently** → queue the second; admission control IS the lock
 - **More than 3 concurrent peers** → shared tree + build/test env starts thrashing
