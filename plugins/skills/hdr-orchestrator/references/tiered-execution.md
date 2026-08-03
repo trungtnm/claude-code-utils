@@ -6,10 +6,10 @@ For beads too complex for a single peer. **Trigger — any one of:**
 - it has a **populated `## Interfaces` block with downstream consumers**, or
 - it touches **≥ 5 files**.
 
-Everything else runs the single-peer flow in SKILL.md. Tiered execution is a **temporal handoff, not a concurrency problem**: at most two panes per delegation (`<slug>-arch`, then `<slug>`), strictly sequential. The delegation dir gains `DESIGN.md` and `TESTPLAN.md`.
+Everything else runs the single-peer flow in SKILL.md. Tiered execution is a **temporal handoff, not a concurrency problem**: at most two panes per delegation (`<bead-id>-arch`, then `<bead-id>`), strictly sequential. The delegation dir gains `DESIGN.md` and `TESTPLAN.md`.
 
 ```
-Architect (pane <slug>-arch)          Coder (pane <slug>)              Reviewer (Task() subagent)
+Architect (pane <bead-id>-arch)          Coder (pane <bead-id>)              Reviewer (Task() subagent)
 DESIGN.md + TESTPLAN.md         →     implementation +            →    judges conformance AND
 + contract tests (land RED)           own unit tests,                  test adequacy; findings
                                       contract tests GREEN             feed normal verify/reject
@@ -19,7 +19,7 @@ DESIGN.md + TESTPLAN.md         →     implementation +            →    judge
 
 ## Stage 1: Architect
 
-Spawn pane `<slug>-arch` with a brief scoped to design-only output:
+Spawn pane `<bead-id>-arch` with a brief scoped to design-only output:
 
 - Designs the abstractions and interfaces; writes `DESIGN.md` + `TESTPLAN.md` into `.ccu/delegations/<id>/`.
 - Writes the **behavioral/contract tests** against the bead's `## Interfaces` surface (e.g. `*.spec.ts` on the bead's `Test:` paths). **These land red — that is correct.** TDD evidence is preserved: the tests demonstrably exist before any implementation.
@@ -29,7 +29,7 @@ Spawn pane `<slug>-arch` with a brief scoped to design-only output:
 
 ## Stage 2: Coder
 
-Spawn pane `<slug>` (the Architect pane may stay alive for change requests). The Coder implements until the contract tests pass.
+Spawn pane `<bead-id>` (the Architect pane may stay alive for change requests). The Coder implements until the contract tests pass.
 
 **Split test ownership — this is how TDD survives delegation:**
 
@@ -44,7 +44,7 @@ Spawn pane `<slug>` (the Architect pane may stay alive for change requests). The
 cat > .ccu/delegations/<id>/coder-settings.json <<'EOF'
 { "permissions": { "deny": [ "Edit(<architect test path glob>)", "Write(<architect test path glob>)" ] } }
 EOF
-herdr agent start <slug> --cwd <repo-root> -- \
+herdr agent start <bead-id> --cwd <repo-root> -- \
   claude --settings .ccu/delegations/<id>/coder-settings.json "<bootstrap>"
 ```
 
@@ -52,7 +52,7 @@ The coordinator's **diff check is the backstop** (and the only line of defense i
 
 **Change requests.** If the Coder needs the abstractions, interfaces, use cases, or contract tests changed:
 
-- **Architect pane alive** → the Coder asks it **directly**: `herdr agent send <slug>-arch "<request>"` + Enter. Peer-to-peer; the coordinator stays out of it.
+- **Architect pane alive** → the Coder asks it **directly**: `herdr agent send <bead-id>-arch "<request>"` + Enter. Peer-to-peer; the coordinator stays out of it.
 - **Architect pane gone** → the Coder reports blocked; the coordinator **forwards the request verbatim to a (re)spawned Architect — without exploring the details itself**. The coordinator is a router here, not a reviewer of the request.
 - Either way: the Architect's revised `DESIGN.md`/`TESTPLAN.md`/contract tests **re-verify** (Stage 1 checks, ledger `expected-red` updated) before the Coder resumes.
 

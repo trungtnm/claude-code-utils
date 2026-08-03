@@ -12,7 +12,7 @@ herdr agent get <target>  # one agent's detail (pane id, state)
 ```
 
 - `Error: ... Connection refused` means the Herdr server is not running — the prerequisite gate refuses on this; tell the user to launch `herdr` first.
-- **Targets** accept terminal ids, unique agent names, detected/reported agent labels, and legacy pane ids. This skill addresses peers by their **pane label** (the delegation slug); use `herdr agent get <label>` when a `pane` subcommand needs the numeric pane id.
+- **Targets** accept terminal ids, unique agent names, detected/reported agent labels, and legacy pane ids. This skill addresses peers by their **pane label** (the bead id; delegation slug in non-bead repos); use `herdr agent get <label>` when a `pane` subcommand needs the numeric pane id.
 
 ## Spawning a peer
 
@@ -21,7 +21,7 @@ herdr agent start <name> --cwd <repo-root> -- claude "<bootstrap prompt>"
 ```
 
 - Atomic spawn + name + cwd — no detection race, no separate rename step needed.
-- `<name>` is the delegation slug (e.g. `fix-checkout-race`); it becomes the sidebar label. Suffix `-2` on collision.
+- `<name>` is the **bead id** (e.g. `a04-3f2c`); it becomes the sidebar label, keying the pane to `br`, commits, and the ledger. Non-bead repos: use the delegation slug instead. Bead ids are unique — no collisions.
 - Everything after `--` is the argv. The bootstrap prompt is one sentence pointing at `BRIEF.md`; the brief and bead carry everything else.
 - Other verified flags, use only when needed: `--workspace ID`, `--tab ID`, `--split right|down`, `--env KEY=VALUE`, `--focus|--no-focus`.
 
@@ -62,6 +62,8 @@ herdr agent rename <target> <name>   # relabel (only needed to fix a label; star
 herdr agent focus <target>           # bring a pane into view for the user
 herdr agent attach <target>          # attach the current terminal to a peer's pane (user-driven)
 herdr pane close <pane_id>           # close a finished pane — only after its delegation is verified
+herdr pane current                   # your OWN pane id — for the coordinator's self-rename
+herdr pane rename <pane_id> <label>  # coordinator labels itself hdr-<epic-or-bead-id> at init
 herdr --version                      # log this in the ledger header at session start
 ```
 

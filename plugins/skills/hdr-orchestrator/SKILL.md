@@ -43,6 +43,13 @@ mkdir -p .ccu/hdr .ccu/delegations
 ```
 
 - **Ledger:** `.ccu/hdr/LEDGER.md` — one row per delegation: id, pane label, bead id, work type, tier, status (`queued` → `running` → `done` → `verified` / `rejected` / `blocked`), rejection count, expected-red flag, commit SHAs. Header records `herdr --version` and session start time.
+
+**Name your own session.** The coordinator's pane is labeled `hdr-<id>` — `hdr-<epic-id>` when driving an epic, `hdr-<bead-id>` for a single delegation (re-rename when the target changes). This marks which session is the coordinator in the sidebar and enforces one-coordinator-per-repo at a glance:
+
+```bash
+herdr pane current                          # find your own pane id
+herdr pane rename <own-pane-id> hdr-<epic-or-bead-id>
+```
 - **Per-delegation dir:** `.ccu/delegations/<id>/` — `BRIEF.md`, `RESULT.md`, `REJECTION-<n>.md`, and for tiered runs `DESIGN.md` + `TESTPLAN.md`.
 
 The ledger is a **cache**, not truth — see Evidence Precedence below.
@@ -65,7 +72,7 @@ One authority per fact — duplication drifts, and a peer working a stale spec i
 
 One delegation = **brief → spawn → result**.
 
-**Ids and labels.** Delegation id: `<YYYYMMDD>-<kebab-slug>` (e.g. `20260729-fix-checkout-race`). The **pane label is the slug itself** (`fix-checkout-race`, suffixed `-2` on collision) so the Herdr sidebar reads as a live task board. The ledger maps label ↔ id ↔ bead.
+**Ids and labels.** Delegation id: `<YYYYMMDD>-<kebab-slug>` (e.g. `20260729-fix-checkout-race`). The **pane label is the bead id** (e.g. `a04-3f2c`) — so the Herdr sidebar reads as a live task board keyed the same way as `br`, commits, and the ledger. Non-bead repos have no bead id: label the pane with the delegation slug instead. Bead ids are unique, so labels never collide. The ledger maps delegation id ↔ bead id (= pane label).
 
 **1. Brief + bead.** Create/confirm the bead (`br create` for ad-hoc work), write the thin `BRIEF.md` from the template, and copy [templates/result.md](templates/result.md) into the delegation dir as `RESULT-TEMPLATE.md` (peers can't see the plugin dir; the brief points them at this copy). The brief carries the delegation's **work type** — `production` / `demo` / `mockup` — set by you from the task's nature; it decides which smell rules apply at verification.
 
@@ -78,7 +85,7 @@ One delegation = **brief → spawn → result**.
 **3. Spawn** — atomic spawn+name+cwd, no detection race:
 
 ```bash
-herdr agent start fix-checkout-race --cwd "$(git rev-parse --show-toplevel)" -- \
+herdr agent start a04-3f2c --cwd "$(git rev-parse --show-toplevel)" -- \
   claude "Read .ccu/delegations/20260729-fix-checkout-race/BRIEF.md and execute it. Your final act is writing .ccu/delegations/20260729-fix-checkout-race/RESULT.md (and closing the bead it names)."
 ```
 
@@ -93,8 +100,8 @@ The bootstrap prompt is that one sentence — everything else lives in the brief
 Wait on state transitions, **always with `--timeout`** (v0.7.4 has no `done` state — idle is the completion signal, and it can misfire):
 
 ```bash
-herdr agent wait fix-checkout-race --status idle --timeout 600000   # completion signal
-herdr agent wait fix-checkout-race --status blocked --timeout 600000  # stuck-peer catch
+herdr agent wait a04-3f2c --status idle --timeout 600000     # completion signal
+herdr agent wait a04-3f2c --status blocked --timeout 600000  # stuck-peer catch
 ```
 
 - **On timeout with no transition:** poll the files — `test -f .ccu/delegations/<id>/RESULT.md`, `git log --oneline -5`, and `herdr agent read <label> --source recent` to peek at the screen. State is signal; files are truth.
@@ -192,10 +199,10 @@ bead status  >  RESULT.md  >  git log  >  LEDGER.md  >  herdr agent list
 | Step | Action |
 |---|---|
 | Gate | repo root + `command -v herdr` + `herdr agent list` — else refuse |
-| Init | gitignore entries, `.ccu/hdr/LEDGER.md` (herdr version + start), `.ccu/delegations/` |
+| Init | gitignore entries, `.ccu/hdr/LEDGER.md` (herdr version + start), `.ccu/delegations/`, rename own pane `hdr-<epic-or-bead-id>` |
 | Define | bead (`br create` if ad-hoc) + thin `BRIEF.md` (work type, authority, completion) |
 | Admit | `## Files` disjoint from running scopes, cap 3 — else `queued` |
-| Spawn | `herdr agent start <slug> --cwd <root> -- claude "<bootstrap>"` → `running` |
+| Spawn | `herdr agent start <bead-id> --cwd <root> -- claude "<bootstrap>"` → `running` |
 | Monitor | `herdr agent wait <label> --status idle\|blocked --timeout <ms>`; timeout → poll `RESULT.md` + git |
 | Verify | [references/verification.md](references/verification.md) — evidence only, full suite here |
 | Reject | `REJECTION-<n>.md` first, then `agent send` + `pane send-keys Enter` |
