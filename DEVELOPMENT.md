@@ -12,27 +12,31 @@ the only generated files are the Codex adapters for Claude's `t:` commands.
 
 ## Claude Code development
 
-Link each plugin component into Claude Code:
+Register this checkout as a local marketplace and install the plugin (once):
 
 ```bash
-for type in skills agents commands; do
-  dest="$HOME/.claude/$type"; mkdir -p "$dest"
-  for item in "$(pwd)/plugins/ccu/$type"/*; do
-    [ -e "$item" ] || continue
-    name=$(basename "$item")
-    [ -e "$dest/$name" ] && [ ! -L "$dest/$name" ] && continue
-    ln -sfn "$item" "$dest/$name"
-  done
-done
+claude plugin marketplace add .
+claude plugin install ccu@ccu
 ```
 
-Restart Claude Code after changing plugin content. To test the marketplace
-package instead of symlinks, use a separate Claude Code session:
+Installation copies the plugin into Claude Code's cache, and `claude plugin
+update` skips re-copying while the version is unchanged. After editing plugin
+content, refresh the cache and start a new session:
 
 ```bash
-/plugin marketplace add trungtnm/claude-code-utils
-/plugin install ccu
+scripts/ccu-refresh.sh
 ```
+
+For a one-off test without touching the installed copy, load the directory
+directly — but note this loads alongside the installed `ccu@ccu`, so skills
+appear twice; prefer the refresh flow when the plugin is installed:
+
+```bash
+claude --plugin-dir "$(pwd)/plugins/ccu"
+```
+
+Do not symlink individual skills/agents/commands into `~/.claude/` — links
+break when files move, and they duplicate the installed plugin's content.
 
 ## Codex development
 
@@ -152,18 +156,19 @@ Use conventional prefixes such as `feat:`, `fix:`, `docs:`, and `refactor:`.
 When Beads is initialized, include the bead ID in the subject, for example
 `feat: add capture screen [a02-1a2b]`.
 
-## Claude Code symlink teardown
-
-Remove only links that point into this checkout, leaving personal content
-intact:
+## Claude Code teardown
 
 ```bash
-for type in skills agents commands; do
-  src="$(pwd)/plugins/ccu/$type"; dest="$HOME/.claude/$type"
-  for item in "$src"/*; do
-    [ -e "$item" ] || continue
-    name=$(basename "$item"); link="$dest/$name"
-    [ -L "$link" ] && rm "$link" && echo "Unlinked $type/$name"
-  done
+claude plugin uninstall ccu@ccu
+claude plugin marketplace remove ccu
+```
+
+If a legacy setup symlinked `~/.claude/skills`, `~/.claude/agents`, or
+`~/.claude/commands` into this checkout, remove those links and recreate the
+directories for personal content:
+
+```bash
+for d in skills agents commands; do
+  [ -L "$HOME/.claude/$d" ] && rm "$HOME/.claude/$d" && mkdir "$HOME/.claude/$d"
 done
 ```
