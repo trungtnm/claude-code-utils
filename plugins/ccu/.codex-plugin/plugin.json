@@ -1,0 +1,38 @@
+{
+  "name": "ccu",
+  "version": "1.0.0+codex.20260804082041",
+  "description": "Reusable engineering skills and workflows for Claude Code and Codex",
+  "author": {
+    "name": "trungtnm",
+    "url": "https://github.com/trungtnm"
+  },
+  "homepage": "https://github.com/trungtnm/claude-code-utils#readme",
+  "repository": "https://github.com/trungtnm/claude-code-utils",
+  "license": "MIT",
+  "keywords": [
+    "skills",
+    "workflow",
+    "security",
+    "quality",
+    "knowledge",
+    "multi-agent"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Claude Code Utils",
+    "shortDescription": "Engineering workflows for Codex and Claude Code.",
+    "longDescription": "Plan work, manage beads, coordinate Herdr peers, review quality and security, preserve session state, and run a shared beads drift hook in Codex or Claude Code.",
+    "developerName": "trungtnm",
+    "category": "Productivity",
+    "capabilities": [
+      "Interactive",
+      "Write"
+    ],
+    "websiteURL": "https://github.com/trungtnm/claude-code-utils",
+    "defaultPrompt": [
+      "Help me choose the right CCU workflow for this task.",
+      "Plan this feature as executable beads.",
+      "Review this repository for quality and security issues."
+    ]
+  }
+}

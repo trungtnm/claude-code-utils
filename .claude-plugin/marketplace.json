@@ -9,11 +9,11 @@
   "plugins": [
     {
       "name": "ccu",
-      "description": "Skills, agents, and commands for Claude Code — planning, TDD, bug scanning, security review, multi-agent orchestration, knowledge references, and session commands",
+      "description": "Shared engineering skills, workflows, and hooks for Claude Code and Codex — plus native Claude Code agents and commands",
       "version": "1.0.0",
-      "source": "./plugins",
+      "source": "./plugins/ccu",
       "category": "productivity",
-      "keywords": ["skills", "agents", "commands", "workflow", "security", "quality", "knowledge", "multi-agent"],
+      "keywords": ["skills", "agents", "commands", "codex", "workflow", "security", "quality", "knowledge", "multi-agent"],
       "author": {
         "name": "trungtnm",
         "email": "trungtnm@users.noreply.github.com"

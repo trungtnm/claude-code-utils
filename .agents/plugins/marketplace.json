@@ -1,0 +1,20 @@
+{
+  "name": "ccu",
+  "interface": {
+    "displayName": "Claude Code Utils"
+  },
+  "plugins": [
+    {
+      "name": "ccu",
+      "source": {
+        "source": "local",
+        "path": "./plugins/ccu"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Productivity"
+    }
+  ]
+}

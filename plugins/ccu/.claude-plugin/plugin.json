@@ -1,0 +1,22 @@
+{
+  "name": "ccu",
+  "description": "Shared engineering skills, workflows, and hooks for Claude Code and Codex — plus native Claude Code agents and commands",
+  "version": "1.0.0",
+  "author": {
+    "name": "trungtnm",
+    "url": "https://github.com/trungtnm"
+  },
+  "repository": "https://github.com/trungtnm/claude-code-utils",
+  "license": "MIT",
+  "keywords": [
+    "skills",
+    "agents",
+    "commands",
+    "codex",
+    "workflow",
+    "security",
+    "quality",
+    "knowledge",
+    "multi-agent"
+  ]
+}

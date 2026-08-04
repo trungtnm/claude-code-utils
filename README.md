@@ -1,8 +1,10 @@
-# Claude Code Utils
+# Claude Code & Codex Utils
 
-A plugin marketplace for [Claude Code](https://docs.anthropic.com/en/docs/claude-code) — custom skills, agents, and commands organized as one installable plugin (`ccu`).
+A shared plugin marketplace for [Claude Code](https://docs.anthropic.com/en/docs/claude-code) and [Codex](https://developers.openai.com/codex/) — reusable engineering skills and workflows organized as one installable plugin (`ccu`).
 
 ## Install
+
+### Claude Code
 
 In a Claude Code session:
 
@@ -11,7 +13,36 @@ In a Claude Code session:
 /plugin install ccu
 ```
 
+### Codex
+
+From a terminal:
+
+```bash
+codex plugin marketplace add trungtnm/claude-code-utils
+codex plugin add ccu@ccu
+```
+
+Restart Codex and open a new conversation after installation. The regular
+skills are available by name. Claude's `/t:name` commands are exposed to Codex
+as `$t-name` skills—for example, `/t:capture` maps to `$t-capture` and
+`/t:commit` maps to `$t-commit`. Open `/hooks` once to inspect and trust the
+bundled read-only beads drift guard.
+
 For local development, see [DEVELOPMENT.md](DEVELOPMENT.md).
+
+## Compatibility
+
+The same `SKILL.md` files and `SessionStart` hook power both products. Claude
+Code additionally loads native `commands/` and `agents/`; Codex loads generated
+`t-*` skill adapters for the commands and maps agent personas onto Codex
+subagents. Workflows translate product-specific tool names to the current
+host's user-input, planning, and collaboration tools.
+
+`hdr-orchestrator` runs on either host and defaults to a same-host cohort:
+Claude Code spawns `claude` peers, while Codex spawns `codex` peers in Herdr.
+Its bead/file/git protocol stays identical; only process, reviewer, and
+permission adapters vary. See
+[the compatibility contract](plugins/ccu/CODEX.md).
 
 ## The Core Workflow
 
@@ -57,7 +88,7 @@ Small fixes get done immediately; substantial ideas become beads (via [[file-bea
 
 **`/orchestrator`** — coordinated multi-agent execution for a planned epic:
 
-- The orchestrator (sonnet) only coordinates, never writes code. It spawns **one worker per ready bead** (opus, capped at 3 concurrent), driven by the `bv`/`br ready` dependency graph — closing a bead unblocks and dispatches the next wave.
+- The orchestrator only coordinates, never writes code. It spawns **one worker per ready bead** (capped at 3 concurrent), driven by the `bv`/`br ready` dependency graph — closing a bead unblocks and dispatches the next wave.
 - After all beads are verified, one independent **tester** agent writes functional/e2e tests against the epic's public surface, bugs bounce back to fix-scoped coders, and a **reviewer** agent does an integrated sweep + writes docs.
 - Verification is objective: the orchestrator checks that a commit exists per bead, greps diffs for `mock`/`stub`/`TODO`, and confirms every commit stays inside the bead's `## Files` scope.
 
@@ -112,7 +143,7 @@ Beads & workflow:
 | `/bv` | Beads Viewer: graph-aware triage (PageRank, critical path, cycles) |
 | `/triage` | Classify captures into quick-fixes, beads, or deferrals |
 | `/orchestrator` | Multi-agent bead execution: dispatch, monitor, verify |
-| `/hdr-orchestrator` | Delegate tasks to peer Claude Code sessions in Herdr panes: thin briefs, admission control, evidence-based verification |
+| `/hdr-orchestrator` | Delegate tasks to peer Claude Code or Codex sessions in Herdr panes: thin briefs, admission control, evidence-based verification |
 | `/recipe` | Pre-built command chains (new-feature, bug-fix, quality-review) |
 | `/session-state` | `.ccu/` directory: evidence, decisions, handoffs, crash recovery |
 
@@ -222,9 +253,12 @@ Morning:
   /t:recover                            ← "You were mid-auto, 2 beads left"
   /t:auto                               ← Resumes, completes remaining beads with verification
   /t:capture fix the flaky test in auth.test.ts
+  /t:capture [pasted image] -> check and improve the styling of CTA button
+  /t:capture we need to support ZNS for messages sending
+  /t:capture #more captures...
 
 Midday:
-  /triage                               ← "flaky test → quick-fix (doing now)"
+  /triage                               ← "flaky test → quick-fix (doing now), other beads..."
   /t:next                               ← "3 ready beads. Start a02-4e5f"
   /t:auto                               ← Works through ready beads
 
@@ -242,24 +276,37 @@ Both execution paths log evidence to `.ccu/EVIDENCE.md`, record decisions in `.c
 
 ### Plugin system
 
-| Type | Format | Invocation |
-|------|--------|------------|
-| **Skill** | `plugins/skills/<name>/SKILL.md` (+ optional `references/`, `templates/`, `scripts/`) | `/skill-name` or auto-triggered by description |
-| **Agent** | `plugins/agents/<name>.md` persona with scoped tools | Spawned via `Task(subagent_type=...)` |
-| **Command** | `plugins/commands/t:<name>.md` instruction script | `/t:command-name` |
+| Type | Shared source | Claude Code | Codex |
+|------|---------------|-------------|-------|
+| **Skill** | `plugins/ccu/skills/<name>/SKILL.md` | `/skill-name` or auto-trigger | `$skill-name` or auto-trigger |
+| **Command workflow** | `plugins/ccu/commands/t:<name>.md` | `/t:command-name` | `$t-command-name` adapter |
+| **Agent persona** | `plugins/ccu/agents/<name>.md` | Native `Task(subagent_type=...)` | Loaded into a generic Codex subagent task when allowed |
+| **Hook** | `plugins/ccu/hooks/hooks.json` | Native plugin hook | Native plugin hook; review/trust with `/hooks` |
 
 Skill frontmatter is minimal — `name`, `description` (with trigger phrases), and optionally `model`. The body is the workflow itself: comprehensive enough to reference mid-work, not a thin wrapper.
+
+Codex command adapters are generated from command frontmatter and link back to
+the original command file, so there is one workflow to maintain. Run
+`python3 scripts/sync-command-skills.py` after adding or renaming a command.
 
 ### Repository layout
 
 ```
 claude-code-utils/
 ├── .claude-plugin/
-│   └── marketplace.json        # Marketplace manifest (plugin: ccu)
+│   └── marketplace.json        # Claude Code marketplace
+├── .agents/plugins/
+│   └── marketplace.json        # Codex repo marketplace
 ├── plugins/
-│   ├── skills/                 # SKILL.md + references/templates/scripts
-│   ├── agents/                 # Role personas + tool scopes
-│   └── commands/               # t: session commands (+ scripts/ helpers)
+│   └── ccu/                    # Shared plugin root
+│       ├── .claude-plugin/     # Claude Code plugin manifest
+│       ├── .codex-plugin/      # Codex plugin manifest
+│       ├── skills/             # Shared skills + generated t-* adapters
+│       ├── agents/             # Claude roles; Codex persona resources
+│       ├── commands/           # Source t: command workflows
+│       └── hooks/              # Shared Claude Code/Codex SessionStart hook
+├── scripts/
+│   └── sync-command-skills.py  # Keeps Codex command adapters in sync
 ├── DEVELOPMENT.md
 └── README.md
 ```
