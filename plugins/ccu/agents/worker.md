@@ -49,8 +49,8 @@ This step takes 30 seconds and prevents hours of rework from violating establish
 **Then load your assignment:**
 
 - Read the epic context file: `.ccu/artifacts/{EPIC_DIR}/epic-context.md` — learnings and gotchas from earlier beads in this epic
-- Note your file scope: the bead's `## Files` block — you may ONLY create/modify files inside it
-- Cross-cutting concerns (shared types, API contracts, patterns affecting other beads) go into your report to the orchestrator — never edit files outside your scope to solve them yourself
+- Note your planned footprint: the bead's `## Files` block — the best-known list of paths this bead touches. Evidence may show the plan is incomplete; you may make minimal necessary changes beyond it, reserving each file before editing and recording the path + reason in your report
+- Cross-cutting concerns (shared types, API contracts, patterns affecting other beads) go into your report to the orchestrator — do not redesign other beads' surfaces to solve them yourself
 
 **File reservations are the ONLY guard.** With every agent in one shared tree, the Agent Mail reservation is the single mechanical lock that stops two agents editing the same file at the same time. Your `## Files` scope is disjoint by plan; **the reservation is the net** that catches a plan that got it wrong — *before* two agents overwrite each other live. Scope discipline is the intent; the reservation is the lock.
 
@@ -59,9 +59,9 @@ This step takes 30 seconds and prevents hours of rework from violating establish
 - Resolve actor: `ACTOR="${BR_ACTOR:-assistant}"`
 - Use `br show {BEAD_ID} --json` to get full bead details
 - **Load inherited constraints:** `br show {EPIC_ID} --json` (the parent epic) — its `## Global Constraints` section applies to every bead in the epic (version floors, naming/copy rules such as Vietnamese diacritics, platform requirements). Treat these as part of your bead's requirements.
-- **Honor the bead's contracts:** the `## Files` block is your complete touch list, and the `## Interfaces` block gives the exact names/types other beads rely on — implement `Produces` signatures verbatim; if a signature must change, that's a cross-cutting concern to report, not a local edit.
-- Use `br update --actor "$ACTOR" {BEAD_ID} --status in_progress` to claim it
-- **Reserve the files before you touch them.** The bead's `## Files` block is your touch list:
+- **Honor the bead's contracts:** the `## Files` block is the best-known footprint, and the `## Interfaces` block gives the exact names/types other beads rely on — implement `Produces` signatures verbatim; if a signature must change, that's a cross-cutting concern to report, not a local edit.
+- Use `br update --actor "$ACTOR" {BEAD_ID} --status in_progress` to claim it (a no-op if the orchestrator already claimed it for you)
+- **Reserve the files before you touch them.** The bead's `## Files` block is your starting reservation list:
   ```
   file_reservation_paths(paths=["src/foo.ts", "src/bar.ts"], reason="{BEAD_ID}")
   ```
@@ -126,7 +126,7 @@ Map discovered scripts: `test*` -> Tests, `lint*` -> Lint, `typecheck`/`tsc` -> 
 
 Run each discovered gate in order: tests -> lint -> typecheck -> build.
 
-**Shared-tree caveat:** other workers may be editing and committing concurrently, so a gate can fail on code you never touched. If a failure is clearly outside your `## Files` scope, do NOT fix it (those files are someone else's reservation) — note it in your report and let the orchestrator route it.
+**Shared-tree caveat:** other workers may be editing and committing concurrently, so a gate can fail on code you never touched. Assign the failure by causality: a failure your change caused is yours to fix, even when the failing file is outside `## Files`; a failure independent of your change belongs to another worker's reservation — note it in your report and let the orchestrator route it.
 
 ### 4.3 Auto-Fix on Failure (up to 2 attempts)
 
@@ -179,7 +179,7 @@ EOF
 # Do NOT add Co-Authored-By trailers — no AI attribution in commits
 ```
 
-The trailing `-- <paths>` limits the commit to exactly your files, regardless of what else is in the index. The orchestrator checks your commit's file list against your `## Files` scope — out-of-scope files = rejection.
+The trailing `-- <paths>` limits the commit to exactly your files, regardless of what else is in the index. The orchestrator judges every path beyond the `## Files` forecast by necessity and causality — unexplained or unnecessary expansion is rejected, and another worker's swept-in staged files are rejected regardless.
 
 Commit types: `feat`, `fix`, `refactor`, `test`, `docs`, `chore`
 
@@ -214,28 +214,6 @@ COMMIT_HASH=$(git log --grep="Bead: {BEAD_ID}" --format='%h' | head -1)
 | "I'll fold it into another commit"  | One commit per bead — orchestrator checks each   |
 
 **If any gate fails:** Fix the issue, re-run ALL gates, then proceed.
-
-## 5.7 Record Evidence
-
-If `.ccu/EVIDENCE.md` exists, append a structured evidence entry. This creates an objective, verifiable record that the orchestrator and peer-review can inspect.
-
-```markdown
----
-## {BEAD_ID} — {BEAD_TITLE}
-- **commit:** {COMMIT_HASH}
-- **files_changed:** {from git show {COMMIT_HASH} --name-only}
-- **lines:** +{added} / -{removed} {from git show {COMMIT_HASH} --stat}
-- **verification:**
-  - tests: {N} passed / {M} total
-  - lint: {pass | N/A}
-  - typecheck: {pass | N/A}
-  - build: {pass | N/A}
-  - ubs: {pass | N/A}
-- **completed:** {ISO timestamp}
-- **actor:** coder-{BEAD_ID}
-```
-
-If `.ccu/` does not exist, skip this step (graceful degradation).
 
 ## 6. Complete the Bead
 
@@ -278,7 +256,7 @@ If `.ccu/` does not exist, skip this step (graceful degradation).
   - ...
   EOF
   ```
-- **Capture decisions**: If you made technology, schema, API, or architecture choices during this bead, append them to `.ccu/DECISIONS.md` now (2-3 most impactful). Use the D{NNN} schema. This prevents decisions from being lost in session history.
+- **Capture decisions**: If you made technology, schema, API, or architecture choices during this bead, record the 2-3 most impactful now, using the shared journal schema and promote rule in the session-state skill (`## YYYY-MM-DD — <title> (<bead-id>)` entries appended to `.ccu/DECISIONS.md`; ADR-gate decisions get `docs/adr/NNNN-slug.md` + a one-line pointer instead). This prevents decisions from being lost in session history.
 - Record outcome for CM (skip if `cm` is not installed):
   ```bash
   cm outcome success <rule-ids-used> 2>/dev/null   # or 'failure' if bead was blocked
@@ -297,6 +275,7 @@ Your run ends when your bead is done — **your final message IS the bead report
 
 - **All checks passing:** YES
 - **Summary:** <what the bead delivered>
+- **Actual scope:** <changed paths; reason for any path beyond the bead's `## Files` forecast — or "as forecast">
 - **Public surface:** <exported fns / routes / commands / components this bead added or changed>
 - **Uncovered at unit level:** <behaviors/integration seams the tester should focus on>
 - **Cross-cutting concerns:** <anything affecting other beads — or NONE>
@@ -425,9 +404,9 @@ If blocked:
 - **Reservation failed but you proceeded anyway → STOP; report the conflict and end your run**
 - **Ending a bead without `release_file_reservations()` → the lock outlives you and blocks the epic**
 - **Passing a `$VAR` (unexpanded) as the Agent Mail key → garbage key, private mailbox, nobody's reservations; paste the literal repo-root path**
-- **Editing outside your bead's `## Files` scope → those files belong to another bead's reservation**
+- **Expanding beyond the `## Files` forecast without reserving the file and recording the reason → unexplained expansion is rejected**
 - **`git add -A` / `git add .` / commit without pathspec → you sweep another worker's staged files into your commit; stage and commit named files only**
-- **Fixing a broken gate outside your scope → that code is another worker's reservation; report it instead**
+- **Fixing an independent failure your change did not cause → that code is likely another worker's reservation; report it instead**
 - **Mailing a question and waiting for the answer → deadlock; your run ends and nothing ships**
 
 # Proactive Bias
