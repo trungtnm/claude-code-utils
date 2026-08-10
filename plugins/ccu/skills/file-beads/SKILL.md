@@ -30,15 +30,16 @@ Self-documenting beads include:
 - **Reasoning / justification** — why this approach was chosen, what alternatives were considered
 - **Considerations** — constraints, edge cases, related decisions from planning
 - **Context lineage** — references to discovery or approach docs in `.ccu/artifacts/<dir>/` that informed this bead
-- **Files contract** — exact Create/Modify/Test paths (see Structured Blocks in Step 4)
-- **Interfaces contract** — exact signatures this bead consumes from and produces for neighboring beads
+- **Files forecast** — best-known Create/Modify/Test paths, including affected tests and generated files
+- **Interfaces forecast** — exact known signatures this bead consumes from and produces for neighboring beads
+- **Coordination resources** — database mode, ports, lockfiles, other exclusive resources, and expected-red set
 - **Risk annotation** — for HIGH-risk components, prefix with `⚠ HIGH RISK: <reason>` and explicit "investigate before coding" guidance (read docs, validate API surface, test assumptions before deep implementation)
 
 Workers should never need to read `.ccu/artifacts/` to understand a bead. Push context forward — don't require backward lookups.
 
 **Beads are ALWAYS written in English.** Title, description, comments, and close reasons — regardless of the language the user planned or captured in (Vietnamese captures get translated when filed). Beads are executed by worker agents, and English keeps every bead unambiguous for any agent that picks it up. The ONE exception: literal user-facing copy quoted inside a bead (UI labels, error messages, seed data) stays in its product language, verbatim — e.g. a bead written in English may specify `label: "Ứng viên"` with full Vietnamese diacritics, because that exact string is the deliverable.
 
-**Contract beats narrative.** The narrative sections tell the worker *why*; the Files and Interfaces contracts tell it exactly *where* and *against what shape*. A bead with rich narrative but no contracts produces code that works alone and fails to integrate — two parallel workers will invent different names for the same seam.
+**Acceptance criteria and gates define completion.** Files, interfaces, and technical notes record the best plan available before implementation. Workers may correct those forecasts when repository evidence requires a minimal change, but they must report the actual scope and reason.
 
 ## Step 2: Analyze and Structure
 
@@ -49,6 +50,8 @@ Before filing any issues, analyze the plan for:
 3. **Dependencies** - What must complete before other work can start?
 4. **Parallelization opportunities** - What can be worked on simultaneously?
 5. **Technical risks** - Which components are novel or external? These need `⚠ HIGH RISK` annotations so workers investigate before coding.
+6. **Test impact** - Which unit, integration, fixture, generated, and documentation files consume a changed symbol, schema, or interface? Assign each affected file to a bead.
+7. **Coordination resources** - Which databases, ports, lockfiles, or other exclusive resources can serialize otherwise independent work?
 
 ### Bead Right-Sizing
 
@@ -79,6 +82,15 @@ Epics should:
 - Include acceptance criteria in the description
 - Be scoped to deliverable milestones
 - Carry a **`## Global Constraints`** section: project-wide requirements copied **verbatim** from the design doc and CLAUDE.md — version floors, dependency limits, naming and copy rules (e.g., Vietnamese text must use full diacritics), platform requirements. One line each, exact values. Every child bead implicitly inherits this section; workers read the epic bead before starting (`br show <epic-id>`). Do NOT repeat constraints in each child bead — duplication drifts.
+- Carry an **`## Orchestration Environment`** section with exact project pre-flight and cleanup commands. Include commands that prove service identity, database isolation, required ports, and persistent queue or scheduler cleanup when those resources exist.
+
+Use this shape:
+
+```markdown
+## Orchestration Environment
+- Pre-flight: `<command>` → <expected identity or state>
+- Cleanup: `<command>` → <expected clean state>
+```
 
 ## Step 4: File Detailed Issues
 
@@ -94,14 +106,15 @@ Match template depth to the task — don't ceremonially pad small beads, but don
 
 **Tier 1 — Minimal** (small scope, well-trodden path, no design decisions). Required sections:
 - Project context (1 sentence — why this exists)
-- Files block (exact Create/Modify/Test paths — see Structured Blocks)
+- Files block (best-known Create/Modify/Test paths — see Structured Blocks)
+- Coordination Resources block
 - Acceptance criteria (executable checklist — each item names its verify command)
 
 **Tier 2 — Standard** (default for most beads). All of Tier 1, plus:
 - Interfaces block (Consumes/Produces — mandatory whenever the bead has dependents or cross-bead consumers)
 - Reasoning / justification (why this approach, what alternatives were considered)
 - Considerations (constraints, edge cases, related decisions)
-- Technical notes (existing patterns, relevant files, gotchas)
+- Technical notes (existing patterns, relevant files, gotchas). Lead with a reference implementation when one exists: `Reference: <path> — imitate its <aspect>`. Source code conveys structure and semantics that prose cannot; the remaining notes then describe only what differs from the reference. Write `Reference: none found` when the hunt came up empty, so workers know it wasn't skipped.
 
 **Tier 3 — High-risk** (novel infra, external dependencies, security/billing/data-loss surface, anything where being wrong is expensive). All of Tier 2, plus:
 - `⚠ HIGH RISK: <reason>` prefix in the description
@@ -112,7 +125,7 @@ When in doubt, escalate one tier. The cost of over-documenting a bead is a few e
 
 ### Structured Blocks
 
-**`## Files` (required, all tiers).** Exact paths, split by action:
+**`## Files` (required, all tiers).** List exact known paths, split by action:
 
 ```markdown
 ## Files
@@ -121,9 +134,24 @@ When in doubt, escalate one tier. The cost of over-documenting a bead is a few e
 - Test:   `src/middleware/rate-limit.test.ts`
 ```
 
-No prose hints ("somewhere in the API layer"). A worker must know every file it will touch before starting — this block IS the worker's Agent Mail reservation list, and [[plan-beads]] validates parallel safety by **comparing these blocks** instead of guessing from descriptions. Disjoint Files sets across beads that can run in parallel is what makes concurrent workers safe. If you cannot name the files yet, the bead isn't ready to file.
+Include production, test, fixture, generated, configuration, and documentation paths that the plan already identifies. Do not use prose hints such as "somewhere in the API layer." Use this block as an admission forecast. Workers may expand it when repository evidence requires a minimal change.
 
-**`## Interfaces` (required Tier 2+; mandatory whenever the bead has dependents or cross-bead consumers).** A worker sees ONLY its own bead — this block is how it learns the exact names and types neighboring beads use:
+When a bead changes or removes a shared symbol, schema, or interface, search its consumers before filing. Name the affected tests and fixtures here or assign them to another bead with an explicit dependency.
+
+**`## Coordination Resources` (required, all tiers).** Declare every admission axis:
+
+```markdown
+## Coordination Resources
+- Database: `app_test` (`read-write`)
+- Ports: `none`
+- Lockfiles: `pnpm-lock.yaml`
+- Other: `none`
+- Expected red: `@app/api typecheck`, `tests/session.integration.test.ts`
+```
+
+Use `none` for an empty axis. Mark database access `read-write` or `schema-mutating`. Record intentional expected red as an exact package, suite, or test set. A missing declaration blocks orchestration dispatch.
+
+**`## Interfaces` (required Tier 2+; mandatory whenever the bead has dependents or cross-bead consumers).** Record the exact known names and types neighboring beads use:
 
 ```markdown
 ## Interfaces
@@ -132,7 +160,7 @@ No prose hints ("somewhere in the API layer"). A worker must know every file it 
   — consumed by a03-7 (usage dashboard reads the `X-RateLimit-Remaining` header this sets)
 ```
 
-Signatures must be exact: names, parameter types, return types. Every `Consumes` must match, **verbatim**, a `Produces` declared on an upstream bead (or an existing symbol named in Technical notes). Pseudocode belongs at the seams only — do not write implementation code in beads; that's the worker's job and it goes stale.
+Signatures must be exact: names, parameter types, and return types. Every `Consumes` must match a `Produces` declared on an upstream bead or an existing symbol named in Technical notes. Treat the block as the planned seam. A worker may correct it when implementation evidence requires a change and the acceptance criteria remain intact.
 
 **Acceptance criteria must be executable.** Each criterion names the command or test that proves it, with the expected result:
 
@@ -144,6 +172,8 @@ Signatures must be exact: names, parameter types, return types. Every `Consumes`
 ```
 
 A criterion with no way to check it ("signature verification implemented") is not finished being written.
+
+When a bead deletes tests, add an acceptance criterion for a deleted-test property ledger. Require each removed behavior to name its replacement test, existing coverage, or reason it dies with the removed mechanism.
 
 ### No Placeholders — Bead Failures
 
@@ -163,6 +193,7 @@ These phrases mean the bead is not done being written. Never file a bead contain
 - **Priority** - see Step 6
 - **Creator** - `--owner "$creator_email" --actor "$creator_name"` from git credentials (see Creator Attribution)
 - **Dependencies** - Link to blocking issues with `--deps bd-<id>` (plan mode only)
+- **Coordination resources** - Declare database mode, ports, lockfiles, other exclusive resources, and the exact expected-red set
 
 ## Step 5: Map Dependencies Carefully
 
@@ -204,6 +235,14 @@ Chose token-bucket algorithm over sliding window because:
 - Modify: `src/app.ts` (mount after auth middleware)
 - Test:   `src/middleware/rate-limit.test.ts`
 
+## Coordination Resources
+
+- Database: `none`
+- Ports: `none`
+- Lockfiles: `none`
+- Other: `redis-rate-limit-test-keyspace`
+- Expected red: `none`
+
 ## Interfaces
 
 - Consumes: `req.user: { id: string; tier: 'free' | 'pro' }` — set by a03-2 (auth middleware)
@@ -237,6 +276,7 @@ Chose token-bucket algorithm over sliding window because:
 
 ## Technical Notes
 
+- Reference: `src/middleware/request-logger.ts` — imitate its middleware shape, error passthrough, and header-setting pattern
 - Existing auth middleware at `src/middleware/auth.ts` extracts `req.user`
 - Redis client already configured in `src/lib/redis.ts`
 - See `.ccu/artifacts/<dir>/approach.md` for the rejected alternatives and full risk analysis
@@ -268,6 +308,9 @@ Verify:
 - Every bead is written in English (titles and descriptions — quoted product copy excepted)
 - Dependencies form a valid DAG (no cycles)
 - Every `Consumes` in a bead matches — verbatim — a `Produces` on one of its upstream beads, or an existing symbol named in its Technical notes
+- Every bead has a complete `## Coordination Resources` block; parallel-ready beads do not conflict on any declared axis
+- Every affected test, fixture, generated file, and integration suite has an owning bead
+- Every intentional expected-red entry names an exact package, suite, or test
 - No bead contains a phrase from the "No Placeholders — Bead Failures" list
 - Ready work exists (some issues have no blockers)
 - Priorities make sense for execution order

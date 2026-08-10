@@ -8,15 +8,15 @@ Generated: <date>
 
 ## Beads
 
-| Bead    | Title                    | Files (reservation list)         | Depends on      | Risk |
-| ------- | ------------------------ | -------------------------------- | --------------- | ---- |
-| {id-1}  | <title>                  | `src/db/migrations/*.sql`        | —               | LOW  |
-| {id-2}  | <title>                  | `apps/server/routes/users.ts`    | {id-1}          | MED  |
-| {id-3}  | <title>                  | `packages/sdk/client.ts`         | {id-2}          | LOW  |
-| {id-4}  | <title>                  | `apps/web/pages/users.tsx`       | {id-2}          | HIGH |
+| Bead | Title | Planned files | Resources | Depends on | Checkpoint | Risk |
+| --- | --- | --- | --- | --- | --- | --- |
+| {id-1} | <title> | `src/db/migrations/*.sql` | DB `app_test` (`schema-mutating`) | — | yes: schema | HIGH |
+| {id-2} | <title> | `apps/server/routes/users.ts` | DB `app_test` (`read-write`) | {id-1} | yes: interface | MED |
+| {id-3} | <title> | `packages/sdk/client.ts` | none | {id-2} | no | LOW |
+| {id-4} | <title> | `apps/web/pages/users.tsx` | port `5174` | {id-2} | no | HIGH |
 
-Each bead's `## Files` block is the worker's Agent Mail reservation list — the complete touch
-list. Beads with no dependency path between them MUST have disjoint Files sets.
+Treat `## Files` as the best-known footprint. Sequence parallel-ready beads when planned files,
+schema-mutating database access, ports, lockfiles, or other exclusive resources conflict.
 
 ## Entry Points (ready at start)
 
@@ -28,7 +28,7 @@ Per `br ready --json` at planning time:
 
 - Wave 1: {id-1}
 - Wave 2: {id-2}
-- Wave 3: {id-3}, {id-4} (disjoint files — safe to run concurrently)
+- Wave 3: {id-3}, {id-4} (no planned file or resource conflict)
 
 ## Sequencing Caveats
 

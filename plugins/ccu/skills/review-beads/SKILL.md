@@ -46,12 +46,16 @@ For EACH issue, verify:
 
 ### Contracts (see [[file-beads]] Structured Blocks)
 
-- [ ] `## Files` block exists with exact Create/Modify/Test paths — no prose hints
+- [ ] `## Files` lists the best-known production, test, fixture, generated, configuration, and documentation paths — no prose hints
+- [ ] `## Coordination Resources` declares database mode, ports, lockfiles, other exclusive resources, and an exact expected-red set or `none`
 - [ ] `## Interfaces` block exists on every bead that has dependents or cross-bead consumers
 - [ ] **Interface consistency:** every `Consumes` matches — verbatim, names and types — a `Produces` on an upstream bead or an existing symbol named in Technical notes (`rateLimit()` in one bead but `rateLimiter()` in its consumer is a plan bug; fix it now, not at integration)
 - [ ] Every acceptance criterion names its verify command/test and expected result
 - [ ] No "No Placeholders" failure phrases: "handle edge cases", "add appropriate error handling", "TBD", "similar to bead X"
-- [ ] Files scopes across beads that can run in parallel are disjoint — overlapping Files sets mean the beads must be sequenced (add a dependency) or merged
+- [ ] Parallel-ready beads do not conflict on planned files, schema-mutating database access, ports, lockfiles, or other exclusive resources
+- [ ] Shared symbols, schemas, and interfaces have a test-impact search; every affected test or fixture has an owning bead
+- [ ] Schema, shared-interface, and environment beads are marked as integration checkpoints in the execution plan
+- [ ] The epic's `## Orchestration Environment` section gives exact pre-flight and cleanup commands with expected state
 
 ### Dependencies
 
@@ -103,6 +107,8 @@ Watch for and correct:
 11. **Missing "why"**: Add project context explaining how this serves overarching goals, and reasoning explaining why this approach was chosen over alternatives
 12. **Locally optimal, globally suboptimal**: Individual beads may look fine in isolation but the overall decomposition doesn't serve users well — restructure from the user's perspective, not the developer's
 13. **Interface drift**: A bead references a function/type/endpoint under a different name than the bead that produces it — align both to the producer's `Produces` signature
+14. **Missing test ownership**: A production change affects tests or fixtures that appear in no bead — assign them before dispatch
+15. **Hidden resource conflict**: File-disjoint beads share a schema mutation, port, lockfile, or exclusive process — declare and sequence the resource
 
 ## Step 4: Update Issues
 
@@ -175,6 +181,7 @@ Before completing, ensure:
 3. **Testability**: Each issue has clear "done" criteria
 4. **Parallelism**: Multiple issues can be worked simultaneously
 5. **Completeness**: Spec coverage check (Step 6) passed — every requirement has a bead
+6. **Admission**: Every bead declares resources, and each affected test has an owner
 
 ## Output Format
 

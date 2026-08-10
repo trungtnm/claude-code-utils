@@ -64,7 +64,9 @@ All planning artifacts live under `.ccu/artifacts/` in a per-feature subdirector
 - Use `<dir>` as shorthand in subsequent phases once the directory is established
 - If brainstorming created a `<date>-draft-<slug>/design.md` already, reuse that directory and rename it at Phase 3 once the epic ID is known: `mv .ccu/artifacts/<date>-draft-<slug> .ccu/artifacts/<date>-<epic-id>-<slug>`
 
-`.ccu/artifacts/` is gitignored — these are local working files, not part of the project's permanent record. Durable context belongs in commit messages, `.ccu/DECISIONS.md`, and bead descriptions.
+`.ccu/artifacts/` is gitignored — these are local working files, not part of the project's permanent record. Durable context belongs in commit messages, bead descriptions, and — for decisions the plan settles — the promote rule in [[session-state]]: ADR-gate decisions become `docs/adr/NNNN-slug.md` with a one-line `.ccu/DECISIONS.md` pointer, below-gate decisions a journal entry in the shared schema.
+
+**Prose in `approach.md` and `execution-plan.md` follows [[tech-doc]]** (`doc-type: design`). Their reader is a worker agent with zero context, which makes its rules load-bearing rather than cosmetic: exact file paths and identifiers in backticks, one idea per sentence, `TODO:` where a fact is genuinely unknown instead of plausible-sounding filler, and no AI-voice hedging that a worker would have to guess at. Rejected options belong in `approach.md` — that is the trade-offs section, not banned history.
 
 **Browsable index:** after writing or updating any doc in the artifacts directory, regenerate its HTML viewer so the plan reads as one switchable page (discovery → approach → execution-plan) with live Mermaid and TOCs:
 
@@ -179,7 +181,9 @@ Each bead MUST include:
 - **Risk annotation** for HIGH-risk items: `⚠ HIGH RISK: <one-line reason>` near the top of the description, with explicit "investigate before coding" guidance
 - **Reference to discovery/approach docs** for context lineage: `See .ccu/artifacts/<dir>/approach.md` so workers can drill into tradeoffs if needed
 - **Clear acceptance criteria**
-- **File scope** (`## Files` block) — each worker reserves exactly these paths via Agent Mail before editing
+- **File forecast** (`## Files` block) — best-known production, test, fixture, generated, configuration, and documentation paths
+- **Coordination resources** — database mode, ports, lockfiles, other exclusive resources, and exact expected-red set
+- **Reference implementation** — while writing each bead, hunt the best existing in-repo (or vendored) code that does something structurally similar and record it in Technical Notes as `Reference: <path> — imitate its <aspect>` (see [[file-beads]]); a bead whose hunt came up empty says `Reference: none found`
 
 ### Example Bead with Risk Annotation
 
@@ -311,7 +315,7 @@ Task(
 
 **Without `execution-plan.md`, the orchestrator has no map of the epic. Your planning work is wasted until this file is written.**
 
-There are no tracks and no pre-assigned agents: the orchestrator spawns **one worker per bead**, dispatching whatever `br ready` returns and letting `bv` rank it. Your job here is to write down what the graph alone can't tell a dispatcher — per-bead file scopes, risks, and sequencing caveats.
+There are no tracks and no pre-assigned agents: the orchestrator spawns **one worker per bead**, dispatching whatever `br ready` returns and letting `bv` rank it. Record what the graph cannot express: planned files, coordination resources, test ownership, integration checkpoints, risks, and sequencing caveats.
 
 ### Step 1: Snapshot the Dependency Graph
 
@@ -320,24 +324,28 @@ bv --robot-plan 2>/dev/null | jq '.'          # parallel waves the graph allows
 br ready --json                               # entry points — beads dispatchable on day one
 ```
 
-### Step 2: Confirm Per-Bead File Scopes
+### Step 2: Confirm Admission Forecasts
 
-Every bead's `## Files` block (from [[file-beads]]) is the worker's reservation list:
+Read every bead's `## Files` and `## Coordination Resources` blocks:
 
 ```bash
-# For each bead, confirm the ## Files block is complete
+# For each bead, inspect the planned footprint and resource declaration
 br show <bead-id>
 ```
 
 **Rules:**
 
-- **Beads that can run in parallel** (no dependency path between them) **must have disjoint `## Files` sets** — overlapping files would make the second worker's Agent Mail reservation fail on arrival
-- If two independent beads must touch the same file, add an explicit dependency (`br dep add`) so they are sequenced — never leave the collision for the reservation to catch
+- Treat `## Files` as the best-known admission forecast. Allow evidence-backed expansion during implementation.
+- Sequence parallel-ready beads when their planned files overlap.
+- Sequence access to the same database when either bead is `schema-mutating`. Ordinary `read-write` access may coexist unless project rules are stricter.
+- Sequence matching ports, lockfiles, and other declared exclusive resources.
+- Search affected tests and fixtures when a bead changes a shared symbol, schema, or interface. Assign every affected file to a bead.
+- Mark schema, shared-interface, environment, and dependency-install boundaries as integration checkpoints.
 - **Backend before frontend**: if a frontend bead consumes an API from a backend bead, the dependency must exist in the graph
 
 ### Step 3: Create Execution Plan
 
-Save to `.ccu/artifacts/<dir>/execution-plan.md` using the template at `templates/execution-plan.md` — a bead-level table (id, files, depends-on, risk), the entry points, and any sequencing caveats.
+Save to `.ccu/artifacts/<dir>/execution-plan.md` using the template at `templates/execution-plan.md`. Include each bead's planned files, resources, dependencies, risk, and checkpoint role.
 
 ### Step 4: Validate the Graph
 
@@ -348,7 +356,7 @@ bv --robot-insights 2>/dev/null | jq '.Cycles'
 # Entry points exist
 br ready --json | jq 'length'   # must be > 0
 
-# No two parallel-eligible beads share files (manual check against the plan table)
+# No two parallel-eligible beads conflict on files or declared resources
 ```
 
 ## Phase 7: Artifact Verification (MANDATORY — final step)
@@ -393,6 +401,8 @@ ls .ccu/artifacts/<dir>/index.html
 - **No bv validation** → Broken dependency graph
 - **Frontend before backend** → Frontend tasks calling APIs must be blocked by the backend tasks that implement those APIs
 - **Parallel beads with API coupling** → If bead A (frontend) consumes bead B's (backend) APIs, add the dependency
-- **Parallel beads sharing files** → Overlapping `## Files` on independent beads means a guaranteed reservation conflict; sequence them with `br dep add`
+- **Parallel beads sharing files or exclusive resources** → Sequence them with `br dep add`
+- **Shared change without test ownership** → Search consumers and assign every affected test or fixture before planning waves
+- **No integration checkpoints** → Mark schema, interface, environment, and dependency-install boundaries so the coordinator runs broad gates only where risk changes
 - **Stopping after beads are filed** → execution-plan.md is required for orchestrator
 - **Forgetting to rename `<date>-draft-<slug>/`** → Phase 3 must rename to use the real epic ID
