@@ -7,25 +7,21 @@ Analyze all available state and recommend the single best next action.
 ## Steps
 
 1. **Read all state** — Gather context from all sources (skip any that don't exist):
-   - `.ccu/HANDOFF.md` — pending handoff from last session
-   - `.ccu/SESSION.md` — current phase
-   - `.ccu/EVIDENCE.md` — completed work
    - `.ccu/CAPTURES.md` — pending captures (count unchecked)
    - `git status` — uncommitted work
    - `git log --oneline -5` — recent commits
-   - `br list --status in_progress --json 2>/dev/null` — claimed but unfinished beads
+   - `br list --status in_progress --json 2>/dev/null` — claimed but unfinished beads, plus their comments (the resume trail)
    - `br ready --json 2>/dev/null` — actionable beads
    - `bv --robot-next 2>/dev/null` — bv's recommendation
 
 2. **Apply priority rules** — Evaluate in this order (first match wins):
-   1. **Handoff exists and unprocessed?** -> "Resume from handoff" (suggest `/t:recover`)
-   2. **Uncommitted changes?** -> "Commit your work first" (suggest `/t:commit`)
-   3. **In-progress bead unclaimed?** -> "Resume bead {ID}" (it was started but not finished)
-   4. **Blocked beads you can unblock?** -> "Unblock {ID} by doing {action}"
-   5. **Untriaged captures (>3)?** -> "Triage your captures" (suggest `/triage`)
-   6. **Ready beads exist?** -> "Work on bead {ID}" (highest priority from `br ready` or `bv --robot-next`)
-   7. **No beads but captures?** -> "Triage captures to create beads" (suggest `/triage`)
-   8. **Nothing actionable?** -> "All clear. Start new work with `/t:discuss` or capture ideas with `/t:capture`."
+   1. **Uncommitted changes?** -> "Commit your work first" (suggest `/t:commit`)
+   2. **In-progress bead unclaimed?** -> "Resume bead {ID}" (it was started but not finished — its comments and git say where it stopped)
+   3. **Blocked beads you can unblock?** -> "Unblock {ID} by doing {action}"
+   4. **Untriaged captures (>3)?** -> "Triage your captures" (suggest `/triage`)
+   5. **Ready beads exist?** -> "Work on bead {ID}" (highest priority from `br ready` or `bv --robot-next`)
+   6. **No beads but captures?** -> "Triage captures to create beads" (suggest `/triage`)
+   7. **Nothing actionable?** -> "All clear. Start new work with `/t:discuss` or capture ideas with `/t:capture`."
 
 3. **Present recommendation** — Show ONE clear recommendation:
    ```

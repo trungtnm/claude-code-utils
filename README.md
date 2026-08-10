@@ -115,7 +115,7 @@ graph LR
 
 **`/brainstorming`** is the required front door for creative work — it explores user intent, requirements, and design *before* any implementation, and writes the agreed design to `.ccu/artifacts/<dir>/design.md`. Alternatively `/t:discuss` runs guided requirements gathering for a concrete feature.
 
-**`/plan-beads`** runs the full planning pipeline: parallel codebase discovery → Oracle synthesis (approach + risk map) → decomposition into beads → bead review → `bv` graph validation → a bead-level execution plan (`.ccu/artifacts/<dir>/execution-plan.md` with per-bead file scopes, entry points, and parallel waves).
+**`/plan-beads`** runs the full planning pipeline: parallel codebase discovery → Oracle synthesis (approach + risk map) → decomposition into beads → bead review → `bv` graph validation → a bead-level execution plan (`.ccu/artifacts/<dir>/execution-plan.md` with planned files, coordination resources, integration checkpoints, entry points, and waves).
 
 ### The Beads Ecosystem
 
@@ -125,9 +125,9 @@ Beads are the source of truth for all work — bead IDs link to Agent Mail threa
 
 **`bv`** (Beads Viewer) computes graph metrics over the backlog: degree and topological sort instantly, then PageRank, betweenness, cycles, and critical path. Agents use `--robot-*` flags (`--robot-triage`, `--robot-priority`, `--robot-plan`) — bare `bv` opens a TUI that blocks automation.
 
-**`/file-beads`** is the single source of truth for bead structure. Every bead is self-contained for a worker with zero context: project context, reasoning, executable acceptance criteria, a **`## Files`** block (exact Create/Modify/Test paths — doubling as the worker's reservation list), and an **`## Interfaces`** block (exact Consumes/Produces signatures between beads). Epics carry `## Global Constraints` that every child bead inherits.
+**`/file-beads`** is the single source of truth for bead structure. Every bead is self-contained for a worker with zero context: project context, reasoning, executable acceptance criteria, a **`## Files`** block with the best-known production and test footprint, a **`## Coordination Resources`** block for admission, and an **`## Interfaces`** block for known cross-bead seams. Epics carry inherited `## Global Constraints` and project-specific `## Orchestration Environment` commands.
 
-**`/review-beads`** applies the plan-space philosophy — *"changing a bead takes seconds, changing implemented code takes hours"* — checking self-documentation, interface consistency, and that parallel-eligible beads have disjoint file scopes.
+**`/review-beads`** applies the plan-space philosophy — *"changing a bead takes seconds, changing implemented code takes hours"* — checking self-documentation, interface consistency, test ownership, and file/resource conflicts between parallel-ready beads.
 
 ## Skills
 
@@ -143,7 +143,7 @@ Beads & workflow:
 | `/bv` | Beads Viewer: graph-aware triage (PageRank, critical path, cycles) |
 | `/triage` | Classify captures into quick-fixes, beads, or deferrals |
 | `/orchestrator` | Multi-agent bead execution: dispatch, monitor, verify |
-| `/hdr-orchestrator` | Delegate tasks to peer Claude Code or Codex sessions in Herdr panes: thin briefs, admission control, evidence-based verification |
+| `/hdr-orchestrator` | Delegate tasks to Claude Code or Codex peers in Herdr panes with resource admission, durable session recovery, and tiered verification |
 | `/recipe` | Pre-built command chains (new-feature, bug-fix, quality-review) |
 | `/session-state` | `.ccu/` directory: evidence, decisions, handoffs, crash recovery |
 
@@ -210,14 +210,13 @@ Session commands (`t:` prefix) are single-purpose instruction scripts. Most acce
 | `t:next` | Analyze all state, recommend the single best next action |
 | `t:commit` | Commit all changes in logical groups with detailed messages |
 | `t:done` | Session completion: close beads, sync state, wrap up |
-| `t:handoff` | Write session state to `.ccu/HANDOFF.md` for the next session |
-| `t:recover` | Rebuild context after a crash, timeout, or fresh session |
 | `t:init` | Check and set up prerequisite tools and project state |
 
 ### Implementation & review
 
 | Command | Purpose |
 |---------|---------|
+| `t:blindspot` | Surface your unknown unknowns about a domain or module before starting work |
 | `t:discuss` | Guided requirements gathering for a new feature |
 | `t:peer-review` | Review code for bugs, security issues, reliability problems |
 | `t:fresh-eyes` | Re-read all session code and catch bugs with fresh perspective |
@@ -226,6 +225,7 @@ Session commands (`t:` prefix) are single-purpose instruction scripts. Most acce
 | `t:remove-stub` | Replace all stubs, placeholders, mocks, and TODOs with real code |
 | `t:demo-to-prod` | Convert a working demo/prototype UI into a production app |
 | `t:onboard` | Guide setup, running, and testing after auto dev mode completes |
+| `t:quiz` | Explain a change set and quiz the user on it before merging unread code |
 
 ### Polish, docs & analysis
 
@@ -236,7 +236,6 @@ Session commands (`t:` prefix) are single-purpose instruction scripts. Most acce
 | `t:enrich-readme` | Enrich the README with real content from the codebase |
 | `t:enrich-docs` | Find undocumented functionality and document it |
 | `t:reorganize` | Reorganize a target directory |
-| `t:audit-decisions` | Mine session history for undocumented decisions |
 
 ### Ideation
 
@@ -250,8 +249,8 @@ Session commands (`t:` prefix) are single-purpose instruction scripts. Most acce
 
 ```
 Morning:
-  /t:recover                            ← "You were mid-auto, 2 beads left"
-  /t:auto                               ← Resumes, completes remaining beads with verification
+  /t:next                               ← "In-progress bead a02-1a2b — resume it"
+  /t:auto                               ← Resumes from beads + git, completes remaining beads
   /t:capture fix the flaky test in auth.test.ts
   /t:capture [pasted image] -> check and improve the styling of CTA button
   /t:capture we need to support ZNS for messages sending
@@ -267,10 +266,9 @@ Afternoon:
   /plan-beads                           ← Decompose into beads + execution plan
   /orchestrator                         ← Parallel workers, one per ready bead
   /t:commit                             ← Commit in logical groups
-  /t:handoff                            ← Write state for tomorrow's session
 ```
 
-Both execution paths log evidence to `.ccu/EVIDENCE.md`, record decisions in `.ccu/DECISIONS.md`, and leave recoverable state for `/t:recover`.
+Both execution paths record verification in bead close reasons and commits, and route decisions per the session-state promote rule: ADR-worthy ones to `docs/adr/`, the rest to the `.ccu/DECISIONS.md` journal. Resume state lives in beads and git.
 
 ## How It Works
 
@@ -313,7 +311,7 @@ claude-code-utils/
 
 ### Session state (`.ccu/`)
 
-Project-local, plain-Markdown state that makes sessions continuous: `CAPTURES.md` (ideas), `DECISIONS.md` (architecture choices), `EVIDENCE.md` (per-bead verification records), `HANDOFF.md` (session-to-session baton), and `artifacts/<dir>/` (planning docs: discovery, approach, execution plan, summary — browsable via a generated HTML index).
+Project-local, plain-Markdown session state: `CAPTURES.md` (ideas), `DECISIONS.md` (append-only journal of decision claims, grep-on-demand), `CHECKPOINT.md` (recipe progress, deleted on completion), and `artifacts/<dir>/` (planning docs: discovery, approach, execution plan, summary — browsable via a generated HTML index). Durable knowledge lives outside `.ccu/`: ADRs in `docs/adr/`, requirements as beads, verification in bead close reasons and commits.
 
 ## Contributing
 

@@ -4,7 +4,7 @@ description: Wrap up a completed session — audit decisions, close beads, sync 
 
 The user has confirmed that the current work is complete. Follow these steps:
 
-0.5. **Audit decisions** — If significant work was done this session (beads completed, features implemented), run `/t:audit-decisions today` to capture undocumented decisions. Append each new decision as a `##` section to `.ccu/DECISIONS.md`.
+0.5. **Audit decisions** — If significant work was done this session (beads completed, features implemented), review the session for undocumented technology, schema, API, or architecture choices and record each one per the promote rule and shared journal schema in [[session-state]] (ADR-gate decisions → `docs/adr/NNNN-slug.md` + a one-line `.ccu/DECISIONS.md` pointer; the rest → a journal entry).
 
 0.8. **Check for untriaged captures** — If `.ccu/CAPTURES.md` has unchecked items, warn: "There are N untriaged captures in .ccu/CAPTURES.md. Consider running /triage before ending the session."
 

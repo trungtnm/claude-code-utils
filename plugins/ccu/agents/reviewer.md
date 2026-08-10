@@ -1,7 +1,7 @@
 ---
 name: reviewer
 description: Use as the final stage of an epic to review the integrated cross-bead output for quality, then write and update the documentation for what was built
-tools: ["Read", "Write", "Edit", "Bash", "Grep", "Glob"]
+tools: ["Read", "Write", "Edit", "Bash", "Grep", "Glob", "Skill"]
 model: opus
 ---
 
@@ -68,9 +68,17 @@ Once the review verdict is PASS (or the critical issues are acknowledged as out-
 
 - **Discover existing docs:** locate the project's docs home — `README.md`, `docs/`, `CHANGELOG.md`, API reference, ADRs. Match its structure and voice.
 - **Map the public surface** the epic added or changed: new commands, endpoints, config options, exported APIs, UI flows, env vars, migrations.
-- **Read `.ccu/DECISIONS.md`** if it exists — surface the architectural decisions worth recording in prose.
+- **Grep `.ccu/DECISIONS.md` for this epic's entries** (they are dated claims — verify against the code before repeating one; epistemics rule in the session-state skill).
+
+## 2.1b Promote the epic's decisions
+
+You are the epic-level promote gate. For each of the epic's decisions found in `.ccu/DECISIONS.md` or bead comments, apply the ADR gate (hard to reverse, surprising without context, real trade-off — see the grill-with-docs skill's `ADR-FORMAT.md`): write `docs/adr/NNNN-slug.md` for those that qualify, then append a new journal entry `Promoted: docs/adr/NNNN-slug.md` naming the original entry's date and title (the journal is append-only — never rewrite old entries). Below-gate decisions stay in the journal as they are.
 
 ## 2.2 Write / Update Docs
+
+**Load the `tech-doc` skill first** — `Skill(skill: "ccu:tech-doc")` — and write every sentence under its rules. It is authoritative for documentation prose: banned history and process narration, banned AI voice, sentence-level style, and the structure table per doc type. Pass it `doc-type` per artifact (`readme`, `api`, `module`), `audience: an engineer who did not work this epic`, and `constraints: update stale sections only; leave accurate prose alone`.
+
+You are the highest-risk caller of that skill. You just read every diff in the epic, so your draft will want to narrate the work — "the handler was refactored", "we added retry logic", "this replaces the old sync path". Every one of those is banned. Document the code as it stands, as if it had always been that way.
 
 Update existing sections that are now stale, and add sections for genuinely new functionality. Follow the project's conventions.
 
@@ -129,6 +137,8 @@ br close --actor "$ACTOR" {DOC_BEAD_ID} --reason "Documented {surfaces}"
 - Documenting behavior you haven't verified against the code/tests → verify first, or mark as "TODO: confirm"
 - Copy-pasting a code example you never ran → pull it from a passing test instead
 - Rewriting accurate existing docs for style → update only what's stale
+- Writing docs that narrate the epic ("was refactored", "now supports", "previously") → banned by `tech-doc`; describe the code as it stands
+- Writing docs without loading `tech-doc` first → stop and load it
 - Stripping Vietnamese diacritics → always write full dấu
 
 # Always

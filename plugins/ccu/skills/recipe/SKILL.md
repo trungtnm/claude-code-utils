@@ -34,7 +34,7 @@ Full lifecycle for a new feature from idea to shipped.
 
 **Sequence:**
 1. **Discuss** — `/t:discuss` for requirements gathering
-   - Skip if: `.ccu/REQUIREMENTS.md` already has requirements for this feature
+   - Skip if: open beads already cover this feature's requirements (check `br list`)
 2. **Plan** — `/plan-beads` to decompose into beads
    - Skip if: beads already exist for this feature (check `br list`)
 3. **Review beads** — `/review-beads` to optimize before work
@@ -56,7 +56,7 @@ Fast path for diagnosing and fixing a bug.
    br create --actor "$ACTOR" "Fix: {summary}" --type bug --priority 1
    ```
 4. **Fix** — Implement with TDD (RED: write failing test for the bug, GREEN: fix, REFACTOR)
-5. **Verify** — Run tests, lint, typecheck. Record evidence to `.ccu/EVIDENCE.md`
+5. **Verify** — Run tests, lint, typecheck. Record the results in the bead's close reason (and the commit message)
 6. **Commit** — `/t:commit` with enriched Context: section
 7. **Close** — Close bead and sync
 
@@ -73,7 +73,7 @@ Safe refactoring with verification gates.
    ```
 4. **Implement** — Refactor in small committed increments
 5. **Verify after each increment** — re-run tests, ensure no regressions vs baseline
-6. **Evidence** — Record to `.ccu/EVIDENCE.md`
+6. **Evidence** — Record verification results in the bead's close reason and the commit message
 7. **Commit** — `/t:commit`
 
 ### hotfix
@@ -115,8 +115,6 @@ Three-layer quality sweep with issue accumulator: find bugs, catch session mista
    # 1. Pick a baseline (most specific wins)
    if [ -n "$CCU_REVIEW_BASE" ]; then
      REVIEW_BASE="$CCU_REVIEW_BASE"                                # explicit override
-   elif [ -f .ccu/SESSION.md ] && grep -q '^start_sha:' .ccu/SESSION.md; then
-     REVIEW_BASE=$(awk '/^start_sha:/ {print $2; exit}' .ccu/SESSION.md)
    elif main_ref=$(git rev-parse --verify --quiet origin/main || git rev-parse --verify --quiet main); then
      REVIEW_BASE=$(git merge-base "$main_ref" HEAD)                # branch base
    else
@@ -222,6 +220,8 @@ For each step in the recipe:
    context: {$ARGUMENTS}
    ```
 6. **On failure** — stop, report what happened, suggest fix
+
+When the recipe's last step completes, **delete `.ccu/CHECKPOINT.md`**. The checkpoint exists only to resume an interrupted recipe; one that outlives its recipe reads as a phantom interruption on the next run ([[session-state]] owns this file's role).
 
 ## Graceful Degradation
 
