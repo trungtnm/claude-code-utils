@@ -69,6 +69,10 @@ When domain relationships are being discussed, stress-test them with specific sc
 
 When the user states how something works, check whether the code agrees. If you find a contradiction, surface it: "Your code cancels entire Orders, but you just said partial cancellation is possible — which is right?"
 
+### Prose style for everything you write
+
+`CONTEXT.md` and every ADR are documentation — [[tech-doc]] owns how they read. Apply it to each entry you write: present tense, active voice, one idea per sentence, exact terms in backticks, no marketing adjectives, no filler transitions. `tech-doc`'s "No history" rule is lifted inside an ADR (the trade-off you rejected is the point) but holds in `CONTEXT.md`: a glossary defines what a term means now, never what it used to mean.
+
 ### Update CONTEXT.md inline
 
 When a term is resolved, update `CONTEXT.md` right there. Don't batch these up — capture them as they happen. Use the format in [CONTEXT-FORMAT.md](./CONTEXT-FORMAT.md).

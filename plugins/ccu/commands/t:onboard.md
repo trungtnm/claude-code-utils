@@ -89,6 +89,8 @@ Guide the user to set up, run, and test the application after auto dev mode has 
 
 7. **Write the onboarding doc** — Save the complete guide to `docs/ONBOARDING.md` (or `GETTING_STARTED.md`). This becomes a permanent artifact that future developers can use too.
 
+   Write it under the [`tech-doc`](../skills/tech-doc/SKILL.md) skill with `doc-type: runbook` — when to run this → prerequisites → numbered steps with expected output → verification → rollback. The reader is a developer who was not in this session, so nothing about auto dev mode, what the agents built, or what you just fixed belongs in the file. Every command in it is copy-pasteable and was actually run. The same applies to any README setup instructions you correct under "Create missing pieces".
+
 8. **Offer to help** — Ask the user:
    - "Want me to run the setup commands now?"
    - "Want me to create a seed script for test data?"

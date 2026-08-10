@@ -105,7 +105,7 @@ For each design decision, document:
 
 ## Architecture Decision Records (ADRs)
 
-For significant architectural decisions, create ADRs:
+For significant architectural decisions, create ADRs. Write them under the `tech-doc` skill (`Skill(skill: "ccu:tech-doc")`, `doc-type: adr`) — it owns the prose. An ADR is one page: context → decision → consequences. Its "No history" rule is lifted here (recording *that* you chose X over Y is the point), but every other rule holds: no AI voice, no marketing adjectives, exact identifiers in backticks, and every number carries a unit and a source. The template below fixes the sections; `tech-doc` fixes the sentences.
 
 ```markdown
 # ADR-001: Use Redis for Semantic Search Vector Storage

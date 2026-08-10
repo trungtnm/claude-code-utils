@@ -16,6 +16,15 @@ Generate detailed, structured implementation specs from a demo/prototype UI so t
 Execute all phases without asking "should I continue?" between them. The user expects you to run the full pipeline. Only pause with AskUserQuestion when you encounter genuine ambiguity (e.g., a component with no clear data source and no API spec to reference).
 </AUTONOMOUS>
 
+## Prose style
+
+The templates below fix the *structure* of each spec. [[tech-doc]] owns the *prose* inside them — read it before writing and apply it to every sentence: present tense, no history, no process narration, no AI voice, exact identifiers in backticks, `TODO:` instead of plausible-sounding filler.
+
+Two rules from it matter most here, because a spec written from a demo invites both:
+
+- **No history.** The spec describes the target UI as it must be built. Never "the demo used X, so production should use Y" — state what production does.
+- **Every claim is checkable.** Token values, component names, and spacing come from the files read in Phase 0.7, never from what the screenshot looked like. Unknown value → `TODO:` naming what is missing.
+
 ## Arguments
 
 Parse `$ARGUMENTS` for:

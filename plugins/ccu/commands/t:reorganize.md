@@ -35,7 +35,7 @@ Always keep in mind, and track in this plan document, changes you will need to m
    - Tiny related files that should be consolidated into one
    - Oversized files that should be split
 
-3. **Draft a reorganization plan** — Create `PROPOSED_CODE_FILE_REORGANIZATION_PLAN.md` at the project root containing:
+3. **Draft a reorganization plan** — Create `PROPOSED_CODE_FILE_REORGANIZATION_PLAN.md` at the project root, written under the [`tech-doc`](../skills/tech-doc/SKILL.md) skill (`doc-type: design`). Every path in it was read, not recalled; rationale goes in prose paragraphs rather than bulleted assertions; no marketing adjectives about the proposed structure — say what a reader gains and where. The document contains:
 
    ### a. Current State Analysis
    - Complete inventory of all files with brief descriptions

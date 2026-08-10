@@ -1,8 +1,16 @@
 ---
 description: Add missing README sections and update only factually outdated ones
+argument-hint: "[path to README, defaults to repo root]"
 ---
 
 Enrich the project's README. Add missing sections, and update only those sections that are factually outdated versus the current code. Leave accurate content alone.
+
+**Target: `$ARGUMENTS`** — if a path is given above, enrich that README. Otherwise use the repo root `README.md`.
+
+**Prose style is owned by the `tech-doc` skill.** Read [`plugins/ccu/skills/tech-doc/SKILL.md`](../skills/tech-doc/SKILL.md) before writing and follow it for every sentence. Delegate with `doc-type: readme` and `constraints: add missing sections; edit existing ones only where factually wrong`. Two precedences, so the two documents never fight:
+
+- **Section inventory and order** — the canonical structure below wins over `tech-doc`'s generic README row. Its fixed headings (including `Why [Project]?`) are part of that structure, so `tech-doc`'s ban on rhetorical-question headings applies only to headings you invent.
+- **Everything inside a section** — `tech-doc` wins. No history, no marketing adjectives without a number, no filler transitions, no closing summary.
 
 ## Steps
 
@@ -62,7 +70,7 @@ Link out to /examples or docs for more.]
 
 - **Add or correct, never restyle** — Add missing sections. Fix sections that are factually wrong or outdated relative to the current code. Do NOT rewrite accurate content just because you'd phrase it differently.
 - **Update means minimal diff** — When correcting an outdated section, change only the stale facts (commands, file paths, feature claims). Keep the rest of the section as-is.
-- **Frame all updates as if they were always present** — Describe the current state of the project. Do NOT write "we added X", "X is now Y", "recently introduced", "new in this version", or any other changelog-style phrasing. The README documents what the project *is*, not what just changed.
+- **Frame all updates as if they were always present** — the README documents what the project *is*, not what just changed. This is `tech-doc`'s "No history" rule; apply it as written there.
 - **Cover new commands, options, and features exhaustively** — When scanning the codebase, identify every command, flag, configuration option, environment variable, skill, hook, or feature the README does not yet document, and add it. Missing surface area is the most common reason READMEs go stale.
 - **Match the existing tone** — headings, voice, and code-block style from the current README.
 - **Be substantive** — each new section teaches something specific about this project, not generic filler like "this project is great".

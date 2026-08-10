@@ -1,8 +1,13 @@
 ---
 description: Find undocumented functionality and add comprehensive narrative documentation for it
+argument-hint: "[area or path to focus on]"
 ---
 
 Find undocumented or under-documented functionality in the project and create comprehensive, narrative documentation for it. This is incremental — add NEW documentation, don't replace existing docs.
+
+**Scope: `$ARGUMENTS`** — if an area, path, or subsystem is named above, restrict the gap analysis to it. Otherwise sweep the whole project.
+
+**Prose style is owned by the `tech-doc` skill.** Read [`plugins/ccu/skills/tech-doc/SKILL.md`](../skills/tech-doc/SKILL.md) before writing a single sentence and follow it for every sentence you write here. It defines the banned patterns (history, process narration, AI voice), the sentence-level rules, and the per-doc-type structure. This command owns *what* to document; that skill owns *how it reads*. Delegate to it with `doc-type: module` (or `api`/`design`, whichever fits the gap) and `constraints: add only, never delete existing docs`.
 
 ## Steps
 
@@ -33,8 +38,8 @@ Find undocumented or under-documented functionality in the project and create co
 ## Rules
 
 - **Incremental only** — Never delete, rewrite, or restructure existing documentation. Only add.
-- **Narrative over reference** — Don't produce a dry dump of methods and parameters. Write prose that explains the "what", "why", and "how" so a new contributor can actually understand the system.
-- **Frame everything as if it was always present** — Write documentation in the voice of timeless reference material. Do NOT write "we added X", "X is now Y", "recently introduced", "new in this version", "previously X did Y but now it does Z", or any other changelog-style phrasing. Describe the current state of the code as a standing fact.
+- **Follow `tech-doc` for all prose** — it is authoritative for voice, banned phrasing, and structure. In particular its "No history" rule replaces any changelog-style framing here: no "we added X", "now supports Y", "new in this version". Run its checklist before you finish.
+- **Explain, don't only enumerate** — a dump of method signatures is not documentation. Write the reference tables first, then prose for the behaviour the tables don't reveal (`tech-doc` Procedure, steps 3–4).
 - **Cover new commands, options, and features exhaustively** — During the codebase inventory, explicitly hunt for commands, flags, CLI subcommands, configuration keys, environment variables, hooks, skills, plugins, extension points, and public APIs that do not appear in existing docs. Missing surface area is the primary reason docs drift — document every one you find.
 - **Match existing style** — Follow the tone, formatting, and conventions already used in the existing docs.
 - **Be exhaustive but organized** — Cover everything you find, but group related topics into coherent pages rather than one giant page.
