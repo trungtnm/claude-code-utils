@@ -2,7 +2,7 @@
 description: Work the backlog autonomously as a single agent, bead by bead
 ---
 
-Work the backlog autonomously as a single agent: pick the best ready bead, implement it, commit, close, repeat. Use `bv` to prioritize when the next bead is not obvious. Multi-agent execution belongs to `/hdr-orchestrator` and `/orchestrator`, not here. Use /effort max.
+Work the backlog autonomously as a single agent: pick the best ready bead, implement it, commit, close, repeat. Use `bv` to prioritize when the next bead is not obvious. Multi-agent execution belongs to `/orchestrator`, not here. Use /effort max.
 
 ## Steps
 

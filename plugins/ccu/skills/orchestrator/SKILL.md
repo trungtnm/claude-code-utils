@@ -31,7 +31,7 @@ Coders own production logic. The tester and reviewer never edit it; they report 
 
 Re-read `br ready --json` and `br show <bead-id>` immediately before every dispatch; the plan describes, the graph schedules. Rank candidates with `bv --robot-priority` and `bv --robot-triage --graph-root <epic-id>`.
 
-Require `## Coordination Resources` on every bead; backfill a missing block before dispatch. Compare each candidate with active workers across planned files, database access, ports, lockfiles, and other declared exclusive resources, using the syntax and conflict matrix in [admission.md](../hdr-orchestrator/references/admission.md).
+Require `## Coordination Resources` on every bead; backfill a missing block before dispatch. Compare each candidate with active workers across planned files, database access, ports, lockfiles, and other declared exclusive resources, using the syntax and conflict matrix in [admission.md](references/admission.md).
 
 Treat `## Files` as the best-known admission footprint, not an edit boundary. Conflicting beads run sequentially; when they also lack a dependency edge, add one with `br dep add`.
 

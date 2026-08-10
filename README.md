@@ -38,11 +38,7 @@ Code additionally loads native `commands/` and `agents/`; Codex loads generated
 subagents. Workflows translate product-specific tool names to the current
 host's user-input, planning, and collaboration tools.
 
-`hdr-orchestrator` runs on either host and defaults to a same-host cohort:
-Claude Code spawns `claude` peers, while Codex spawns `codex` peers in Herdr.
-Its bead/file/git protocol stays identical; only process, reviewer, and
-permission adapters vary. See
-[the compatibility contract](plugins/ccu/CODEX.md).
+See [the compatibility contract](plugins/ccu/CODEX.md) for the full mapping.
 
 ## The Core Workflow
 
@@ -143,9 +139,8 @@ Beads & workflow:
 | `/bv` | Beads Viewer: graph-aware triage (PageRank, critical path, cycles) |
 | `/triage` | Classify captures into quick-fixes, beads, or deferrals |
 | `/orchestrator` | Multi-agent bead execution: dispatch, monitor, verify |
-| `/hdr-orchestrator` | Delegate tasks to Claude Code or Codex peers in Herdr panes with resource admission, durable session recovery, and tiered verification |
 | `/recipe` | Pre-built command chains (new-feature, bug-fix, quality-review) |
-| `/session-state` | `.ccu/` directory: evidence, decisions, handoffs, crash recovery |
+| `/session-state` | `.ccu/` directory: captures, decisions journal, recipe checkpoint, artifacts |
 
 Quality & safety:
 
