@@ -25,9 +25,9 @@ This file is the single authority for `.ccu/` file roles and formats. Commands a
 
 | File | Role | Written by | Read at session start |
 |------|------|-----------|----------------------|
-| `CAPTURES.md` | Ad-hoc ideas queue (fast-write buffer) | `t:capture` | count unchecked items only |
+| `CAPTURES.md` | Ad-hoc ideas queue (fast-write buffer) | `capture` | count unchecked items only |
 | `CHECKPOINT.md` | Recipe progress; deleted by [[recipe]] when the recipe completes | recipe | only by recipe |
-| `DECISIONS.md` | Append-only journal of dated decision claims; grep-on-demand only | `t:auto`, `t:discuss`, worker agents | never |
+| `DECISIONS.md` | Append-only journal of dated decision claims; grep-on-demand only | `auto`, `discuss`, worker agents | never |
 | `artifacts/<dir>/` | Discovery, design, and plan docs per feature/epic | [[brainstorming]], [[plan-beads]], [[orchestrator]] | on demand |
 | `brainstorm/` | Visual-companion scratch | brainstorming | never |
 
@@ -57,7 +57,7 @@ A decision that meets the ADR gate in [[grill-with-docs]] — hard to reverse, s
 Append-only: each decision is a new `##` section at the end. Never rewrite or remove existing sections. One schema, used by every writer:
 
 ```markdown
-## 2026-08-07 — Serialise api integration tests (t:auto, ts-core-8adk)
+## 2026-08-07 — Serialise api integration tests (auto, ts-core-8adk)
 
 **Context:** 5s default timeout measured against scheduler queueing, not work.
 **Decision:** `fileParallelism: false` + `testTimeout: 20_000` in apps/api.
@@ -102,7 +102,7 @@ Do not load `DECISIONS.md` at session start. Grep it when a specific "why" quest
 
 ## Initialization
 
-When initializing `.ccu/` (typically via `t:init`):
+When initializing `.ccu/` (typically via `init`):
 
 1. Create `.ccu/` if it doesn't exist
 2. Create `CAPTURES.md` if it doesn't exist

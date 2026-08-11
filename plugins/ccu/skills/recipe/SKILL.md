@@ -20,11 +20,10 @@ triggers:
 # Workflow Recipes
 
 When running in Codex, read [the Codex compatibility rules](../../CODEX.md)
-before starting. Every `/t:name` reference below means the corresponding
-`$t-name` command-adapter skill, and `/skill-name` means the installed skill of
-that name.
+before starting. Every `/name` reference below means the installed skill of that
+name, which Codex invokes as `$name`.
 
-One command to go from "I have an idea" to "it's shipped." Each recipe chains ccu commands in the optimal order, checking prerequisites and skipping completed phases.
+One command to go from "I have an idea" to "it's shipped." Each recipe chains ccu workflows in the optimal order, checking prerequisites and skipping completed phases.
 
 ## Available Recipes
 
@@ -33,16 +32,16 @@ One command to go from "I have an idea" to "it's shipped." Each recipe chains cc
 Full lifecycle for a new feature from idea to shipped.
 
 **Sequence:**
-1. **Discuss** — `/t:discuss` for requirements gathering
+1. **Discuss** — `/discuss` for requirements gathering
    - Skip if: open beads already cover this feature's requirements (check `br list`)
 2. **Plan** — `/plan-beads` to decompose into beads
    - Skip if: beads already exist for this feature (check `br list`)
 3. **Review beads** — `/review-beads` to optimize before work
    - Skip if: beads have already been reviewed (check bead comments for review notes)
-4. **Execute** — `/t:auto` for single-agent or `/orchestrator` for multi-agent
+4. **Execute** — `/auto` for single-agent or `/orchestrator` for multi-agent
    - Skip completed beads automatically
-5. **Quality** — `/t:peer-review` + `/ubs` for quality gates
-6. **Wrap up** — `/t:commit` + `/t:done`
+5. **Quality** — `/peer-review` + `/ubs` for quality gates
+6. **Wrap up** — `/commit` + `/done`
 
 ### bug-fix
 
@@ -50,14 +49,14 @@ Fast path for diagnosing and fixing a bug.
 
 **Sequence:**
 1. **Understand** — Read the bug report (from `$ARGUMENTS` or ask user)
-2. **Investigate** — Use `/t:rootfix` approach to find root cause
+2. **Investigate** — Use `/rootfix` approach to find root cause
 3. **Track** — Create bead if one doesn't exist:
    ```bash
    br create --actor "$ACTOR" "Fix: {summary}" --type bug --priority 1
    ```
 4. **Fix** — Implement with TDD (RED: write failing test for the bug, GREEN: fix, REFACTOR)
 5. **Verify** — Run tests, lint, typecheck. Record the results in the bead's close reason (and the commit message)
-6. **Commit** — `/t:commit` with enriched Context: section
+6. **Commit** — `/commit` with enriched Context: section
 7. **Close** — Close bead and sync
 
 ### refactor
@@ -65,7 +64,7 @@ Fast path for diagnosing and fixing a bug.
 Safe refactoring with verification gates.
 
 **Sequence:**
-1. **Scope** — Clarify refactor scope (from `$ARGUMENTS` or `/t:discuss`)
+1. **Scope** — Clarify refactor scope (from `$ARGUMENTS` or `/discuss`)
 2. **Baseline** — Snapshot current test results: `npm test 2>&1 | tail -10`
 3. **Track** — Create bead:
    ```bash
@@ -74,7 +73,7 @@ Safe refactoring with verification gates.
 4. **Implement** — Refactor in small committed increments
 5. **Verify after each increment** — re-run tests, ensure no regressions vs baseline
 6. **Evidence** — Record verification results in the bead's close reason and the commit message
-7. **Commit** — `/t:commit`
+7. **Commit** — `/commit`
 
 ### hotfix
 
@@ -97,7 +96,7 @@ No bead creation before the fix. No evidence logging. No TDD requirement. No pee
 
 Three-layer quality sweep with issue accumulator: find bugs, catch session mistakes, polish the experience, then fix everything before committing.
 
-**Critical: review window includes committed work.** Recipes like `/t:auto` commit as they go, so by the time `quality-review` runs, the working tree is often clean. The recipe MUST review everything produced during the session — both committed and uncommitted — not just `git diff` against HEAD. Step 0 below computes that window once and feeds it into every subsequent step.
+**Critical: review window includes committed work.** Recipes like `/auto` commit as they go, so by the time `quality-review` runs, the working tree is often clean. The recipe MUST review everything produced during the session — both committed and uncommitted — not just `git diff` against HEAD. Step 0 below computes that window once and feeds it into every subsequent step.
 
 **Issue Accumulator:** Maintain a running markdown checklist of all issues found but NOT fixed across steps. Initialize as empty at recipe start. After each step, append any unfixed issues with their source step and severity:
 ```markdown
@@ -137,15 +136,15 @@ Three-layer quality sweep with issue accumulator: find bugs, catch session mista
    - If `REVIEW_FILES` is empty AND working tree is clean AND there are no commits since `REVIEW_BASE`: report "Nothing produced this session — skipping quality-review" and exit. This is the only legitimate empty-scan path.
    - Otherwise, proceed. Report: "Reviewing {N} files against baseline {short-sha}."
 
-1. **Peer review** — `/t:peer-review {$ARGUMENTS}` for deep bug/logic/security analysis
+1. **Peer review** — `/peer-review {$ARGUMENTS}` for deep bug/logic/security analysis
    - Pass `REVIEW_FILES` as the explicit scope so peer-review covers committed work, not just dirty files
    - Skip if: `REVIEW_FILES` is empty
    - After: append any issues found but not fixed to the accumulator
-2. **Fresh eyes** — `/t:fresh-eyes` to re-read session changes with a fresh perspective
+2. **Fresh eyes** — `/fresh-eyes` to re-read session changes with a fresh perspective
    - Pass `REVIEW_FILES` as the explicit scope
    - Skip if: `REVIEW_FILES` is empty
    - After: append any issues found but not fixed to the accumulator
-3. **Polish** — `/t:polish {$ARGUMENTS}` for UI/UX refinement
+3. **Polish** — `/polish {$ARGUMENTS}` for UI/UX refinement
    - Skip if: project has no UI (pure CLI tool, library, or backend-only) OR `REVIEW_FILES` contains no UI files
    - After: append any issues found but not fixed to the accumulator
 4. **Run UBS** — static analysis gate over the full review window, not just `--diff`:
@@ -164,7 +163,7 @@ Three-layer quality sweep with issue accumulator: find bugs, catch session mista
    - For issues that genuinely cannot or should not be fixed (false positives, intentional tradeoffs, out of scope), the user can explicitly defer them by marking with `[deferred: reason]`.
    - After fixing, re-run verification for the affected files: tests, lint, typecheck as applicable.
    - Repeat until the accumulator contains only deferred items or is empty.
-6. **Commit fixes** — `/t:commit` if any fixes were made
+6. **Commit fixes** — `/commit` if any fixes were made
 
 ## How to Use
 
@@ -227,4 +226,4 @@ When the recipe's last step completes, **delete `.ccu/CHECKPOINT.md`**. The chec
 
 - **No `br`** — skip bead creation/tracking, use git commits as tracking
 - **No `.ccu/`** — skip checkpoint and evidence steps, still chain the commands
-- **No Agent Mail** — use `/t:auto` instead of `/orchestrator`
+- **No Agent Mail** — use `/auto` instead of `/orchestrator`

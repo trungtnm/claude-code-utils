@@ -196,10 +196,10 @@ Launch 3 Explorer agents simultaneously:
 For comprehensive guides, examples, and best practices:
 
 **Workflows:**
-- [WORKFLOWS.md](./WORKFLOWS.md) — Detailed workflow examples and strategies
+- [WORKFLOW.md](./WORKFLOW.md) — Detailed workflow examples and strategies
 
 **Reference guides:**
-- [Tool Selection](./references/tool-selection.md) — Complete guide to choosing and using tools
+- [Tool Selection](./tool-selection.md) — Complete guide to choosing and using tools
 - [Documentation Sources](./references/documentation-sources.md) — Common sources and patterns across ecosystems
 - [Error Handling](./references/error-handling.md) — Troubleshooting and resolution strategies
 - [Best Practices](./references/best-practices.md) — 8 essential principles for effective discovery

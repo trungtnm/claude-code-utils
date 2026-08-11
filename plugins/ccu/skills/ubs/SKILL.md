@@ -37,9 +37,9 @@ ubs --diff                              # Working tree vs HEAD (uncommitted only
 ubs --files=a.ts,b.py                   # Arbitrary file list
 ```
 
-### ⚠ Post-commit review (post-`/t:auto`, post-orchestrator, etc.)
+### ⚠ Post-commit review (post-`/auto`, post-orchestrator, etc.)
 
-`--diff` and `--staged` only see *uncommitted* changes. After workflows that commit as they go (`/t:auto`, `/orchestrator`, recipe pipelines), the working tree is clean and `ubs --diff` will report "nothing to scan" even though there's a session's worth of new code to vet.
+`--diff` and `--staged` only see *uncommitted* changes. After workflows that commit as they go (`/auto`, `/orchestrator`, recipe pipelines), the working tree is clean and `ubs --diff` will report "nothing to scan" even though there's a session's worth of new code to vet.
 
 For that case, compute the changed-file list against a session baseline and pass it explicitly:
 

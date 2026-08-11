@@ -1,15 +1,15 @@
 # Codex compatibility
 
 The `skills/` and default `hooks/hooks.json` components are shared directly by
-Claude Code and Codex. The `commands/` and `agents/` directories are native
-Claude Code components, so Codex reaches command workflows through generated
-`t-*` skills and loads agent Markdown as subagent personas when needed.
+Claude Code and Codex. Every workflow lives in `skills/<name>/SKILL.md` and both
+hosts run the same file. The `agents/` directory is a native Claude Code
+component, so Codex loads that Markdown as subagent personas when needed.
 
-## Command adapters
+## Running a shared workflow
 
-When a `t-*` skill points to a command in `commands/`:
+When a skill under `skills/` describes a multi-step workflow:
 
-1. Read the referenced command completely before acting.
+1. Read the whole `SKILL.md` before acting.
 2. Treat the scope or details supplied with the user's invocation as
    `$ARGUMENTS` or `${ARGUMENTS}`. Never pass those placeholders literally.
 3. Translate product-specific tool names by intent:
@@ -43,6 +43,9 @@ allowed by the user's request or the active skill instructions.
   uses `PLUGIN_ROOT` with `CLAUDE_PLUGIN_ROOT` as a compatibility fallback.
 - Codex requires the user to inspect and trust plugin hooks (for example via
   `/hooks`) before they run. Never bypass that trust review.
-- Claude invokes command files as `/t:name`.
-- Codex invokes their generated adapters as `$t-name` or by asking for the
-  workflow in natural language.
+- Claude invokes a skill as `/name` (or `/ccu:name` when disambiguating).
+- Codex invokes the same skill as `$name` or by asking for the workflow in
+  natural language.
+- Workflow scripts ship beside their `SKILL.md` (for example
+  `skills/init/scripts/`). Resolve them from `PLUGIN_ROOT`, falling back to
+  `CLAUDE_PLUGIN_ROOT`, rather than hardcoding a host cache path.

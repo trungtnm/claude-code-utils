@@ -22,21 +22,20 @@ codex plugin marketplace add trungtnm/claude-code-utils
 codex plugin add ccu@ccu
 ```
 
-Restart Codex and open a new conversation after installation. The regular
-skills are available by name. Claude's `/t:name` commands are exposed to Codex
-as `$t-name` skills—for example, `/t:capture` maps to `$t-capture` and
-`/t:commit` maps to `$t-commit`. Open `/hooks` once to inspect and trust the
-bundled read-only beads drift guard.
+Restart Codex and open a new conversation after installation. Every skill is
+available by name — the same workflows Claude invokes as `/name`, Codex invokes
+as `$name` (`/capture` ↔ `$capture`, `/commit` ↔ `$commit`). Open `/hooks` once
+to inspect and trust the bundled read-only beads drift guard.
 
 For local development, see [DEVELOPMENT.md](DEVELOPMENT.md).
 
 ## Compatibility
 
-The same `SKILL.md` files and `SessionStart` hook power both products. Claude
-Code additionally loads native `commands/` and `agents/`; Codex loads generated
-`t-*` skill adapters for the commands and maps agent personas onto Codex
-subagents. Workflows translate product-specific tool names to the current
-host's user-input, planning, and collaboration tools.
+The same `SKILL.md` files and `SessionStart` hook power both products — every
+workflow has exactly one definition under `skills/`, with no per-host copy to
+keep in sync. Claude Code additionally loads native `agents/`; Codex maps those
+personas onto its own subagents. Workflows translate product-specific tool names
+to the current host's user-input, planning, and collaboration tools.
 
 See [the compatibility contract](plugins/ccu/CODEX.md) for the full mapping.
 
@@ -46,20 +45,20 @@ Everything in this plugin serves one loop: **capture ideas without losing flow, 
 
 ```mermaid
 graph LR
-    A["/t:capture<br/>idea → .ccu/CAPTURES.md"] --> B["/triage<br/>quick-fix / bead / defer"]
+    A["/capture<br/>idea → .ccu/CAPTURES.md"] --> B["/triage<br/>quick-fix / bead / defer"]
     B --> C["Beads backlog<br/>br + bv"]
-    C --> D["/t:auto<br/>single agent"]
+    C --> D["/auto<br/>single agent"]
     C --> E["/orchestrator<br/>worker per bead"]
 ```
 
-### 1. Capture — `/t:capture`
+### 1. Capture — `/capture`
 
 The most valuable habit: record every idea, bug, or observation the moment it occurs. Takes under 5 seconds, never breaks focus:
 
 ```bash
-/t:capture this API should have rate limiting
-/t:capture flaky test in checkout.test.ts — race condition?
-/t:capture [paste image]      # saved to .ccu/captures/, summarized in text
+/capture this API should have rate limiting
+/capture flaky test in checkout.test.ts — race condition?
+/capture [paste image]      # saved to .ccu/captures/, summarized in text
 ```
 
 Everything lands in `.ccu/CAPTURES.md` as a timestamped checklist — no analysis, no formatting, no interruption.
@@ -74,9 +73,9 @@ At natural breaks (between beads, end of day), classify every unchecked capture:
 
 Small fixes get done immediately; substantial ideas become beads (via [[file-beads]] templates); noise gets consciously discarded. Capture fast, triage deliberately — good ideas never slip through and you never lose flow chasing them.
 
-### 3. Execute — `/t:auto` or `/orchestrator`
+### 3. Execute — `/auto` or `/orchestrator`
 
-**`/t:auto`** — a single autonomous agent works through the beads backlog:
+**`/auto`** — a single autonomous agent works through the beads backlog:
 
 - Picks the highest-value ready bead (`br ready` + `bv`), claims it, implements with TDD, verifies (tests/lint/typecheck/build), commits per bead, closes it, and loops until nothing actionable remains.
 - Detects other active agents via Agent Mail; when peers are present it runs in multi-agent mode with file reservations, otherwise solo.
@@ -106,10 +105,10 @@ graph LR
     A["/brainstorming<br/>intent → design.md"] --> B["/plan-beads<br/>7-phase pipeline"]
     B --> C["/file-beads<br/>epic + issues"]
     C --> D["/review-beads<br/>optimize before work"]
-    D --> E["/orchestrator or /t:auto"]
+    D --> E["/orchestrator or /auto"]
 ```
 
-**`/brainstorming`** is the required front door for creative work — it explores user intent, requirements, and design *before* any implementation, and writes the agreed design to `.ccu/artifacts/<dir>/design.md`. Alternatively `/t:discuss` runs guided requirements gathering for a concrete feature.
+**`/brainstorming`** is the required front door for creative work — it explores user intent, requirements, and design *before* any implementation, and writes the agreed design to `.ccu/artifacts/<dir>/design.md`. Alternatively `/discuss` runs guided requirements gathering for a concrete feature.
 
 **`/plan-beads`** runs the full planning pipeline: parallel codebase discovery → Oracle synthesis (approach + risk map) → decomposition into beads → bead review → `bv` graph validation → a bead-level execution plan (`.ccu/artifacts/<dir>/execution-plan.md` with planned files, coordination resources, integration checkpoints, entry points, and waves).
 
@@ -139,7 +138,8 @@ Beads & workflow:
 | `/bv` | Beads Viewer: graph-aware triage (PageRank, critical path, cycles) |
 | `/triage` | Classify captures into quick-fixes, beads, or deferrals |
 | `/orchestrator` | Multi-agent bead execution: dispatch, monitor, verify |
-| `/recipe` | Pre-built command chains (new-feature, bug-fix, quality-review) |
+| `/recipe` | Pre-built workflow chains (new-feature, bug-fix, quality-review) |
+| `/grill-with-docs` | Stress-test a plan against the domain model; update CONTEXT.md and ADRs inline |
 | `/session-state` | `.ccu/` directory: captures, decisions journal, recipe checkpoint, artifacts |
 
 Quality & safety:
@@ -151,17 +151,12 @@ Quality & safety:
 | `/dcg` | Destructive Command Guard: blocks dangerous commands pre-execution |
 | `/security-review` | Security checklist for auth, input, secrets, APIs |
 | `/qa-sweep` | Three-phase quality sweep (inspect, peer-review, polish) |
-| `/coding-standards` | TypeScript/JavaScript/React/Node.js standards |
-| `/create-project-rules` | Generate tailored quality rules for a project's CLAUDE.md |
 
 Frontend & design:
 
 | Skill | Description |
 |-------|-------------|
-| `/reactcomponents` | Convert Stitch designs into Vite/React components |
 | `/ui-spec-writer` | Implementation specs from a working demo, for handoff to agents |
-| `/web-design-guidelines` | Web Interface Guidelines compliance review |
-| `/vercel-react-best-practices` | React/Next.js optimization guidelines |
 | `/excalidraw-diagram` | Excalidraw diagrams that make visual arguments |
 | `/markdown-html-viewer` | Render Markdown docs as a polished HTML viewer with Mermaid |
 
@@ -172,8 +167,9 @@ Knowledge & memory:
 | `/cass` | Search session history across coding agents |
 | `/cm` | Procedural memory with confidence decay and anti-pattern learning |
 | `/docs-seeker` | Discover docs via llms.txt, Repomix, parallel exploration |
+| `/tech-doc` | Owns documentation prose style: READMEs, ADRs, API refs, runbooks |
 | `/deslopify` | Remove AI tropes and clichés from text |
-| `/writing-clearly-and-concisely` | Strunk's rules applied to any prose |
+| `/mcp-builder` | Build MCP servers in Python (FastMCP) or TypeScript |
 
 ## Agents
 
@@ -192,75 +188,75 @@ Knowledge & memory:
 
 Tool access is deliberately scoped per agent: reviewers and consultants read but don't edit; the worker has full access because it owns implementation.
 
-## Commands
+## Workflow skills
 
-Session commands (`t:` prefix) are single-purpose instruction scripts. Most accept optional `$ARGUMENTS` to scope their work.
+Session workflows are single-purpose instruction scripts. Most accept optional `$ARGUMENTS` to scope their work. Invoke them as `/name` in Claude Code and `$name` in Codex.
 
 ### Core loop
 
-| Command | Purpose |
-|---------|---------|
-| `t:capture` | Record an idea, observation, or bug in <5 seconds |
-| `t:auto` | Autonomous agent: register with Agent Mail, work through ready beads |
-| `t:next` | Analyze all state, recommend the single best next action |
-| `t:commit` | Commit all changes in logical groups with detailed messages |
-| `t:done` | Session completion: close beads, sync state, wrap up |
-| `t:init` | Check and set up prerequisite tools and project state |
+| Workflow | Purpose |
+|----------|---------|
+| `capture` | Record an idea, observation, or bug in <5 seconds |
+| `auto` | Autonomous agent: register with Agent Mail, work through ready beads |
+| `next` | Analyze all state, recommend the single best next action |
+| `commit` | Commit all changes in logical groups with detailed messages |
+| `done` | Session completion: close beads, sync state, wrap up |
+| `init` | Check and set up prerequisite tools and project state |
 
 ### Implementation & review
 
-| Command | Purpose |
-|---------|---------|
-| `t:blindspot` | Surface your unknown unknowns about a domain or module before starting work |
-| `t:discuss` | Guided requirements gathering for a new feature |
-| `t:peer-review` | Review code for bugs, security issues, reliability problems |
-| `t:fresh-eyes` | Re-read all session code and catch bugs with fresh perspective |
-| `t:random-inspect` | Randomly explore code files, trace flows, fix issues |
-| `t:rootfix` | Diagnose and fix root causes — no bandaid fixes |
-| `t:remove-stub` | Replace all stubs, placeholders, mocks, and TODOs with real code |
-| `t:demo-to-prod` | Convert a working demo/prototype UI into a production app |
-| `t:onboard` | Guide setup, running, and testing after auto dev mode completes |
-| `t:quiz` | Explain a change set and quiz the user on it before merging unread code |
+| Workflow | Purpose |
+|----------|---------|
+| `blindspot` | Surface your unknown unknowns about a domain or module before starting work |
+| `discuss` | Guided requirements gathering for a new feature |
+| `peer-review` | Review code for bugs, security issues, reliability problems |
+| `fresh-eyes` | Re-read all session code and catch bugs with fresh perspective |
+| `random-inspect` | Randomly explore code files, trace flows, fix issues |
+| `rootfix` | Diagnose and fix root causes — no bandaid fixes |
+| `remove-stub` | Replace all stubs, placeholders, mocks, and TODOs with real code |
+| `demo-to-prod` | Convert a working demo/prototype UI into a production app |
+| `onboard` | Guide setup, running, and testing after auto dev mode completes |
+| `quiz` | Explain a change set and quiz the user on it before merging unread code |
 
 ### Polish, docs & analysis
 
-| Command | Purpose |
-|---------|---------|
-| `t:polish` | Scrutinize UI/UX and implementation quality |
-| `t:performance-audit` | Find and fix performance problems |
-| `t:enrich-readme` | Enrich the README with real content from the codebase |
-| `t:enrich-docs` | Find undocumented functionality and document it |
-| `t:reorganize` | Reorganize a target directory |
+| Workflow | Purpose |
+|----------|---------|
+| `polish` | Scrutinize UI/UX and implementation quality |
+| `performance-audit` | Find and fix performance problems |
+| `enrich-readme` | Enrich the README with real content from the codebase |
+| `enrich-docs` | Find undocumented functionality and document it |
+| `reorganize` | Reorganize a target directory |
 
 ### Ideation
 
-| Command | Purpose |
-|---------|---------|
-| `t:top-ideas` | Top 10 most impactful feature ideas |
-| `t:idea-wizard` | Best ideas for improving the project |
-| `t:opinion` | Honest, critical assessment of the project (or a target) |
+| Workflow | Purpose |
+|----------|---------|
+| `top-ideas` | Top 10 most impactful feature ideas |
+| `idea-wizard` | Best ideas for improving the project |
+| `opinion` | Honest, critical assessment of the project (or a target) |
 
 ## A Typical Day
 
 ```
 Morning:
-  /t:next                               ← "In-progress bead a02-1a2b — resume it"
-  /t:auto                               ← Resumes from beads + git, completes remaining beads
-  /t:capture fix the flaky test in auth.test.ts
-  /t:capture [pasted image] -> check and improve the styling of CTA button
-  /t:capture we need to support ZNS for messages sending
-  /t:capture #more captures...
+  /next                               ← "In-progress bead a02-1a2b — resume it"
+  /auto                               ← Resumes from beads + git, completes remaining beads
+  /capture fix the flaky test in auth.test.ts
+  /capture [pasted image] -> check and improve the styling of CTA button
+  /capture we need to support ZNS for messages sending
+  /capture #more captures...
 
 Midday:
   /triage                               ← "flaky test → quick-fix (doing now), other beads..."
-  /t:next                               ← "3 ready beads. Start a02-4e5f"
-  /t:auto                               ← Works through ready beads
+  /next                               ← "3 ready beads. Start a02-4e5f"
+  /auto                               ← Works through ready beads
 
 Afternoon:
   /brainstorming add SSO support        ← Design exploration for the next feature
   /plan-beads                           ← Decompose into beads + execution plan
   /orchestrator                         ← Parallel workers, one per ready bead
-  /t:commit                             ← Commit in logical groups
+  /commit                             ← Commit in logical groups
 ```
 
 Both execution paths record verification in bead close reasons and commits, and route decisions per the session-state promote rule: ADR-worthy ones to `docs/adr/`, the rest to the `.ccu/DECISIONS.md` journal. Resume state lives in beads and git.
@@ -271,16 +267,15 @@ Both execution paths record verification in bead close reasons and commits, and 
 
 | Type | Shared source | Claude Code | Codex |
 |------|---------------|-------------|-------|
-| **Skill** | `plugins/ccu/skills/<name>/SKILL.md` | `/skill-name` or auto-trigger | `$skill-name` or auto-trigger |
-| **Command workflow** | `plugins/ccu/commands/t:<name>.md` | `/t:command-name` | `$t-command-name` adapter |
+| **Skill / workflow** | `plugins/ccu/skills/<name>/SKILL.md` | `/name` or auto-trigger | `$name` or auto-trigger |
 | **Agent persona** | `plugins/ccu/agents/<name>.md` | Native `Task(subagent_type=...)` | Loaded into a generic Codex subagent task when allowed |
 | **Hook** | `plugins/ccu/hooks/hooks.json` | Native plugin hook | Native plugin hook; review/trust with `/hooks` |
 
-Skill frontmatter is minimal — `name`, `description` (with trigger phrases), and optionally `model`. The body is the workflow itself: comprehensive enough to reference mid-work, not a thin wrapper.
+Skill frontmatter is minimal — `name`, `description` (with trigger phrases), and optionally `argument-hint` or `model`. The body is the workflow itself: comprehensive enough to reference mid-work, not a thin wrapper.
 
-Codex command adapters are generated from command frontmatter and link back to
-the original command file, so there is one workflow to maintain. Run
-`python3 scripts/sync-command-skills.py` after adding or renaming a command.
+There is no separate command layer and no code generation step: knowledge skills
+and session workflows are the same component type, so each one has a single
+definition that both hosts run.
 
 ### Repository layout
 
@@ -294,12 +289,12 @@ claude-code-utils/
 │   └── ccu/                    # Shared plugin root
 │       ├── .claude-plugin/     # Claude Code plugin manifest
 │       ├── .codex-plugin/      # Codex plugin manifest
-│       ├── skills/             # Shared skills + generated t-* adapters
+│       ├── skills/             # Shared knowledge skills + session workflows
 │       ├── agents/             # Claude roles; Codex persona resources
-│       ├── commands/           # Source t: command workflows
+│       ├── CODEX.md            # Cross-host compatibility contract
 │       └── hooks/              # Shared Claude Code/Codex SessionStart hook
 ├── scripts/
-│   └── sync-command-skills.py  # Keeps Codex command adapters in sync
+│   └── ccu-refresh.sh          # Reinstall the plugin from this checkout
 ├── DEVELOPMENT.md
 └── README.md
 ```

@@ -3,7 +3,7 @@ name: triage
 description: >-
   Classify captured ideas from .ccu/CAPTURES.md into actionable categories.
   Converts captures to beads, quick-fixes, or deferred items. Use when you
-  have pending captures to process, between tasks, or when /t:next suggests
+  have pending captures to process, between tasks, or when /next suggests
   triaging. Triggers on triage, captures, classify, process ideas, sort backlog.
 domain: project-management
 role: specialist

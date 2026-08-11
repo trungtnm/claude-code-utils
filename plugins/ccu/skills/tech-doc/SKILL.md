@@ -10,7 +10,7 @@ Documentation describes **the system as it is now**, for a reader who was not pr
 
 The reader is a competent engineer who has never seen this code. They have a task. Every sentence either helps them do that task or gets deleted.
 
-This skill is the **single source of truth for documentation prose** in this project. Other skills, commands, and agents that write or edit markdown (`/t:enrich-docs`, `/t:enrich-readme`, [[ui-spec-writer]], the `reviewer` agent, and any workflow producing a design doc, runbook, or ADR) MUST delegate the writing rules here rather than restating their own, so the voice stays consistent.
+This skill is the **single source of truth for documentation prose** in this project. Other skills, commands, and agents that write or edit markdown (`/enrich-docs`, `/enrich-readme`, [[ui-spec-writer]], the `reviewer` agent, and any workflow producing a design doc, runbook, or ADR) MUST delegate the writing rules here rather than restating their own, so the voice stays consistent.
 
 ## Scope
 

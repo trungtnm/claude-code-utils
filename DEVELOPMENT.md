@@ -7,8 +7,8 @@ git clone https://github.com/trungtnm/claude-code-utils.git
 cd claude-code-utils
 ```
 
-The shared package lives at `plugins/ccu`. There is no application build step;
-the only generated files are the Codex adapters for Claude's `t:` commands.
+The shared package lives at `plugins/ccu`. There is no application build step
+and no generated content — every file in the repo is edited directly.
 
 ## Claude Code development
 
@@ -92,29 +92,27 @@ definition. Claude Code installs these as native subagent types. Codex can use
 the files as persona resources when a shared workflow delegates to a generic
 subagent, but does not install them as named agent types.
 
-### Cross-host command workflows
+### Cross-host session workflows
 
-Create `plugins/ccu/commands/t:<name>.md` with at least a description:
+Session workflows (`auto`, `capture`, `commit`, …) are ordinary skills. Create
+`plugins/ccu/skills/<name>/SKILL.md` and add an `argument-hint` when the
+workflow takes a scope:
 
 ```yaml
 ---
-description: What this workflow does
+name: my-workflow
+description: What this workflow does, with useful trigger phrases.
 argument-hint: [optional scope]
 ---
 ```
 
-Use `$ARGUMENTS` for the caller's scope. Claude invokes the command as
-`/t:name`; Codex invokes its generated adapter as `$t-name`.
+Use `$ARGUMENTS` for the caller's scope. Claude invokes it as `/name`; Codex
+invokes the same file as `$name`. There is no separate command file and nothing
+to regenerate.
 
-After adding, renaming, or changing a command description, regenerate and check
-the adapters:
-
-```bash
-python3 scripts/sync-command-skills.py
-python3 scripts/sync-command-skills.py --check
-```
-
-Do not edit generated `plugins/ccu/skills/t-*/SKILL.md` files directly.
+Helper scripts belong in `plugins/ccu/skills/<name>/scripts/`, resolved at run
+time from `PLUGIN_ROOT` with `CLAUDE_PLUGIN_ROOT` as the fallback — see
+`skills/init/SKILL.md` for the pattern.
 
 ### Shared hooks
 
@@ -135,18 +133,22 @@ bash plugins/ccu/hooks/test-beads-guard.sh
 Before committing plugin changes:
 
 ```bash
-python3 scripts/sync-command-skills.py --check
+python3 scripts/check-skills.py
 python3 /path/to/plugin-creator/scripts/validate_plugin.py plugins/ccu
 bash plugins/ccu/hooks/test-beads-guard.sh
 python3 -m json.tool .claude-plugin/marketplace.json >/dev/null
 python3 -m json.tool .agents/plugins/marketplace.json >/dev/null
 ```
 
-Then test a representative shared skill and command workflow in a new session
+`check-skills.py` asserts that every `skills/*/SKILL.md` has frontmatter whose
+`name` matches its directory and a non-empty `description` — the invariant both
+hosts rely on to resolve `/name` and `$name`.
+
+Then test a representative knowledge skill and session workflow in a new session
 of each host:
 
-- Claude Code: `/brainstorming`, `/t:next`
-- Codex: `$brainstorming`, `$t-next`
+- Claude Code: `/brainstorming`, `/next`
+- Codex: `$brainstorming`, `$next`
 - Both hosts: inspect/trust the hook, start a session in a repo with `.beads/`,
   and confirm the guard is silent when `jsonl_newer` is false
 
