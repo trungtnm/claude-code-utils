@@ -1,5 +1,5 @@
 {
-  "description": "Claude Code and Codex SessionStart guard: warn when git-tracked beads JSONL has drifted ahead of the local DB, so auto-import does not silently clobber local issues.",
+  "description": "SessionStart guard: warn when git-tracked beads JSONL has drifted ahead of the local DB, so auto-import does not silently clobber local issues.",
   "hooks": {
     "SessionStart": [
       {
