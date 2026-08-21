@@ -1,0 +1,33 @@
+name: Deploy to Cloudflare Workers
+on:
+  push: { branches: [main] }
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: deploy-workers
+  cancel-in-progress: true
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@<LATEST>
+      - uses: actions/setup-node@<LATEST>
+        with: { node-version: 24, cache: npm }
+      - run: npm ci
+      - run: npm run build
+      - name: Verify build output
+        run: |
+          test -f dist/support.js
+          ls dist/*.dc.html >/dev/null
+          for leaked in CLAUDE.md README.md wrangler.jsonc package.json .git; do
+            if [ -e "dist/$leaked" ]; then
+              echo "::error::$leaked leaked into dist/"; exit 1
+            fi
+          done
+      - uses: cloudflare/wrangler-action@<LATEST>
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: deploy

@@ -1,0 +1,14 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "<WORKER_NAME>",
+  "main": "worker/index.js",
+  "compatibility_date": "<TODAY, YYYY-MM-DD>",
+  "workers_dev": true,
+  "assets": {
+    "directory": "./dist",
+    "binding": "ASSETS",
+    "html_handling": "none",
+    "not_found_handling": "none"
+  },
+  "observability": { "enabled": true }
+}
