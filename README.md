@@ -141,7 +141,7 @@ Beads & workflow:
 | `/recipe` | Pre-built workflow chains (new-feature, bug-fix, quality-review) |
 | `/grill-with-docs` | Stress-test a plan against the domain model; update CONTEXT.md and ADRs inline |
 | `/agent-mail` | Coordination contract: registration, file reservations, message semantics |
-| `/session-state` | `.ccu/` directory: captures, decisions journal, recipe checkpoint, artifacts |
+| `.ccu/` directory: captures, decisions journal, recipe checkpoint, artifacts |
 
 Quality & safety:
 
