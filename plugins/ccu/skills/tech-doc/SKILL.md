@@ -20,7 +20,7 @@ Not every markdown file is documentation. Some artifacts are **records of a mome
 
 | Artifact | Why |
 |---|---|
-| `.ccu/HANDOFF.md`, `.ccu/EVIDENCE.md` | Session state. Their entire content is what happened during a work session. |
+| `.ccu/CHECKPOINT.md` | Session state. Its content is where an interrupted recipe run stopped, not how the system works. |
 | `.ccu/CAPTURES.md` | Captures hold the user's words verbatim. Rewriting them loses the signal. |
 | `CHANGELOG.md` | Change history is its subject. |
 | Commit messages, PR descriptions, bead descriptions | Not documentation. Beads follow [[file-beads]]. |

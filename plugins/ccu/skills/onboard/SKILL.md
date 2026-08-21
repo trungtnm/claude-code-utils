@@ -10,7 +10,7 @@ Guide the user to set up, run, and test the application after auto dev mode has 
 1. **Assess what was built** — Gather the full picture of what agents produced:
    - Read `README.md` for project overview and stated setup instructions (may be outdated)
    - Read `CLAUDE.md` or `AGENTS.md` for architecture, tech stack, conventions
-   - `.ccu/EVIDENCE.md` — what beads were completed, what was actually built
+   - `br list --status closed --json` — what beads were completed, what was actually built
    - `.ccu/DECISIONS.md` — architectural decisions that affect setup (DB choice, auth strategy, etc.)
    - `git log --oneline -30` — recent commits to understand the full scope of work
    - `br list --json 2>/dev/null` — check if any beads are still open (incomplete features the user should know about)
