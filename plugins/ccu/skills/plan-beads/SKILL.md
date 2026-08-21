@@ -64,7 +64,7 @@ All planning artifacts live under `.ccu/artifacts/` in a per-feature subdirector
 - Use `<dir>` as shorthand in subsequent phases once the directory is established
 - If brainstorming created a `<date>-draft-<slug>/design.md` already, reuse that directory and rename it at Phase 3 once the epic ID is known: `mv .ccu/artifacts/<date>-draft-<slug> .ccu/artifacts/<date>-<epic-id>-<slug>`
 
-`.ccu/artifacts/` is gitignored — these are local working files, not part of the project's permanent record. Durable context belongs in commit messages, bead descriptions, and — for decisions the plan settles — the promote rule in [[session-state]]: ADR-gate decisions become `docs/adr/NNNN-slug.md` with a one-line `.ccu/DECISIONS.md` pointer, below-gate decisions a journal entry in the shared schema.
+`.ccu/artifacts/` is gitignored — these are local working files, not part of the project's permanent record. Durable context belongs in commit messages, bead descriptions, and — for decisions the plan settles: ADR-gate decisions become `docs/adr/NNNN-slug.md` with a one-line `.ccu/DECISIONS.md` pointer, below-gate decisions a journal entry in the shared schema.
 
 **Prose in `approach.md` and `execution-plan.md` follows [[tech-doc]]** (`doc-type: design`). Their reader is a worker agent with zero context, which makes its rules load-bearing rather than cosmetic: exact file paths and identifiers in backticks, one idea per sentence, `TODO:` where a fact is genuinely unknown instead of plausible-sounding filler, and no AI-voice hedging that a worker would have to guess at. Rejected options belong in `approach.md` — that is the trade-offs section, not banned history.
 
@@ -74,7 +74,7 @@ All planning artifacts live under `.ccu/artifacts/` in a per-feature subdirector
 python3 "${CLAUDE_PLUGIN_ROOT}/skills/markdown-html-viewer/scripts/md2html.py" .ccu/artifacts/<dir>/
 ```
 
-Directory + default fetch mode → one `index.html` with a document switcher, each `.md` staying a live source. Do **not** ask the user how to build it — this automated case is the documented exception. See the "Artifacts HTML index" convention in [[session-state]].
+Directory + default fetch mode → one `index.html` with a document switcher, each `.md` staying a live source. Do **not** ask the user how to build it — this automated case is the documented exception.
 
 ## Completion Gate (MANDATORY)
 

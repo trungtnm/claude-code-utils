@@ -162,7 +162,7 @@ Session mockups persist under `.ccu/brainstorm/` (gitignored, like other ephemer
   - The `draft-` placeholder gets replaced with the real epic ID by [[plan-beads]] (Phase 3) — brainstorming runs before any beads exist, so it can't know the epic ID yet
 - Write it under [[tech-doc]] with `doc-type: design` — problem and constraints → chosen design → interfaces and data flow → trade-offs and rejected options → open questions. It owns the prose: no AI voice, no filler, exact identifiers in backticks, `TODO:` where a fact is still unknown rather than plausible-sounding filler. The design doc is the one place where rejected alternatives belong, so `tech-doc`'s "No history" rule applies to the *system*, not to the options you considered.
 - **Do NOT run `git commit`.** `.ccu/artifacts/` is gitignored — the design doc is a local working file, not a committed artifact.
-- **Route the durable "why" before ending** (the design doc dies gitignored, so this step is what preserves it): for each decision the approved design settles, apply the promote rule in [[session-state]] — decisions meeting the [[grill-with-docs]] ADR gate get `docs/adr/NNNN-slug.md` + a one-line `.ccu/DECISIONS.md` pointer; below-gate decisions (including the rejected alternatives worth remembering) get a journal entry in the shared schema.
+- **Route the durable "why" before ending** (the design doc dies gitignored, so this step is what preserves it): for each decision the approved design settles, decisions meeting the [[grill-with-docs]] ADR gate get `docs/adr/NNNN-slug.md` + a one-line `.ccu/DECISIONS.md` pointer; below-gate decisions (including the rejected alternatives worth remembering) get a journal entry in the shared schema.
 
 **Spec Self-Review (required):**
 After writing the design doc, look at it with fresh eyes:
@@ -179,7 +179,7 @@ Immediately after the self-review — **before** the User Review Gate and indepe
 ```bash
 python3 "${CLAUDE_PLUGIN_ROOT}/skills/markdown-html-viewer/scripts/md2html.py" .ccu/artifacts/<date>-draft-<slug>/
 ```
-Directory + default fetch mode (no `--inline`, no build questions — the automated exception documented in [[session-state]]). Point the user at the resulting `index.html`, opened via `open_in_dev_browser.sh`.
+Directory + default fetch mode (no `--inline`, no build questions). Point the user at the resulting `index.html`, opened via `open_in_dev_browser.sh`.
 
 **Force this step every time.** Do NOT gate it on user approval, design status, perceived simplicity, or "the doc might still change." The rendered HTML is *how* the user reviews the design (the Mermaid flow, tables, and callouts are far more legible than raw Markdown), so it must exist **before** they review. **Regenerate it after every edit** — each time you revise the design doc during the review loop, re-run the command so the HTML never lags the Markdown.
 

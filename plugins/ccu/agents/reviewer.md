@@ -68,7 +68,7 @@ Once the review verdict is PASS (or the critical issues are acknowledged as out-
 
 - **Discover existing docs:** locate the project's docs home — `README.md`, `docs/`, `CHANGELOG.md`, API reference, ADRs. Match its structure and voice.
 - **Map the public surface** the epic added or changed: new commands, endpoints, config options, exported APIs, UI flows, env vars, migrations.
-- **Grep `.ccu/DECISIONS.md` for this epic's entries** (they are dated claims — verify against the code before repeating one; epistemics rule in the session-state skill).
+- **Grep `.ccu/DECISIONS.md` for this epic's entries** (they are dated claims — verify against the code before repeating one).
 
 ## 2.1b Promote the epic's decisions
 

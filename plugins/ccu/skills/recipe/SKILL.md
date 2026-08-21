@@ -220,7 +220,7 @@ For each step in the recipe:
    ```
 6. **On failure** — stop, report what happened, suggest fix
 
-When the recipe's last step completes, **delete `.ccu/CHECKPOINT.md`**. The checkpoint exists only to resume an interrupted recipe; one that outlives its recipe reads as a phantom interruption on the next run ([[session-state]] owns this file's role).
+When the recipe's last step completes, **delete `.ccu/CHECKPOINT.md`**. The checkpoint exists only to resume an interrupted recipe; one that outlives its recipe reads as a phantom interruption on the next run.
 
 ## Graceful Degradation
 

@@ -261,7 +261,7 @@ Afternoon:
   /commit                             ← Commit in logical groups
 ```
 
-Both execution paths record verification in bead close reasons and commits, and route decisions per the session-state promote rule: ADR-worthy ones to `docs/adr/`, the rest to the `.ccu/DECISIONS.md` journal. Resume state lives in beads and git.
+Both execution paths record verification in bead close reasons and commits, and route decisions to ADRs or the journal: ADR-worthy ones to the `.ccu/DECISIONS.md` journal. Resume state lives in beads and git.
 
 ## How It Works
 

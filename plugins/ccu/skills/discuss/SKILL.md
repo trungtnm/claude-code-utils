@@ -34,7 +34,7 @@ Guided requirements gathering for a new feature or change. Produces structured a
    - Find similar patterns or features already implemented
    - Identify files and modules that would be affected
    - Check for existing infrastructure that can be reused
-   - Cross-reference standing decisions: `docs/adr/` and, for the "why" behind them, a targeted grep of `.ccu/DECISIONS.md` (its entries are dated claims — apply the epistemics rule in [[session-state]]). Don't propose something that contradicts a standing decision without acknowledging the conflict
+   - Cross-reference standing decisions: `docs/adr/` and, for the "why" behind them, a targeted grep of `.ccu/DECISIONS.md` (its entries are dated claims — verify against the code before relying on one). Don't propose something that contradicts a standing decision without acknowledging the conflict
    Summarize your findings to the user.
 
 6. **Ask targeted questions** — Based on what you found, ask specific questions about:
@@ -49,7 +49,7 @@ Guided requirements gathering for a new feature or change. Produces structured a
 
    **For visual/UX-heavy topics:** offer to mock 2–4 divergent design directions (a quick React + shadcn/Tailwind demo, per the repo's demo convention) for the user to react to before locking requirements. Reacting to a prototype is cheaper than discovering misaligned expectations during implementation.
 
-7. **Record outcomes** — Requirements become beads, not a log: file must-do requirements via `/file-beads` (small, clear) or carry them into `/plan-beads` (epic-sized) — beads are the only requirement store with a real lifecycle. Decisions made during the discussion follow the promote rule in [[session-state]]: ADR-gate decisions get `docs/adr/NNNN-slug.md` + a one-line `.ccu/DECISIONS.md` pointer; below-gate decisions get a journal entry in the shared schema.
+7. **Record outcomes** — Requirements become beads, not a log: file must-do requirements via `/file-beads` (small, clear) or carry them into `/plan-beads` (epic-sized) — beads are the only requirement store with a real lifecycle. Decisions made during the discussion: ADR-gate decisions get `docs/adr/NNNN-slug.md` + a one-line `.ccu/DECISIONS.md` pointer; below-gate decisions get a journal entry in the shared schema.
 
 8. **Offer next steps** — Ask:
    - "Run `/file-beads` to create the bead?" - in case the issue is small and clear

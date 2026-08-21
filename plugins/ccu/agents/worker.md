@@ -233,7 +233,7 @@ Report test counts from the Step 4 runs — the bead's `— verify:` commands an
   - ...
   EOF
   ```
-- **Capture decisions**: If you made technology, schema, API, or architecture choices during this bead, record the 2-3 most impactful now, using the shared journal schema and promote rule in the session-state skill (`## YYYY-MM-DD — <title> (<bead-id>)` entries appended to `.ccu/DECISIONS.md`; ADR-gate decisions get `docs/adr/NNNN-slug.md` + a one-line pointer instead). This prevents decisions from being lost in session history.
+- **Capture decisions**: If you made technology, schema, API, or architecture choices during this bead, record the 2-3 most impactful now, using the shared journal schema (`## YYYY-MM-DD — <title> (<bead-id>)` entries appended to `.ccu/DECISIONS.md`; ADR-gate decisions get `docs/adr/NNNN-slug.md` + a one-line pointer instead). This prevents decisions from being lost in session history.
 - Record outcome for CM (skip if `cm` is not installed):
   ```bash
   cm outcome success <rule-ids-used> 2>/dev/null   # or 'failure' if bead was blocked

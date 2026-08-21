@@ -52,7 +52,7 @@ The guiding idea: pick the representation that makes the *structure* visible. Do
 **This step is mandatory on every invocation.** Before generating anything, confirm the build choices with the user using the question tool (`AskUserQuestion`). Do not assume defaults and skip the ask — even when the request looks obvious, ask. Put the recommended option first.
 
 > [!NOTE]
-> **One documented exception: automated `.ccu/artifacts/<dir>/` generation.** When a ccu workflow skill ([[plan-beads]], [[brainstorming]], [[orchestrator]]) regenerates the viewer for a `.ccu/artifacts/` directory, it does **not** ask — it always uses directory + fetch mode (switcher index). See the "Artifacts HTML index" convention in [[session-state]]. The ask below applies to every *user-initiated* invocation.
+> **One documented exception: automated `.ccu/artifacts/<dir>/` generation.** When a ccu workflow skill ([[plan-beads]], [[brainstorming]], [[orchestrator]]) regenerates the viewer for a `.ccu/artifacts/` directory, it does **not** ask — it always uses directory + fetch mode (switcher index). The ask below applies to every *user-initiated* invocation.
 
 First determine how many `.md` files are in scope (the file(s) the user named, or the `.md` files in the target directory). Then:
 

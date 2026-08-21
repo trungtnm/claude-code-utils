@@ -19,7 +19,7 @@ Blind-spot pass before entering unfamiliar territory — a domain the user hasn'
 
 2. **Investigate** — Build the map before briefing:
    - The in-repo surface: which modules/files the topic touches, how they are structured, 2–3 representative files read in full
-   - Historical work: `git log --oneline -20 -- <relevant paths>`, `docs/adr/` entries touching the area, a targeted grep of `.ccu/DECISIONS.md` (its entries are dated claims — apply the epistemics rule in [[session-state]]), prior beads (`br list --json 2>/dev/null` filtered by keyword)
+   - Historical work: `git log --oneline -20 -- <relevant paths>`, `docs/adr/` entries touching the area, a targeted grep of `.ccu/DECISIONS.md` (its entries are dated claims — verify against the code before relying on one), prior beads (`br list --json 2>/dev/null` filtered by keyword)
    - Domain knowledge beyond the repo: what "good" looks like in this domain, standard approaches, common failure modes — use web search when the domain is outside your confident knowledge
    - The quality bar: what distinguishes a passable result from a good one in this domain (the article-class unknown "do I know how good something can be?")
 

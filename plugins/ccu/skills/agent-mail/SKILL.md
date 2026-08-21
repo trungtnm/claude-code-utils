@@ -5,7 +5,7 @@ description: MCP Agent Mail coordination contract — registration, file reserva
 
 # Agent Mail
 
-Agent Mail carries live coordination between agents that share one working tree: identity, file reservations, progress mail, rejections. It does not replace bead state or git — those arbitrate. Durable knowledge routing is [[session-state]]'s job.
+Agent Mail carries live coordination between agents that share one working tree: identity, file reservations, progress mail, rejections. It does not replace bead state or git — those arbitrate.
 
 Two workflows depend on this contract, and they can run at the same time in the same tree:
 
