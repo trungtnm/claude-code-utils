@@ -47,7 +47,7 @@ Everything in this plugin serves one loop: **capture ideas without losing flow, 
 graph LR
     A["/capture<br/>idea → .ccu/CAPTURES.md"] --> B["/triage<br/>quick-fix / bead / defer"]
     B --> C["Beads backlog<br/>br + bv"]
-    C --> D["/auto<br/>single agent"]
+    C --> D["/auto<br/>fungible peers"]
     C --> E["/orchestrator<br/>worker per bead"]
 ```
 
@@ -75,10 +75,10 @@ Small fixes get done immediately; substantial ideas become beads (via [[file-bea
 
 ### 3. Execute — `/auto` or `/orchestrator`
 
-**`/auto`** — a single autonomous agent works through the beads backlog:
+**`/auto`** — one or more interchangeable agents work through the beads backlog:
 
 - Picks the highest-value ready bead (`br ready` + `bv`), claims it, implements with TDD, verifies (tests/lint/typecheck/build), commits per bead, closes it, and loops until nothing actionable remains.
-- Detects other active agents via Agent Mail; when peers are present it runs in multi-agent mode with file reservations, otherwise solo.
+- Registers with Agent Mail and reserves every file before editing it. Behavior does not change with peer count: run it in one terminal for a solo agent, in N terminals for a swarm with no coordinator. It owns no domain, so any peer can resume a bead it leaves in progress.
 - Commits land directly on your current branch; pushing is always your call.
 
 **`/orchestrator`** — coordinated multi-agent execution for a planned epic:
@@ -91,7 +91,7 @@ Small fixes get done immediately; substantial ideas become beads (via [[file-bea
 
 All agents work in the same tree, on the current branch. Two mechanisms keep them from colliding:
 
-- **Agent Mail file reservations** — every worker reserves its bead's `## Files` before editing and releases on completion. A failed reservation means stop and report, never proceed. Agent Mail is keyed to the repo root, so reservations from every session and epic collide correctly.
+- **Agent Mail file reservations** — every agent reserves its bead's `## Files` before editing and releases on completion. Agent Mail is keyed to the repo root, so reservations from every session and epic collide correctly — an `/auto` peer and an `/orchestrator` worker lock against each other. On a failed reservation an orchestrator worker stops and reports; an `/auto` peer drops the claim and takes a different bead. The contract is `/agent-mail`.
 - **Beads dependencies (`br dep`, scheduled by `bv`)** — only beads whose dependencies are closed get dispatched. Beads that can run in parallel must have disjoint `## Files` sets; beads that share files are sequenced with an explicit dependency.
 
 Commit discipline follows: agents stage named files only and commit with a pathspec (`git commit -m "..." -- <paths>`), so concurrent work in the shared index never leaks between commits.
@@ -140,6 +140,7 @@ Beads & workflow:
 | `/orchestrator` | Multi-agent bead execution: dispatch, monitor, verify |
 | `/recipe` | Pre-built workflow chains (new-feature, bug-fix, quality-review) |
 | `/grill-with-docs` | Stress-test a plan against the domain model; update CONTEXT.md and ADRs inline |
+| `/agent-mail` | Coordination contract: registration, file reservations, message semantics |
 | `/session-state` | `.ccu/` directory: captures, decisions journal, recipe checkpoint, artifacts |
 
 Quality & safety:
@@ -197,7 +198,7 @@ Session workflows are single-purpose instruction scripts. Most accept optional `
 | Workflow | Purpose |
 |----------|---------|
 | `capture` | Record an idea, observation, or bug in <5 seconds |
-| `auto` | Autonomous agent: register with Agent Mail, work through ready beads |
+| `auto` | Fungible agent: register with Agent Mail, reserve files, work through ready beads |
 | `next` | Analyze all state, recommend the single best next action |
 | `commit` | Commit all changes in logical groups with detailed messages |
 | `done` | Session completion: close beads, sync state, wrap up |

@@ -39,7 +39,7 @@ Read every hit in context; reject behavior, not substrings in unrelated identifi
 
 ## Rejection
 
-Write the rejection as mail on the epic thread (what failed, what a passing resubmission contains), then resume the live worker with `SendMessage` or respawn a fix-scoped worker pointing at the thread, per [agent-mail.md](agent-mail.md). Stop after three rejections on one bead and report the evidence to the user.
+Write the rejection as mail on the epic thread (what failed, what a passing resubmission contains), then resume the live worker with `SendMessage` or respawn a fix-scoped worker pointing at the thread, per [[agent-mail]]. Stop after three rejections on one bead and report the evidence to the user.
 
 ## Tester phase
 

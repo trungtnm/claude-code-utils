@@ -38,7 +38,7 @@ Full lifecycle for a new feature from idea to shipped.
    - Skip if: beads already exist for this feature (check `br list`)
 3. **Review beads** — `/review-beads` to optimize before work
    - Skip if: beads have already been reviewed (check bead comments for review notes)
-4. **Execute** — `/auto` for single-agent or `/orchestrator` for multi-agent
+4. **Execute** — `/auto` for self-scheduling agents (one terminal or several) or `/orchestrator` for a dispatched epic with tester and reviewer phases
    - Skip completed beads automatically
 5. **Quality** — `/peer-review` + `/ubs` for quality gates
 6. **Wrap up** — `/commit` + `/done`
@@ -226,4 +226,4 @@ When the recipe's last step completes, **delete `.ccu/CHECKPOINT.md`**. The chec
 
 - **No `br`** — skip bead creation/tracking, use git commits as tracking
 - **No `.ccu/`** — skip checkpoint and evidence steps, still chain the commands
-- **No Agent Mail** — use `/auto` instead of `/orchestrator`
+- **No Agent Mail** — `/orchestrator` cannot dispatch; run a single `/auto`, which says so once and works alone

@@ -5,7 +5,7 @@ description: Plan and coordinate multi-agent bead execution. Use when starting a
 
 # Orchestrator
 
-Coordinate the work; do not implement production changes. Spawn one worker subagent per bead, scheduled by the dependency graph. Every agent works in the user's tree, on the current branch; Agent Mail file reservations are the only lock between them. Beads, commits, and `.ccu/` files hold durable state.
+Coordinate the work; do not implement production changes. Spawn one worker subagent per bead, scheduled by the dependency graph. Every agent works in the user's tree, on the current branch; Agent Mail file reservations are the only lock between them, and a peer [[auto]] session may be working the same tree. Beads, commits, and `.ccu/` files hold durable state.
 
 When running in Codex, read [CODEX.md](../../CODEX.md) first and translate `Task(...)`, `TaskList`, `TaskOutput`, `SendMessage`, and `AskUserQuestion` to the Codex collaboration mechanism. Before spawning a worker, tester, or reviewer in Codex, include the matching persona from `../../agents/` in the delegated task.
 
@@ -23,7 +23,7 @@ Coders own production logic. The tester and reviewer never edit it; they report 
 
 1. Require `.ccu/artifacts/<dir>/execution-plan.md` from [[plan-beads]]. Run [[review-beads]] first when bead quality is unverified.
 2. Resolve the actor: `ACTOR="${BR_ACTOR:-assistant}"`.
-3. Register with Agent Mail and record `ORCH_NAME` per [agent-mail.md](references/agent-mail.md).
+3. Register with Agent Mail and record `ORCH_NAME` per [[agent-mail]].
 4. Record the baseline: `git rev-parse --short HEAD`. If `git status --porcelain` shows a dirty tree, tell the user before dispatching.
 5. Create the epic context file `.ccu/artifacts/<dir>/epic-context.md`. Workers read it before starting and append learnings after each bead.
 
@@ -66,7 +66,7 @@ Progress arrives on two channels; durable state arbitrates both:
 | Task result | worker's final message, `TaskOutput` | The bead report |
 | Beads and git | `bv --robot-triage`, `br show <id> --json`, `git log --grep="Bead:"` | Ground truth |
 
-A worker that mails `COMPLETE` without a commit is not complete. A mailed reply never restarts a finished agent: resume live agents with `SendMessage`, respawn exited ones with the decision or rejection referenced in the prompt. Message semantics and reservation-conflict handling are in [agent-mail.md](references/agent-mail.md).
+A worker that mails `COMPLETE` without a commit is not complete. A mailed reply never restarts a finished agent: resume live agents with `SendMessage`, respawn exited ones with the decision or rejection referenced in the prompt. Message semantics and reservation-conflict handling are in [[agent-mail]].
 
 Resolve coordination questions yourself when the plan, the bead, or project convention answers them. Escalate to the user with `AskUserQuestion` only for a required acceptance-criteria change, an irreversible action, an external blocker, or a bead that fails verification three times. Include the evidence and the options in the question.
 
@@ -87,7 +87,7 @@ Skip the tester only when the epic adds no behavior surface (docs-only, config-o
 
 When `bv --robot-triage --graph-root <epic-id>` shows zero open beads:
 
-1. Broadcast the epic summary to every participating agent on the epic thread, then confirm no reservations remain held (stale-lock handling in [agent-mail.md](references/agent-mail.md)).
+1. Broadcast the epic summary to every participating agent on the epic thread, then confirm no reservations remain held (stale-lock handling in [[agent-mail]]).
 2. Write `.ccu/artifacts/<dir>/summary.md` (bead summaries, deliverables, learnings) and regenerate the HTML index:
 
    ```bash
