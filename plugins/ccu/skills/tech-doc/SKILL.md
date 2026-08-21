@@ -138,6 +138,29 @@ Rules that apply to all of them:
 - Every code block is copy-pasteable and runs as written. Real values, not `<your-value-here>` where a real default exists. Include expected output when the reader needs to compare.
 - Diagrams: Mermaid, only when the relationship is not linear. A three-step flow is a sentence, not a diagram.
 
+## ADR gate
+
+A decision earns an ADR only when all three of these hold:
+
+1. **Hard to reverse** — the cost of changing your mind later is meaningful.
+2. **Surprising without context** — a future reader looks at the code and asks why it was done this way.
+3. **The result of a real trade-off** — there were genuine alternatives, and one was chosen for stated reasons.
+
+A decision that fails any of the three belongs in the `.ccu/DECISIONS.md` journal instead. An easy-to-reverse decision gets reversed; an unsurprising one raises no question; one with no alternative records nothing beyond "we did the obvious thing".
+
+What clears the gate:
+
+- **Architectural shape.** "The write model is event-sourced, the read model is projected into Postgres."
+- **Integration patterns between contexts.** "Ordering and Billing communicate via domain events, not synchronous HTTP."
+- **Technology choices that carry lock-in.** Database, message bus, auth provider, deployment target — the ones that would take a quarter to swap out, not every library.
+- **Boundary and scope decisions.** "Customer data is owned by the Customer context; other contexts reference it by ID only." The explicit no is worth as much as the yes.
+- **Deliberate deviations from the obvious path.** "Hand-written SQL instead of an ORM, because X." These stop the next engineer from "fixing" something intentional.
+- **Constraints not visible in the code.** A compliance rule that rules out a provider, a partner contract that caps response times.
+- **Rejected alternatives whose rejection is non-obvious.** Otherwise the same alternative gets proposed again in six months.
+
+ADRs live in `docs/adr/NNNN-slug.md`, numbered from the highest number already there. Create `docs/adr/` with the first ADR, not before. The body follows the ADR row in [Structure](#structure); a single paragraph naming the context, the decision, and the reason is a complete ADR. Add `Status` frontmatter (`proposed | accepted | deprecated | superseded by ADR-NNNN`) only where decisions get revisited.
+
+
 ## Procedure
 
 1. **Read the code first.** Open the actual files, configs, and types. Do not document from what you remember writing earlier in the session — memory of the change is contaminated with process and with intent that never landed in the code.

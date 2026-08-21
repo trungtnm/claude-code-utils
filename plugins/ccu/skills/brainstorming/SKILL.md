@@ -162,7 +162,7 @@ Session mockups persist under `.ccu/brainstorm/` (gitignored, like other ephemer
   - The `draft-` placeholder gets replaced with the real epic ID by [[plan-beads]] (Phase 3) — brainstorming runs before any beads exist, so it can't know the epic ID yet
 - Write it under [[tech-doc]] with `doc-type: design` — problem and constraints → chosen design → interfaces and data flow → trade-offs and rejected options → open questions. It owns the prose: no AI voice, no filler, exact identifiers in backticks, `TODO:` where a fact is still unknown rather than plausible-sounding filler. The design doc is the one place where rejected alternatives belong, so `tech-doc`'s "No history" rule applies to the *system*, not to the options you considered.
 - **Do NOT run `git commit`.** `.ccu/artifacts/` is gitignored — the design doc is a local working file, not a committed artifact.
-- **Route the durable "why" before ending** (the design doc dies gitignored, so this step is what preserves it): for each decision the approved design settles, decisions meeting the [[grill-with-docs]] ADR gate get `docs/adr/NNNN-slug.md` + a one-line `.ccu/DECISIONS.md` pointer; below-gate decisions (including the rejected alternatives worth remembering) get a journal entry in the shared schema.
+- **Route the durable "why" before ending** (the design doc dies gitignored, so this step is what preserves it): for each decision the approved design settles, decisions meeting the [[tech-doc]] ADR gate get `docs/adr/NNNN-slug.md` + a one-line `.ccu/DECISIONS.md` pointer; below-gate decisions (including the rejected alternatives worth remembering) get a journal entry in the shared schema.
 
 **Spec Self-Review (required):**
 After writing the design doc, look at it with fresh eyes:

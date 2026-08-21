@@ -7,7 +7,7 @@ description: The check ladder for a code change — what an agent runs locally b
 
 This skill is the single authority for **which checks an agent runs, at what scope, in what order,
 and what to do when one comes back red**. Other skills and agents cite it; they do not restate the
-commands. ("Gate" here means a check on a code change. The ADR gate in [[grill-with-docs]] and
+commands. ("Gate" here means a check on a code change. The ADR gate in [[tech-doc]] and
 admission in [[orchestrator]] are unrelated uses of the word.)
 
 Each stage of the ladder runs longer than the stage before it, and agent quota is finite. Stage 1

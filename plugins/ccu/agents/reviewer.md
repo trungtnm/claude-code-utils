@@ -72,7 +72,7 @@ Once the review verdict is PASS (or the critical issues are acknowledged as out-
 
 ## 2.1b Promote the epic's decisions
 
-You are the epic-level promote gate. For each of the epic's decisions found in `.ccu/DECISIONS.md` or bead comments, apply the ADR gate (hard to reverse, surprising without context, real trade-off — see the grill-with-docs skill's `ADR-FORMAT.md`): write `docs/adr/NNNN-slug.md` for those that qualify, then append a new journal entry `Promoted: docs/adr/NNNN-slug.md` naming the original entry's date and title (the journal is append-only — never rewrite old entries). Below-gate decisions stay in the journal as they are.
+You are the epic-level promote gate. For each of the epic's decisions found in `.ccu/DECISIONS.md` or bead comments, apply the ADR gate (hard to reverse, surprising without context, real trade-off — the `tech-doc` skill states it in full): write `docs/adr/NNNN-slug.md` for those that qualify, then append a new journal entry `Promoted: docs/adr/NNNN-slug.md` naming the original entry's date and title (the journal is append-only — never rewrite old entries). Below-gate decisions stay in the journal as they are.
 
 ## 2.2 Write / Update Docs
 

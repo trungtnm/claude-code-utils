@@ -139,7 +139,6 @@ Beads & workflow:
 | `/triage` | Classify captures into quick-fixes, beads, or deferrals |
 | `/orchestrator` | Multi-agent bead execution: dispatch, monitor, verify |
 | `/recipe` | Pre-built workflow chains (new-feature, bug-fix, quality-review) |
-| `/grill-with-docs` | Stress-test a plan against the domain model; update CONTEXT.md and ADRs inline |
 | `/agent-mail` | Coordination contract: registration, file reservations, message semantics |
 | `.ccu/` directory: captures, decisions journal, recipe checkpoint, artifacts |
 
@@ -228,7 +227,6 @@ Session workflows are single-purpose instruction scripts. Most accept optional `
 | `performance-audit` | Find and fix performance problems |
 | `enrich-readme` | Enrich the README with real content from the codebase |
 | `enrich-docs` | Find undocumented functionality and document it |
-| `reorganize` | Reorganize a target directory |
 
 ### Ideation
 
