@@ -43,7 +43,7 @@ For each admitted bead:
 2. Fill [worker-prompt.md](templates/worker-prompt.md) and spawn a background worker: `Task(subagent_type="worker", model="opus", prompt=<filled template>)`. The prompt carries the single bead id, the literal repo root (the mail project key), `ORCH_NAME`, and the epic thread id.
 3. Record the worker's mail name and harness agent id when it reports in; mail addressing and `SendMessage` addressing differ, and you need both.
 
-Cap concurrency at 3 workers. All workers share one git index and one build/test environment; beyond 3, gate runs collide. When a bead closes, re-run `br ready` and dispatch what it freed.
+Cap concurrency at 3 workers. All workers share one git index and one build/test environment; beyond 3, gate runs collide. This cap is agent concurrency, not runner parallelism — [[gates]] holds the separate rule against parallel flags inside a single test run. When a bead closes, re-run `br ready` and dispatch what it freed.
 
 ## Worker authority
 
@@ -103,3 +103,5 @@ When `bv --robot-triage --graph-root <epic-id>` shows zero open beads:
    ```
 
 The epic's code commits are already on the current branch. Pushing or opening a PR is the user's call.
+
+The full suite runs once for the epic, never per bead ([[gates]], stage 4). Where the project has CI, that run is the PR check — say so in the summary. Where it has none, run it once here and record the result on the epic bead.

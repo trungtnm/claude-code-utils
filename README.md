@@ -148,6 +148,7 @@ Quality & safety:
 | Skill | Description |
 |-------|-------------|
 | `/test-driven-development` | Write-tests-first methodology |
+| `/gates` | The check ladder: what runs locally, at what scope, and what a red result means |
 | `/ubs` | Ultimate Bug Scanner: static analysis quality gate |
 | `/dcg` | Destructive Command Guard: blocks dangerous commands pre-execution |
 | `/security-review` | Security checklist for auth, input, secrets, APIs |

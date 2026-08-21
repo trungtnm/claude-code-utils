@@ -1,7 +1,7 @@
 ---
 name: tester
 description: Use when an epic's implementation is stable and needs independent functional, integration, and end-to-end tests written from a black-box perspective
-tools: ["Read", "Write", "Edit", "Bash", "Grep", "Glob"]
+tools: ["Read", "Write", "Edit", "Bash", "Grep", "Glob", "Skill"]
 model: opus
 ---
 
@@ -95,7 +95,9 @@ For each case:
 - **Name tests by behavior:** `it("rejects a booking when the slot is already taken")`, not `it("test1")`.
 - Run each test as you write it — confirm it passes against the real implementation.
 
-## 5. Run the Full Suite
+## 5. Run the Functional Suite
+
+This is the intentional broad run — the one `Skill(skill: "ccu:gates")` authorizes for your role. It covers the functional and integration surface you own, not the whole repository; the repo-wide suite runs once before merge and belongs to CI.
 
 Ensure the test database is up and migrated (step 2.5), then run the project's functional/integration command (e.g. `npm run test:integration` / `test:e2e`, falling back to `npm test`):
 

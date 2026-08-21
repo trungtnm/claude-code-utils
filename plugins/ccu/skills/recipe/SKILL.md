@@ -55,7 +55,7 @@ Fast path for diagnosing and fixing a bug.
    br create --actor "$ACTOR" "Fix: {summary}" --type bug --priority 1
    ```
 4. **Fix** — Implement with TDD (RED: write failing test for the bug, GREEN: fix, REFACTOR)
-5. **Verify** — Run tests, lint, typecheck. Record the results in the bead's close reason (and the commit message)
+5. **Verify** — Run the ladder in [[gates]]. Record the results in the bead's close reason (and the commit message)
 6. **Commit** — `/commit` with enriched Context: section
 7. **Close** — Close bead and sync
 
@@ -65,7 +65,7 @@ Safe refactoring with verification gates.
 
 **Sequence:**
 1. **Scope** — Clarify refactor scope (from `$ARGUMENTS` or `/discuss`)
-2. **Baseline** — Snapshot current test results: `npm test 2>&1 | tail -10`
+2. **Baseline** — Snapshot the suite covering the refactor target, not the whole repo — the scope [[gates]] stage 2 defines. A refactor is judged against that snapshot
 3. **Track** — Create bead:
    ```bash
    br create --actor "$ACTOR" "Refactor: {scope}" --type task --labels refactor
@@ -82,7 +82,7 @@ Emergency fast path when production is down. Skip all ceremony — just fix and 
 **Sequence:**
 1. **Understand** — Read the error from `$ARGUMENTS`
 2. **Fix** — Implement the fix. Write a regression test if time permits, but the fix takes priority.
-3. **Verify** — Run tests + typecheck. This step is mandatory, no skip.
+3. **Verify** — Run the ladder in [[gates]]. This step is mandatory, no skip.
 4. **Commit + Push** — `hotfix: {summary}` prefix. Push immediately.
 5. **Track retroactively** — After the fix is live, create a bead:
    ```bash
@@ -161,7 +161,7 @@ Three-layer quality sweep with issue accumulator: find bugs, catch session mista
    - Present the complete accumulator to the user with a summary: "{N} unfixed issues from {steps}."
    - Fix ALL issues that are fixable. Work through them systematically, highest severity first.
    - For issues that genuinely cannot or should not be fixed (false positives, intentional tradeoffs, out of scope), the user can explicitly defer them by marking with `[deferred: reason]`.
-   - After fixing, re-run verification for the affected files: tests, lint, typecheck as applicable.
+   - After fixing, re-run only the stages [[gates]] scopes to the affected files.
    - Repeat until the accumulator contains only deferred items or is empty.
 6. **Commit fixes** — `/commit` if any fixes were made
 

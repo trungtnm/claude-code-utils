@@ -111,38 +111,18 @@ When a CM rule helps or hurts during implementation, leave inline comments so CM
 ```
 These are parsed automatically during CM reflection — no manual steps needed.
 
-## 4. Verify All Checks Pass (with Auto-Fix Retry)
+## 4. Verify
 
-### 4.1 Discover Verification Commands
+Load `Skill(skill: "ccu:gates")` and run the ladder it defines. If it does not load: run lint and typecheck, then the bead's `— verify:` commands, then `build` once before you complete the bead. The whole-repo suite is CI's.
 
-Check what verification commands are available:
-```bash
-cat package.json 2>/dev/null | jq '.scripts | keys[]' 2>/dev/null
-```
+**Shared-tree caveat:** other workers may be editing and committing concurrently, so a gate can fail on code you never touched. `gates` owns the causality test — apply it before you touch a red check, and record an independent failure in your report instead of fixing it.
 
-Map discovered scripts: `test*` -> Tests, `lint*` -> Lint, `typecheck`/`tsc` -> Types, `build` -> Build. If no `package.json` or no matching scripts, use project-specific commands from CLAUDE.md. Skip gates that have no corresponding command.
+If a gate is still red after the attempts `gates` allows:
 
-### 4.2 Run Gates
-
-Run each discovered gate in order: tests -> lint -> typecheck -> build.
-
-**Shared-tree caveat:** other workers may be editing and committing concurrently, so a gate can fail on code you never touched. Assign the failure by causality: a failure your change caused is yours to fix, even when the failing file is outside `## Files`; a failure independent of your change belongs to another worker's reservation — note it in your report and let the orchestrator route it.
-
-### 4.3 Auto-Fix on Failure (up to 2 attempts)
-
-If any gate FAILS on code within your scope:
-1. **Analyze the error output** — read the error messages carefully
-2. **Attempt a targeted fix:**
-   - Type errors: add annotations, fix imports, add null checks
-   - Lint errors: run `--fix` if available, otherwise fix manually
-   - Test failures: fix the implementation (NOT the test)
-   - Build errors: fix module resolution, missing exports, config
-3. **Re-run the failed gate** — verify the fix worked
-4. **If still failing after 2 fix attempts:**
-   - Mark bead blocked: `br update --actor "$ACTOR" {BEAD_ID} --status blocked`
-   - Add failure context: `br comments add --actor "$ACTOR" {BEAD_ID} --message "Verification gate '{GATE}' failed after 2 attempts. Error: {ERROR_SUMMARY}"`
-   - Report BLOCKED in your final message (not COMPLETE)
-   - Do NOT proceed to step 4.5
+- Mark bead blocked: `br update --actor "$ACTOR" {BEAD_ID} --status blocked`
+- Add failure context: `br comments add --actor "$ACTOR" {BEAD_ID} --message "Verification gate '{GATE}' failed after 2 attempts. Error: {ERROR_SUMMARY}"`
+- Report BLOCKED in your final message (not COMPLETE)
+- Do NOT proceed to step 4.5
 
 **After all gates pass**, continue to Step 4.5.
 
@@ -187,22 +167,19 @@ Commit types: `feat`, `fix`, `refactor`, `test`, `docs`, `chore`
 
 **STOP: Do NOT proceed to Step 6 until ALL gates pass.**
 
+Step 4 runs the checks before the commit. What remains here is bead bookkeeping:
+
 | Gate       | Command                    | Required Result |
 | ---------- | -------------------------- | --------------- |
-| Tests      | `npm test`                 | All pass        |
-| Lint       | `npm run lint`             | No errors       |
-| Types      | `npm run typecheck`        | No errors       |
-| Build      | `npm run build`            | Success         |
-| UBS        | `ubs <your files>`         | Exit code 0     |
 | Git Commit | `git log -1 --format='%h'`| Commit exists   |
 
 Capture outputs for your deliverables report:
 ```bash
-# Run and capture test counts
-npm test 2>&1 | tail -5         # Note: N passed, M total
 # Capture commit hash
 COMMIT_HASH=$(git log --grep="Bead: {BEAD_ID}" --format='%h' | head -1)
 ```
+
+Report test counts from the Step 4 runs — the bead's `— verify:` commands and the stages `gates` put you through. Do not re-run the suite to produce a number.
 
 ### Anti-Rationalization (ALL FALSE)
 
@@ -213,7 +190,7 @@ COMMIT_HASH=$(git log --grep="Bead: {BEAD_ID}" --format='%h' | head -1)
 | "Orchestrator trusts me"            | Orchestrator VERIFIES commits and bead status    |
 | "I'll fold it into another commit"  | One commit per bead — orchestrator checks each   |
 
-**If any gate fails:** Fix the issue, re-run ALL gates, then proceed.
+**If the commit is missing:** commit your work, then proceed. If a Step 4 check went red after the commit, re-run only that stage per `gates` — never the whole ladder.
 
 ## 6. Complete the Bead
 
@@ -373,10 +350,7 @@ If blocked:
 - Orchestrator replies (rejections, decisions) arrive as SendMessage continuations of your run, or as a fresh spawn with the context in the prompt
 
 **Development:**
-- `npm test` - Run tests
-- `npm run lint` - Lint check
-- `npm run typecheck` - Type check
-- `npm run build` - Build
+- The check commands, their order, and their scope come from `Skill(skill: "ccu:gates")` — it discovers them per project rather than assuming npm
 
 **Static Analysis (UBS):**
 - `ubs <file1> <file2>` - Scan your scope's files explicitly (preferred — `--diff`/`--staged` may sweep in other workers' concurrent edits)
@@ -394,8 +368,9 @@ If blocked:
 
 - Writing code before test → Delete, start with test
 - Test passes immediately → You're testing existing behavior
-- Skipping verification → Run all checks before completing
-- Committing without tests passing → Fix first
+- Skipping verification → Run the `gates` ladder before committing
+- Committing red → Fix first
+- Re-running a check without reading the failure → Read the output; `gates` caps the attempts
 - Completing bead without commit → **BLOCKED** — gate fails
 - Reporting without deliverables → Orchestrator will reject
 - Skipping `br close` → Work doesn't count
@@ -423,7 +398,7 @@ If blocked:
 - Work in the repo root, on the current branch — the same tree as every other agent
 - Reserve files before editing; release them when the bead lands
 - TDD strictly (RED → GREEN → REFACTOR)
-- Verify before completing (tests, lint, types, build)
+- Verify before committing, per the `gates` ladder
 - One commit per bead — named paths, pathspec commit
 - Mail the orchestrator when the bead lands; record deliverables in bead comments; final message = bead report
 - Save context to the epic context file

@@ -25,7 +25,7 @@ Stop only for: a failed reservation, a new exclusive resource, an irreversible a
 - Own failures your change caused, wherever they surface. Record independent failures without fixing them.
 
 ## Completion
-1. Run the bead's acceptance checks and affected gates. Implement real behavior: production code with mock, stub, or placeholder behavior fails verification.
+1. Run the bead's acceptance checks and affected gates, per the `gates` skill — it defines the order, the scope, and what to do with a red result. Implement real behavior: production code with mock, stub, or placeholder behavior fails verification.
 2. Mail {ORCH_NAME} on thread {EPIC_ID} as soon as the bead lands, then record deliverables in a bead comment. Every report carries: commit hash, test counts, bead status confirmed via br show.
 3. Close the bead only when every acceptance criterion passes, release your reservations, then stop. Your final message is your bead report: commit, tests, status, actual scope with reasons, public surface, and unit-level gaps for the tester.
 
